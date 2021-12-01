@@ -8,15 +8,36 @@
     "eject": "expo eject"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.13.0",
+    "@react-native-community/masked-view": "0.1.10",
+    "@react-native-community/netinfo": "^6.0.0",
+    "@react-navigation/bottom-tabs": "~5.2.6",
+    "@react-navigation/native": "~5.1.5",
+    "@react-navigation/stack": "~5.2.10",
+    "axios": "^0.21.1",
     "expo": "~42.0.1",
+    "expo-sqlite": "~9.2.1",
     "expo-status-bar": "~1.0.4",
+    "firebase": "~8.2.3",
     "react": "16.13.1",
     "react-dom": "16.13.1",
     "react-native": "https://github.com/expo/react-native/archive/sdk-42.0.0.tar.gz",
-    "react-native-web": "~0.13.12"
+    "react-native-easy-toast": "^2.0.0",
+    "react-native-elements": "^3.4.2",
+    "react-native-gesture-handler": "~1.10.2",
+    "react-native-modal": "^13.0.0",
+    "react-native-picker-select": "^8.0.4",
+    "react-native-reanimated": "~2.2.0",
+    "react-native-safe-area-context": "3.2.0",
+    "react-native-screens": "~3.4.0",
+    "react-native-snap-carousel": "~3.9.0",
+    "react-native-table-component": "^1.2.1",
+    "react-native-web": "~0.13.12",
+    "utf8": "^3.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0"
   },
-  "private": true
+  "private": true,
+  "version": "0.0.0"
 }
