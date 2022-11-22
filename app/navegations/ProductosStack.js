@@ -1,7 +1,7 @@
 import React from "react";
 import {createStackNavigator} from "@react-navigation/stack";
 import Productos from "../screens/Productos";
-import DetTotal from "../screens/DetTotal";
+import NuevoPed from "../screens/NuevoPed";
 import Perfil from "../screens/Perfil";
 
 const Stack = createStackNavigator();
@@ -13,9 +13,9 @@ export default function ProductosStack(){
             component={Productos}
             options={{title:"Pedidos Vendedor"}} />
             <Stack.Screen 
-            name="dettotal"
-            component={DetTotal}
-            options={{title:"Detalle de Pedido"}} />
+            name="nuevoped"
+            component={NuevoPed}
+            options={{title:"Nuevo Pedido"}} />
             <Stack.Screen 
             name="perfil"
             component={Perfil}

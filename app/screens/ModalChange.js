@@ -9,8 +9,6 @@ class ModalChange extends Component {
         data: [],
         isLoading: true,
         check: false,
-        texto: Number(props.valbol).toFixed(2),
-        index: props.indexval
       };
  }
   state = {

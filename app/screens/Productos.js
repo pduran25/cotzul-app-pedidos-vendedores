@@ -303,10 +303,15 @@ export default function Productos(props){
         
     }
 
+
+    const nuevoPedido = () =>{
+        navigation.navigate("nuevoped",{dataUser}); 
+    }
+
     const goDetalles = () =>{
 
         if(registro.cb_codigo != '')
-            navigation.navigate("dettotal",{registro, recargarPedidos}); 
+            navigation.navigate("nuevoped",{registro, recargarPedidos}); 
         else
             Alert.alert("Seleccione un Pedido");
      }
@@ -332,6 +337,15 @@ export default function Productos(props){
                 <Text style={styles.titlespick2}>Usuario: {dataUser.vn_nombre}</Text>
             </View>
             {/*Search*/}
+
+            <View style={{alignItems:'center'}}>
+                <Button
+                    title="Nuevo Pedido"
+                    containerStyle={styles.btnContainerLogin}
+                    buttonStyle = {styles.btnLogin}
+                    onPress= {nuevoPedido}
+                />
+            </View>
             <Text style={styles.titlespick}>Mis Pedidos:</Text>
             
             <View style={{ marginHorizontal:20, marginTop:10, height: 120}}>
@@ -368,7 +382,7 @@ export default function Productos(props){
                     title="Ver detalles"
                     containerStyle={styles.btnContainerLogin}
                     buttonStyle = {styles.btnLogin}
-                    onPress= {goDetalles}
+                    onPress= {()=> Alert.alert("Por implementar...")}
                 />
             </View>
         </ScrollView>
