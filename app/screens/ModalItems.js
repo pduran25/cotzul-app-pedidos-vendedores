@@ -5,7 +5,11 @@ import {SearchBar, ListItem, Icon, colors } from "react-native-elements"
 import { DebugInstructions } from "react-native/Libraries/NewAppScreen";
 
 
-class ModalClientes extends Component {
+
+    
+
+
+class ModalItems extends Component {
 
     
 
@@ -15,7 +19,7 @@ class ModalClientes extends Component {
         data: [],
         isLoading: true,
         search: "", 
-        dataCliente: this.defaultValueRegister
+        dataItem: this.defaultValueRegister
 
       };
 
@@ -46,10 +50,9 @@ class ModalClientes extends Component {
    // this.getClientes();
   }
 
-  setClientes(alignItems){
-    console.log("paso por aqui "+alignItems.ct_cliente);
+  setItems(valItem){
     
-    this.props.actualizaCliente(alignItems);
+    this.props.actualizaItem(valItem);
     this.setModalVisible(!this.state.modalVisible);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
 };
 
@@ -59,12 +62,12 @@ getClientes = async () => {
   try {
     this.setState({ isLoading: true});
     const response = await fetch(
-      "https://app.cotzul.com/Pedidos/getClientes.php?nombre="+this.state.search
+      "https://app.cotzul.com/Pedidos/getItems.php?nombre="+this.state.search
     );
-    console.log("https://app.cotzul.com/Pedidos/getClientes.php?nombre="+this.state.search);
+    console.log("https://app.cotzul.com/Pedidos/getItems.php?nombre="+this.state.search);
     const jsonResponse = await response.json();
     console.log(jsonResponse);
-    this.setState({ data: jsonResponse?.clientes});
+    this.setState({ data: jsonResponse?.items});
     this.setState({ isLoading: false});
   } catch(e) {
     this.setState({ isLoading: false});
@@ -80,20 +83,20 @@ registerItem =({item}) =>{
   return( 
       
      
-      <TouchableOpacity onPress={() => this.setClientes(item)}>
+      <TouchableOpacity onPress={() => this.setItems(item)}>
       <View style={{flexDirection: 'row', backgroundColor: item.background, marginRight:15}}>
           <View style={{width:75, height: 30, borderColor: 'black', borderWidth: 1}}>
-              <Text style={styles.tabletext}>{item.ct_cedula}</Text>
+              <Text style={styles.tabletext}>{item.it_referencia}</Text>
           </View>
           
           <View style={{width:85, height: 30,   borderColor: 'black', borderWidth: 1}}>
-              <Text style={styles.tabletext}>{item.ct_cliente}</Text>
+              <Text style={styles.tabletext}>{item.it_familia}</Text>
           </View>
           <View style={{width:85, height: 30,   borderColor: 'black', borderWidth: 1}}>
-              <Text style={styles.tabletext}>{item.ct_telefono}</Text>
+              <Text style={styles.tabletext}>{item.it_marca}</Text>
           </View>
           <View style={{width:85, height: 30,   borderColor: 'black', borderWidth: 1}}>
-          <Text style={styles.tabletext}>$ {item.ct_cupodisponible}</Text>
+          <Text style={styles.tabletext}>{item.it_stock}</Text>
           </View>
       </View>
       </TouchableOpacity>
@@ -105,7 +108,7 @@ registerItem =({item}) =>{
 
   render() {
     const { modalVisible, texto, data, isLoading, search} = this.state;
-    const { actualizaCliente} = this.props;
+    const { actualizaItem } = this.props;
 
     
         return (
@@ -129,7 +132,7 @@ registerItem =({item}) =>{
 <View style={styles.searchWrapper}>
                
                <View style={styles.search}>
-               <Text style={styles.modalText}>Listado de Clientes</Text>
+               <Text style={styles.modalText}>Listado de Items</Text>
               <SearchBar
                 placeholder="Buscar..."
                 onChangeText={(e)=> this.setTextoSearch(e)}
@@ -142,17 +145,17 @@ registerItem =({item}) =>{
               <View style={{ marginHorizontal:20, marginTop:10, height: 120}}>
                 <View style={{flexDirection: 'row'}}>
                     <View style={{width:75, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
-                        <Text style={styles.tabletitle}>#Cedula:</Text>
+                        <Text style={styles.tabletitle}>Referencia:</Text>
                     </View>
                     <View style={{width:85, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
-                        <Text style={styles.tabletitle}>Nombre:</Text>
+                        <Text style={styles.tabletitle}>Familia:</Text>
                     </View>
                     
                     <View style={{width:85, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
-                        <Text style={styles.tabletitle}>Teléfono:</Text>
+                        <Text style={styles.tabletitle}>Marca:</Text>
                     </View>
                     <View style={{width:85, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
-                        <Text style={styles.tabletitle}>Cupo:</Text>
+                        <Text style={styles.tabletitle}>Stock:</Text>
                     </View>
                 </View>
                 {isLoading ? <ActivityIndicator
@@ -188,7 +191,7 @@ registerItem =({item}) =>{
           
           onPress={() => this.setModalVisible(true)}
         >
-           <Text style={styles.textStyle}>Seleccionar Cliente</Text>
+           <Text style={styles.textStyle}>Seleccionar Item</Text>
         </Pressable>
       </View>
     );
@@ -346,4 +349,4 @@ const styles = StyleSheet.create({
   }, 
 });
 
-export default ModalClientes;
+export default ModalItems;
