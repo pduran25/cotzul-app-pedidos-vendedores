@@ -245,7 +245,8 @@ function defaultValueRegister(){
     ct_direccion: "",
     ct_plazo: 0,
     ct_telefono: "",
-    ct_tipoid: 0
+    ct_tipoid: 0,
+    ct_tcodigo: 0
   }
 }
 
