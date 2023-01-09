@@ -43,6 +43,14 @@ function defaultCliente(){
     }
   }
 
+  function defaultPeso(){
+    return{
+      pl_peso: 0,
+      pl_tarifa1: 0,
+      pl_tarifa2: 0
+    }
+  }
+
 
   
 
@@ -58,8 +66,9 @@ function defaultCliente(){
 
 export default function NuevoPed(props) {
     const {navigation, route} = props;
-    const { dataUser, recargarPedidos } = route.params;
+    const { dataUser, regresarFunc } = route.params;
     const [bodega, setBodega] =  useState(0);
+    const [doc, setDoc] =  useState(0);
     const [prioridad, setPrioridad] =  useState(0);
     const [cliente, setCliente] = useState(defaultCliente);
     const [dataitem, setDataItem] = useState([]);
@@ -78,19 +87,26 @@ export default function NuevoPed(props) {
     const [porcent, setPorcent] = useState(0);
     const [plazo, setPlazo] = useState([]);
     const [transp, setTransp] = useState([]);
-    const [tplazo, setTPlazo] = useState("");
-    const [ttrans, setTtrans] = useState("");
+    const [vpeso, setVpeso] = useState(defaultPeso);
+    const [tplazo, setTPlazo] = useState(0);
+    const [ttrans, setTtrans] = useState(0);
     const [desc, setDesc] = useState(0);
     const [cant, setCant] = useState(0);
     const [subtemp, setSubtemp] = useState(0);
     const [tottemp, setTottemp] = useState(0);
    const [itemtotal, setItemTotal] = useState([]);
    const [valindex, setValIndex] = useState(0);
+   const [cadenaint, setCadenaint] = useState("");
+   const [cadenita, setCadenita] = useState("");
+   const [idnewvendedor, setIdnewvendedor] = useState(0);
+   const [usuvendedor, setUsuvendedor] = useState("");
    var resindex = 0;
+   var itemtext = "";
 
 
 
     const [valrecibo,setRecibo] = useState("000"+(Number(dataUser.vn_recibo)+1))
+    const [numdoc, setNumDoc] = useState(Number(dataUser.vn_recibo)+1);
     const [obs, setObs] = useState("");
 
     let nextId = 0;
@@ -98,7 +114,7 @@ export default function NuevoPed(props) {
 
     Item =({item, index}) =>{
   
-        console.log("valor de subtotal: "+itemtotal[index].subtotal+" valor del index: "+index)
+
         return( 
             <View>
             <View style={{flexDirection: 'row'}}>
@@ -118,9 +134,8 @@ export default function NuevoPed(props) {
                             keyboardType='numeric'
                             placeholder='0,0'
                             style={styles.tabletext}
-                            
-                            onChangeText={(val)=> setCanti(val)}
-                            onEndEditing={()=>EditarResultados(index, cant, desc, item.it_precio, item.it_costoprom) }
+                            onChangeText={(val)=> setCanti(val, index)}
+                            onEndEditing={()=>EditarResultados(index, item.it_codprod, itemtotal[index].cantidad, itemtotal[index].descuento, item.it_precio, item.it_costoprom, item.it_peso, item.it_referencia) }
                             />
                 </View>
                 
@@ -136,9 +151,8 @@ export default function NuevoPed(props) {
                             keyboardType='numeric'
                             placeholder='0,0'
                             style={styles.tabletext}
-                            
-                            onChangeText={(val)=> setDescu(val)}
-                            onEndEditing={()=>EditarResultados(index, cant, desc, item.it_precio, item.it_costoprom)}
+                            onChangeText={(val)=> setDescu(val, index)}
+                            onEndEditing={()=>EditarResultados(index, item.it_codprod, itemtotal[index].cantidad, itemtotal[index].descuento, item.it_precio, item.it_costoprom, item.it_peso, item.it_referencia)}
                             />)}
                 </View>
                 <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
@@ -156,34 +170,29 @@ export default function NuevoPed(props) {
         )
         }
     
-    const setCanti = (valor) =>{
-        if(valor == "")
+    const setCanti = (valor, index) =>{
+        if(valor == ""){
             setCant(0);
-        else
+            itemtotal[index].cantidad = 0;
+        }
+        else{
             setCant(valor);
+            itemtotal[index].cantidad = valor;
+        }
+            
     }
 
-    const setDescu = (valor) =>{
-        if(valor == "")
+    const setDescu = (valor, index) =>{
+        if(valor == ""){
             setDesc(0);
-        else
+            itemtotal[index].descuento = 0;
+        }
+        else{
             setDesc(valor);
+            itemtotal[index].descuento = valor;
+        }
+            
     }
-
-
-    /*const EndEdit = (codigo, precio) =>{
-        console.log("VALOR DE CANT: "+cant+" VALOR DE DESC: "+desc);
-        var ressub = 0;
-        ressub = Number(cant) * Number(precio);
-        itemsubtot[codigo] = ressub;
-        itemtotal[codigo] = (ressub - ((ressub * desc)/100));
-
-        console.log("valor subtotal: "+itemsubtot[codigo]+" el index: "+ codigo);
-
-    }*/
-
-
-    
 
     
 
@@ -203,6 +212,8 @@ export default function NuevoPed(props) {
   const actualizaCliente =(item) =>{
     setCliente(item)
     setTcodigo(item.ct_tcodigo)
+    setIdnewvendedor(item.ct_idvendedor);
+    setUsuvendedor(item.ct_usuvendedor);
   }
 
 
@@ -215,7 +226,7 @@ export default function NuevoPed(props) {
     setDataItem(dataitem.concat(newitem))
     console.log("dataitem. "+dataitem);
     
-    agregaResultados(valindex, 0,0, 0, 0);
+    agregaResultados(valindex,newitem.it_codprod, 0,0, 0, 0, 0, "-");
     resindex = valindex + 1;
     setValIndex(resindex);
     setLoading(true)
@@ -224,6 +235,20 @@ export default function NuevoPed(props) {
   eliminaItem = (nameItem)=>{
     setDataItem(dataitem.filter(item => item.it_codigo !== nameItem));
     console.log("ingreso: "+nameItem)
+    eliminardeArray(nameItem);
+    
+  }
+
+  eliminardeArray = (codigo)=>{
+    var vindex = 0;
+    for (let i = 0; i < itemtotal.length; ++i) {
+        if(itemtotal[i].codigo == codigo) 
+            vindex = i;
+    }
+
+    //delete itemtotal[vindex];
+    itemtotal.splice(vindex, 1);
+    CargarResultados();
   }
 
   const registrarPlazo = (dataPlazo) =>{
@@ -244,17 +269,17 @@ const registrarTransporte = (dataTransporte) =>{
     setTransp(temp);
 }
 
-const agregaResultados = (codigo, cant, desc, precio, costo) =>{
+const agregaResultados = (codigo, codprod, cant, desc, precio, costo, peso, descripcion) =>{
    var temp = [];
    for (let i = 0; i < itemtotal.length; ++i) {
-        temp.push({codigo: itemtotal[i].codigo,cantidad: itemtotal[i].cant, descuento: itemtotal[i].desc,subtotal: itemtotal[i].subtotal, total: itemtotal[i].total});
+        temp.push({codigo: itemtotal[i].codigo, codprod: itemtotal[i].codprod,  descripcion: itemtotal[i].descripcion , cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento,subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso});
     }
 
     var ressub = 0, restot = 0;
-    ressub = Number(cant) * Number(costo);
+    ressub = Number(cant) * Number(precio);
     restot = (ressub - ((ressub * desc)/100));
 
-    temp.push({codigo: codigo, cantidad:cant, descuento:desc, subtotal: ressub, total: restot});
+    temp.push({codigo: codigo, codprod: codprod,  descripcion: descripcion,cantidad:cant, precio: precio, costo: costo, descuento:desc, subtotal: ressub, total: restot, peso: peso});
     setItemTotal(temp);
 
 }
@@ -269,20 +294,43 @@ const CargarResultados = () =>{
     var vardesc = 0;
     var varorden = 0, varventas = 0, vargastos = 0;
     var resdes = 0;
+    var totpeso = 0;
+    var numcod = 0;
+    var porcpor = 0;
+    itemtext = "";
+    var cadenita1 = "";
+    
 
     for (let i = 0; i < itemtotal.length; ++i) {
-       
-            temp.push({codigo: itemtotal[i].codigo, cantidad: itemtotal[i].cantidad, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total});
-            varsubtotal = varsubtotal + itemtotal[i].total;
+            numcod ++;
+            temp.push({codigo: itemtotal[i].codigo, codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion ,cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso });
+            varsubtotal = varsubtotal + itemtotal[i].subtotal;
+            totpeso = totpeso + itemtotal[i].peso;
+            porcpor = porcpor + itemtotal[i].descuento;
             resdes = resdes +  Number(itemtotal[i].subtotal * itemtotal[i].descuento)/100;
-        
+            itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+itemtotal[i].codprod+"\" d2=\""+itemtotal[i].cantidad+"\" d3=\""+itemtotal[i].precio+"\" d4=\""+itemtotal[i].descripcion+"\" d5=\""+itemtotal[i].peso+"\" d6=\""+itemtotal[i].descuento+"\" d7=\""+0+"\"></detalle>";
+            cadenita1 = cadenita1 + "*"+numcod+";"+itemtotal[i].codprod+";"+itemtotal[i].descripcion+";"+itemtotal[i].cantidad+";"+itemtotal[i].precio+";"+itemtotal[i].descuento+";"+itemtotal[i].total;
      }
+
+     setCadenaint(itemtext);
+     setCadenita(cadenita1);
+
+     porcpor = (porcpor/itemtotal.length);
+     cargarTarifas(tcodigo, ttrans);
+
      setItemTotal(temp);
      setSubtotal(varsubtotal);
-     varseguro = varsubtotal * 0.01;
+     varseguro = (varsubtotal * 1.12)/100;
      setSeguro(varseguro);
-     vartransp = varsubtotal * 0.02;
-     setTransporte(vartransp);
+     if(vpeso.pl_peso != 0){
+        if(totpeso < vpeso.pl_peso){
+            vartransp = (totpeso * vpeso.pl_tarifa1);
+            setTransporte(vartransp);
+        }else{
+            vartransp = (totpeso * vpeso.pl_tarifa2);
+            setTransporte(vartransp);
+        }
+    }   
      variva = varsubtotal * 0.12;
      setIva(variva);
 
@@ -290,10 +338,12 @@ const CargarResultados = () =>{
         vardesc = (varsubtotal * porcent)/100;
      }else{
         vardesc = resdes;
+        setPorcent(porcpor);
      }
      setDescuento(vardesc);
      
-     vartotal = (varsubtotal + varseguro + vartransp) - vardesc;
+     vartotal = (varsubtotal + varseguro + vartransp + variva) - vardesc;
+     console.log("valor del total: "+vartotal);
      setTotal(vartotal);
 
      console.log("res. subtotal: "+Number(varsubtotal));
@@ -307,7 +357,7 @@ const CargarResultados = () =>{
      setGnGastos(vargastos);
 }
 
-const EditarResultados = (codigo, cant, desc, precio, costo) =>{
+const EditarResultados = (codigo, codprod, cant, desc, precio, costo, peso, descripcion) =>{
     var temp = [];
     var varsubtotal = 0;
     var varseguro = 0;
@@ -317,45 +367,101 @@ const EditarResultados = (codigo, cant, desc, precio, costo) =>{
     var vardesc = 0;
     var varorden = 0, varventas = 0, vargastos = 0;
     var resdes = 0;
+    var valpeso = 0;
+    var totpeso = 0;
+    var valtarifa = 0;
+    var numcod = 0;
+    var porcpor = 0;
+    var cadenita1 = "";
+    var rescosto = 0;
+    var varsubtotalcosto = 0;
+    itemtext = "";
 
     for (let i = 0; i < itemtotal.length; ++i) {
+        numcod++;
         if(itemtotal[i].codigo == codigo){
             var ressub = 0, restot = 0;
-            ressub = Number(cant) * Number(costo);
+            ressub = Number(cant) * Number(precio);
+            rescosto = Number(cant) * Number(costo);
+            valpeso = Number(cant) * Number(peso);
+
             restot = (ressub - ((ressub * desc)/100));
-            temp.push({codigo: codigo, cantidad: cant, descuento: desc, subtotal: ressub, total: restot});
-            varsubtotal = varsubtotal + restot;
+            
+            temp.push({codigo: codigo, codprod: codprod, descripcion: descripcion, cantidad: cant, precio: precio, costo:costo, descuento: desc, subtotal: ressub, total: restot, peso: peso});
+            
+            varsubtotal = varsubtotal + ressub;
+            varsubtotalcosto = varsubtotalcosto + rescosto;
             resdes = resdes + Number(ressub * desc)/100;
+            totpeso= totpeso + valpeso;
+            porcpor = porcpor + desc;
+
+            itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+codprod+"\" d2=\""+cant+"\" d3=\""+precio+"\" d4=\""+descripcion+"\" d5=\""+peso+"\" d6=\""+desc+"\" d7=\""+0+"\"></detalle>"; 
+            cadenita1 = cadenita1 + "*"+numcod+";"+codprod+";"+descripcion+";"+cant+";"+precio+";"+desc+";"+restot;
         }else{
-            temp.push({codigo: itemtotal[i].codigo, cantidad: itemtotal[i].cantidad, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total});
-            varsubtotal = varsubtotal + itemtotal[i].total;
+           
+            temp.push({codigo: itemtotal[i].codigo, codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion, cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso});
+
+            valpeso = Number(itemtotal[i].cantidad) *  Number(itemtotal[i].peso);
+            rescosto = Number(itemtotal[i].cantidad) *  Number(itemtotal[i].costo);
+            varsubtotal = varsubtotal + itemtotal[i].subtotal;
+            varsubtotalcosto = varsubtotalcosto + rescosto;
             resdes = resdes +  Number(itemtotal[i].subtotal * itemtotal[i].descuento)/100;
+            porcpor = porcpor + itemtotal[i].descuento;
+            totpeso = totpeso + valpeso;
+
+            itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+itemtotal[i].codprod+"\" d2=\""+itemtotal[i].cantidad+"\" d3=\""+itemtotal[i].precio+"\" d4=\""+itemtotal[i].descripcion+"\" d5=\""+itemtotal[i].peso+"\" d6=\""+itemtotal[i].descuento+"\" d7=\""+0+"\"></detalle>"; 
+            cadenita1 = cadenita1 + "*"+numcod+";"+itemtotal[i].codprod+";"+itemtotal[i].descripcion+";"+itemtotal[i].cantidad+";"+itemtotal[i].precio+";"+itemtotal[i].descuento+";"+itemtotal[i].total;
         }
+
+        
      }
+
+     setCadenaint(itemtext);
+     setCadenita(cadenita1);
+
+     porcpor = (porcpor/itemtotal.length);
      setItemTotal(temp);
      setSubtotal(varsubtotal);
-     varseguro = varsubtotal * 1.2;
+     varseguro = (varsubtotal * 1.12)/100;
      setSeguro(varseguro);
-     vartransp = varsubtotal * 0.02;
-     setTransporte(vartransp);
+     
      variva = varsubtotal * 0.12;
      setIva(variva);
+
+     cargarTarifas(tcodigo, ttrans);
+
+
 
      if(checked == 'second'){
         vardesc = (varsubtotal * porcent)/100;
      }else{
         vardesc = resdes;
+        setPorcent(porcpor);
      }
      setDescuento(vardesc);
+
+     if(vpeso.pl_peso != 0){
+            if(totpeso < vpeso.pl_peso){
+                vartransp = (totpeso * vpeso.pl_tarifa1);
+                setTransporte(vartransp);
+                
+            }else{
+                vartransp = (totpeso * vpeso.pl_tarifa2);
+                setTransporte(vartransp);
+            }
+    }
      
-     vartotal = (varsubtotal + varseguro + vartransp) - vardesc;
+     
+     vartotal = (varsubtotal + varseguro + vartransp + variva) - vardesc;
      setTotal(vartotal);
 
+     console.log("valor del total: "+vartotal);
+
      console.log("res. subtotal: "+Number(varsubtotal));
-     console.log("resultado var orden: "+(Number(vartotal) - Number(vardesc) - Number(varsubtotal)).toFixed(2));
-     varorden = (Number(vartotal) - Number(vardesc) - Number(varsubtotal));
-     varventas = ((gnorden/(Number(vartotal)-Number(vardesc)))*100);
-     vargastos = ((Number(vartotal)-Number(vardesc))/Number(varsubtotal));
+     console.log("resultado var orden: "+(Number(vartotal) - Number(vardesc) - Number(varsubtotalcosto)).toFixed(2));
+     varorden = (Number(varsubtotal) - Number(vardesc) - Number(varsubtotalcosto));
+     varventas = ((gnorden/(Number(varsubtotal)-Number(vardesc)))*100);
+     vargastos = ((Number(varsubtotal)-Number(vardesc))/Number(varsubtotalcosto));
 
      setGnOrden(varorden);
      setGnVentas(varventas);
@@ -397,6 +503,30 @@ const cargarTransporte = async () => {
 };
 
 
+const cargarTarifas = async (ttcodigo, idtransporte) =>{
+    try{
+        console.log("Entro en tarifas: "+ tcodigo+ "- "+ttrans);
+        if(ttcodigo != 0 && ttrans != 0){
+            const response = await fetch(
+                "https://app.cotzul.com/Pedidos/pd_getTarifa.php?ttcodigo="+ttcodigo+"&tarifa="+idtransporte
+              );
+
+            console.log( "https://app.cotzul.com/Pedidos/pd_getTarifa.php?ttcodigo="+ttcodigo+"&tarifa="+idtransporte);
+            const jsonResponse = await response.json();
+            console.log("REGISTRANDO TARIFAS TRANSPORTE");
+            console.log(jsonResponse?.tarifa[0]);
+            setVpeso(jsonResponse?.tarifa[0]);
+
+        }
+       
+    }catch(error){
+        console.log("un error cachado listar transporte");
+        console.log(error);
+    }
+
+}
+
+
 
 
 useEffect(()=>{
@@ -411,18 +541,19 @@ useEffect(()=>{
 
 GrabarPedido = async () =>{
     try {
-      if(comentario == undefined)
-        comentario = '';
-      var textofinal = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><c c0=\"2\" c1=\"1\" c2=\""+idpedido+"\" c3=\"P\" c4=\""+usuario+"\" c5=\""+codusuario+"\" c6=\""+comentario+"\">"+cadenaint+"</c>";
-      console.log("https://app.cotzul.com/Pedidos/setPedidosxid.php?idpedido="+idpedido+"&gnorden="+gnorden+"&gnventas="+gnventas+"&gngastos="+gngastos+"&comentario="+comentario+"&estatus="+estatus+"&cadena="+textofinal);
-      const response = await fetch("https://app.cotzul.com/Pedidos/setPedidosxid.php?idpedido="+idpedido+"&gnorden="+gnorden+"&gnventas="+gnventas+"&gngastos="+gngastos+"&comentario="+comentario+"&estatus="+estatus+"&cadena="+textofinal);
+      if(cadenaint != "")
+      //var textofinal = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><c c0=\"2\" c1=\"1\" c2=\""+numdoc+"\" c3=\""+dataUser.vn_codigo+"\" c4=\""+ttrans+"\" c5=\""+cliente.ct_codigo+"\" c6=\""+doc+"\" c7=\""+tplazo+"\" c8=\""+obs+"\" c9=\""+subtotal+"\" c10=\""+porcent+"\" c11=\""+descuento+"\" c12=\""+seguro+"\" c13=\""+transporte+"\" c14=\""+iva+"\" c15=\""+total+"\" c16=\""+0+"\" c17=\""+0+"\" c18=\""+dataUser.vn_usuario+"\" >"+cadenaint+"</c>";
+      var textofinal = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><c c0=\"2\" c1=\"1\" c2=\""+numdoc+"\" c3=\""+dataUser.vn_codigo+"\" c4=\""+ttrans+"\" c5=\""+cliente.ct_codigo+"\" c6=\""+doc+"\" c7=\""+tplazo+"\" c8=\""+obs+"\" c9=\""+subtotal+"\" c10=\""+porcent+"\" c11=\""+descuento+"\" c12=\""+seguro+"\" c13=\""+transporte+"\" c14=\""+iva+"\" c15=\""+total+"\" c16=\""+0+"\" c17=\""+0+"\" c18=\"pduran\" >"+cadenaint+"</c>";
+      console.log("https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido="+numdoc+"&idvendedor="+dataUser.vn_codigo+"&usuvendedor="+dataUser.vn_usuario+"&fecha="+fechaped+"&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones="+obs+"&idcliente="+cliente.ct_codigo+"&tipodoc="+doc+"&tipodesc="+((checked=='second')?1:0)+"&valordesc="+descuento+"&gnorden="+gnorden+"&gnventas="+gnventas+"&gngastos="+gngastos+"&subtotal="+subtotal+"&descuento="+descuento+"&transporte="+transporte+"&seguro="+seguro+"&iva="+iva+"&total="+total+"&idnewvendedor="+idnewvendedor+"&usunewvendedor="+usuvendedor+"&cadenaxml="+textofinal+"&cadena="+cadenita);
+      console.log("https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido="+numdoc+"&idvendedor="+dataUser.vn_codigo+"&usuvendedor="+dataUser.vn_usuario+"&fecha="+fechaped+"&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones="+obs+"&idcliente="+cliente.ct_codigo+"&tipodoc="+doc+"&tipodesc="+((checked=='second')?1:0)+"&valordesc="+descuento+"&gnorden="+gnorden+"&gnventas="+gnventas+"&gngastos="+gngastos+"&subtotal="+subtotal+"&descuento="+descuento+"&transporte="+transporte+"&seguro="+seguro+"&iva="+iva+"&total="+total+"&idnewvendedor="+idnewvendedor+"&usunewvendedor="+usuvendedor+"&cadenaxml="+textofinal+"&cadena="+cadenita);
+      const response = await fetch("https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido="+numdoc+"&idvendedor="+dataUser.vn_codigo+"&usuvendedor="+dataUser.vn_usuario+"&fecha="+fechaped+"&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones="+obs+"&idcliente="+cliente.ct_codigo+"&tipodoc="+doc+"&tipodesc="+((checked=='second')?1:0)+"&valordesc="+descuento+"&gnorden="+gnorden+"&gnventas="+gnventas+"&gngastos="+gngastos+"&subtotal="+subtotal+"&descuento="+descuento+"&transporte="+transporte+"&seguro="+seguro+"&iva="+iva+"&total="+total+"&idnewvendedor="+idnewvendedor+"&usunewvendedor="+usuvendedor+"&cadenaxml="+textofinal+"&cadena="+cadenita);
 
       const jsonResponse = await response.json();
-      this.setState({ data: jsonResponse.estatusped});
       console.log(jsonResponse.estatusped);
       if(jsonResponse.estatusped == 'REGISTRADO'){
-        this.setState({ modalVisible: false });
-        this.props.regresarFn();
+        console.log("Se registro con éxito");
+        //navigation.navigate("productos");
+        regresarFunc();
       }
       
     } catch (error) {
@@ -533,7 +664,7 @@ GrabarPedido = async () =>{
                     <View style={styles.itemrow}><RNPickerSelect
                 useNativeAndroidPickerStyle={false}
                 style={pickerStyle}
-                onValueChange={(bodega) => setBodega(bodega)}
+                onValueChange={(doc) => setDoc(doc)}
                 placeholder={{ label: "SELECCIONAR", value: 0 }}
                 items={[
                     { label: "CHEQUE A FECHA", value: 1},
@@ -565,7 +696,7 @@ GrabarPedido = async () =>{
                 </View>
                 <View style={styles.row}>
                     
-                    <View style={styles.itemrow}><Text style={styles.tittext}>Tipo de Descuento:</Text><Text>Item:</Text><RadioButton
+            <View style={styles.itemrow}><Text style={styles.tittext}>Tipo de Descuento:</Text><Text>Item:</Text><RadioButton
         value="first"
         status={ checked === 'first' ? 'checked' : 'unchecked' }
         onPress={() => setChecked('first')}
@@ -672,7 +803,7 @@ GrabarPedido = async () =>{
                     <View style={styles.itemrow}><Text style={styles.itemtext}>${subtotal.toFixed(2)}</Text></View>
                 </View>
                 <View style={styles.row}>
-                    <View style={styles.itemrow}><Text style={styles.tittext}>Desc. %:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>Desc.:</Text></View>
                     <View style={styles.itemrow}><Text style={styles.itemtext}>${descuento.toFixed(2)}</Text></View>
                 </View>  
                 <View style={styles.row}>
@@ -680,7 +811,7 @@ GrabarPedido = async () =>{
                     <View style={styles.itemrow}><Text style={styles.itemtext}>${seguro.toFixed(2)}</Text></View>
                 </View>
                 <View style={styles.row}>
-                    <View style={styles.itemrow}><Text style={styles.tittext}>Trans.:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>Flete:</Text></View>
                     <View style={styles.itemrow}><Text style={styles.itemtext}>${transporte.toFixed(2)}</Text></View>
                 </View>
                 <View style={styles.row}>

@@ -9,7 +9,7 @@ export default function DetPedidos(props) {
         <View> 
             <View style={styles.detallebody}> 
                 <Text style={{fontWeight:'bold'}}>Nombre Cliente:</Text>
-                <Text style={styles.titlespick}>{registro.cb_cliente}</Text>
+                <Text style={styles.titlespick}>{registro.pv_cliente}</Text>
             </View>
             {/*<View style={{width:80, alignItems: 'left', paddingLeft: 10}}>
                         <Text style={{fontWeight:'bold'}}>#Docum.</Text>
@@ -22,11 +22,11 @@ export default function DetPedidos(props) {
             <View style={styles.dividobody}> 
                     <View style={{width:80}}>
                         <Text style={{fontWeight:'bold'}}>#Docum.</Text>
-                        <Text style={styles.titlespick}>{registro.cb_coddocumento}</Text>
+                        <Text style={styles.titlespick}>{registro.pv_codigo}</Text>
                     </View>
                     <View style={{width:270}}>
                         <Text style={{fontWeight:'bold'}}>Vendedor</Text>
-                        <Text style={styles.titlespick}>{registro.cb_vendedor}</Text>
+                        <Text style={styles.titlespick}>{registro.pv_vendedor}</Text>
                     </View>
                     
             </View>
@@ -34,7 +34,7 @@ export default function DetPedidos(props) {
             
                     <View style={{width:'100%'}}>
                         <Text style={{textAlign: 'right', paddingRight: 30,fontWeight:'bold'}}>Total($)</Text>
-                        <Text style={{textAlign: 'right', paddingRight: 30}}>{Number(registro.cb_valortotal).toFixed(2)}</Text>
+                        <Text style={{textAlign: 'right', paddingRight: 30}}>{Number(registro.pv_total).toFixed(2)}</Text>
                     </View>
             </View>
            

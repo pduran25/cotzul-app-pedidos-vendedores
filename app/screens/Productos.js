@@ -133,81 +133,38 @@ export default function Productos(props){
         if(dataUser){
             if(!usuario){
                 getDataUser();
-                //listarPedidos(-1);
+                
                 
             }
         }
         
     },[]);
 
+    useEffect(() => {
+        listarPedidos();
+    },[dataUser]);
 
- 
+
+    const regresarFunc = () =>{
+        console.log("ingreso a regresar");
+        navigation.navigate("productos"); 
+        listarPedidos();
+    }
 
 
 
-    const listarPedidos = async (estatus) => {
+    const listarPedidos = async () => {
         try {
-           
-            console.log("entro prueba item");
+        
           const response = await fetch(
-            "https://app.cotzul.com/Pedidos/getAllPedidosN.php?idestatus="+estatus+"&usuario="+dataUser.us_usuario+"&cadena="+cadena
+            "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor="+dataUser.vn_codigo
           );
-          console.log("https://app.cotzul.com/Pedidos/getAllPedidosN.php?idestatus="+estatus+"&usuario="+dataUser.us_usuario+"&cadena="+cadena);
+          console.log("https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor="+dataUser.vn_codigo);
           const jsonResponse = await response.json();
-          console.log("entro prueba item1");
           setLoading(true);
-          
-          setData(jsonResponse?.cabpedidos);
-          cargarDetalles(jsonResponse?.cabpedidos);
-
-          if(estatus != -1)
-             listarDetPedidos();
-          else
-            setLoading2(true);
-          
+          setData(jsonResponse?.pedidovendedor);
         } catch (error) {
          setLoading(false)
-          console.log("un error cachado listar pedidos");
-          console.log(error);
-        }
-    };
-
-
-    const listarPedidos2 = async () => {
-        try {
-           
-          console.log("entro prueba item");
-          const response = await fetch(
-            "https://app.cotzul.com/Pedidos/getAllPedidosN2.php?usuario="+dataUser.us_usuario+"&cadena="+cadena
-          );
-          console.log("https://app.cotzul.com/Pedidos/getAllPedidosN2.php?usuario="+dataUser.us_usuario+"&cadena="+cadena);
-          const jsonResponse = await response.json();
-          console.log("entro prueba item2");
-          setLoading(true);
-          setLoading2(true);
-          setData(jsonResponse?.cabpedidos);
-          cargarDetalles(jsonResponse?.cabpedidos);
-          
-        } catch (error) {
-         setLoading(false)
-          console.log("un error cachado listar pedidos");
-          console.log(error);
-        }
-    };
-
-
-    const listarDetPedidos = async () => {
-        try {
-         
-          const response2 = await fetch(
-            "https://app.cotzul.com/Pedidos/getAllDetallesN.php?usuario="+dataUser.us_usuario
-          );
-          console.log("https://app.cotzul.com/Pedidos/getAllDetallesN.php?usuario="+dataUser.us_usuario);
-          const jsonResponse2 = await response2.json();
-          console.log(jsonResponse2?.detpedidos[0].dt_respuesta);
-          setLoading2(true);
-        } catch (error) {
-          setLoading2(false);
           console.log("un error cachado listar pedidos");
           console.log(error);
         }
@@ -258,18 +215,17 @@ export default function Productos(props){
        const viewDetails = (props) =>{
             console.log("Detalle pedido");
            
-            console.log(item.empresa);
-            for (let x = 0; x < dataped.length; x++) {
+            for (let x = 0; x < data.length; x++) {
                 cont++;
-                console.log(item.cb_coddocumento)
-                if (dataped[x].cb_coddocumento == item.cb_coddocumento) {
-                    dataped[x].background = 'gray';
+                console.log(item.pv_codigo)
+                if (data[x].pv_codigo == item.pv_codigo) {
+                    data[x].background = 'gray';
                 } else {
-                    dataped[x].background = 'white';
+                    data[x].background = 'white';
                 }
             }
            
-            if(dataped.length == 0){
+            if(data.length == 0){
                 setRegistro(defaultValueRegister);
             }else{
                 setRegistro(item);
@@ -284,17 +240,17 @@ export default function Productos(props){
             <TouchableOpacity onPress={viewDetails}>
             <View style={{flexDirection: 'row', backgroundColor: item.background, marginRight:15}}>
                 <View style={{width:75, height: 30, borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tabletext}>{item.cb_coddocumento}</Text>
+                    <Text style={styles.tabletext}>{item.pv_codigo}</Text>
                 </View>
                 
                 <View style={{width:85, height: 30,   borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tabletext}>{item.cb_cliente}</Text>
+                    <Text style={styles.tabletext}>{item.pv_cliente}</Text>
                 </View>
                 <View style={{width:85, height: 30,   borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tableval}>$ {item.cb_valortotal}</Text>
+                    <Text style={styles.tableval}>$ {item.pv_total}</Text>
                 </View>
                 <View style={{width:85, height: 30,   borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tabletext}>{(item.cb_estado=='D')?'NO APROBADO':(item.cb_estado=='A')?'NUEVOS':(item.cb_estado=='B')?'BACKORDER':(item.cb_estado=='R')?'REACTIVADOS':'NINGUNO'}</Text>
+                    <Text style={styles.tabletext}>{(item.pv_estatus==0)?'NO APROBADO':(item.pv_estatus==1)?'NUEVOS':(item.pv_estatus==2)?'BACKORDER':(item.pv_estatus==3)?'REACTIVADOS':'NINGUNO'}</Text>
                 </View>
             </View>
             </TouchableOpacity>
@@ -305,7 +261,7 @@ export default function Productos(props){
 
 
     const nuevoPedido = () =>{
-        navigation.navigate("nuevoped",{dataUser}); 
+        navigation.navigate("nuevoped",{dataUser, regresarFunc}); 
     }
 
     const goDetalles = () =>{
@@ -317,7 +273,7 @@ export default function Productos(props){
      }
 
      const recargarPedidos = () =>{
-        //listarPedidos2();
+        listarPedidos();
         setRegistro(defaultValueRegister);
     }
 
@@ -365,7 +321,7 @@ export default function Productos(props){
                     </View>
                 </View>
                 {(loading && loading2) ? (<FlatList 
-                    data={dataped}
+                    data={data}
                     renderItem = {item}
                     keyExtractor = {(item, index)=> index.toString()}
                 />) : <ActivityIndicator
