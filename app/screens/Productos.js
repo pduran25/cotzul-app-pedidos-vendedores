@@ -239,17 +239,17 @@ export default function Productos(props){
            
             <TouchableOpacity onPress={viewDetails}>
             <View style={{flexDirection: 'row', backgroundColor: item.background, marginRight:15}}>
-                <View style={{width:75, height: 30, borderColor: 'black', borderWidth: 1}}>
+                <View style={{width:60, height: 30, borderColor: 'black', borderWidth: 1}}>
                     <Text style={styles.tabletext}>{item.pv_codigo}</Text>
                 </View>
                 
-                <View style={{width:85, height: 30,   borderColor: 'black', borderWidth: 1}}>
+                <View style={{width:120, height: 30,   borderColor: 'black', borderWidth: 1}}>
                     <Text style={styles.tabletext}>{item.pv_cliente}</Text>
                 </View>
-                <View style={{width:85, height: 30,   borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tableval}>$ {item.pv_total}</Text>
+                <View style={{width:60, height: 30,   borderColor: 'black', borderWidth: 1}}>
+                    <Text style={styles.tableval}>{Number(item.pv_gngastos).toFixed(2)} %</Text>
                 </View>
-                <View style={{width:85, height: 30,   borderColor: 'black', borderWidth: 1}}>
+                <View style={{width:110, height: 30,   borderColor: 'black', borderWidth: 1}}>
                     <Text style={styles.tabletext}>{(item.pv_estatus==0)?'NO APROBADO':(item.pv_estatus==1)?'NUEVOS':(item.pv_estatus==2)?'BACKORDER':(item.pv_estatus==3)?'REACTIVADOS':'NINGUNO'}</Text>
                 </View>
             </View>
@@ -303,23 +303,24 @@ export default function Productos(props){
                 />
             </View>
             <Text style={styles.titlespick}>Mis Pedidos:</Text>
-            
-            <View style={{ marginHorizontal:20, marginTop:10, height: 120}}>
+            <ScrollView horizontal>
+            <View style={{ marginHorizontal:20, marginTop:10, height: 200}}>
                 <View style={{flexDirection: 'row'}}>
-                    <View style={{width:75, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                    <View style={{width:60, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>#Doc.</Text>
                     </View>
-                    <View style={{width:85, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                    <View style={{width:120, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Cliente</Text>
                     </View>
                     
-                    <View style={{width:85, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
-                        <Text style={styles.tabletitle}>Saldo</Text>
+                    <View style={{width:60, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                        <Text style={styles.tabletitle}>Lote</Text>
                     </View>
-                    <View style={{width:85, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                    <View style={{width:110, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Estado</Text>
                     </View>
                 </View>
+                
                 {(loading && loading2) ? (<FlatList 
                     data={data}
                     renderItem = {item}
@@ -329,17 +330,18 @@ export default function Productos(props){
                       loading={loading && loading2}/>} 
                 
             </View>
+            </ScrollView>
             <View style={styles.titlesWrapper}>
                 <Text style={styles.titlesdetalle}>Cabecera de Pedidos</Text>
             </View>
             <DetPedidos registro={registro} />
             <View style={{alignItems:'center'}}>
-                <Button
+               {/* <Button
                     title="Ver detalles"
                     containerStyle={styles.btnContainerLogin}
                     buttonStyle = {styles.btnLogin}
                     onPress= {()=> Alert.alert("Por implementar...")}
-                />
+                />*/}
             </View>
         </ScrollView>
 
@@ -353,13 +355,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     tabletitle:{
-        fontSize: 8,
+        fontSize: 12,
+        fontWeight:'bold'
     },
     tabletext:{
-        fontSize: 8,
+        fontSize: 10,
     },
     tableval:{
-        fontSize: 8,
+        fontSize: 10,
         textAlign: 'right'
     },
 titlesSubtitle:{

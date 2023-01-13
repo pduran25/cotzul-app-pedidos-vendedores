@@ -9,6 +9,7 @@ import { Button} from 'react-native-elements';
 import { FlatList } from "react-native-gesture-handler";
 
 
+
 /**
 * @author Pedro Durán A.
 * @function  Creación de nuevo pedido
@@ -51,6 +52,13 @@ function defaultCliente(){
     }
   }
 
+  function defaultVendedor(){
+    return{
+        vd_codigo: 0,
+        vd_vendedor: ""
+    }
+  }
+
 
   
 
@@ -89,6 +97,7 @@ export default function NuevoPed(props) {
     const [transp, setTransp] = useState([]);
     const [vpeso, setVpeso] = useState(defaultPeso);
     const [tplazo, setTPlazo] = useState(0);
+    const [tvendedor, setTvendedor] = useState(0);
     const [ttrans, setTtrans] = useState(0);
     const [desc, setDesc] = useState(0);
     const [cant, setCant] = useState(0);
@@ -99,7 +108,9 @@ export default function NuevoPed(props) {
    const [cadenaint, setCadenaint] = useState("");
    const [cadenita, setCadenita] = useState("");
    const [idnewvendedor, setIdnewvendedor] = useState(0);
-   const [usuvendedor, setUsuvendedor] = useState("");
+   const [ubicacion, setUbicacion] = useState(0);
+   const [vseguro, setVseguro] = useState(0);
+   const [vvendedor, setVvendedor] = useState([]);
    var resindex = 0;
    var itemtext = "";
 
@@ -122,11 +133,11 @@ export default function NuevoPed(props) {
                     <Text style={styles.tabletext}>{item.it_stock}</Text>
             </View>
             
-                <View style={{width:70, height: 30, borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tabletext}>{item.it_referencia}</Text>
+                <View style={{width:120, height: 30, borderColor: 'black', borderWidth: 1}}>
+                    <Text style={styles.tabletext}>{item.it_referencia+"-"+item.it_descripcion}</Text>
                 </View>
                 
-                <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
+                <View style={{width:100, height: 30,   borderColor: 'black', borderWidth: 1}}>
                     <Text style={styles.tabletext}>{item.it_marca}</Text>
                 </View>
                 <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
@@ -135,7 +146,7 @@ export default function NuevoPed(props) {
                             placeholder='0,0'
                             style={styles.tabletext}
                             onChangeText={(val)=> setCanti(val, index)}
-                            onEndEditing={()=>EditarResultados(index, item.it_codprod, itemtotal[index].cantidad, itemtotal[index].descuento, item.it_precio, item.it_costoprom, item.it_peso, item.it_referencia) }
+                            onEndEditing={()=>EditarResultados(item.it_codprod, itemtotal[index].cantidad, itemtotal[index].descuento, item.it_precio, item.it_costoprom, item.it_peso, item.it_referencia+"-"+item.it_descripcion) }
                             />
                 </View>
                 
@@ -143,7 +154,7 @@ export default function NuevoPed(props) {
                     <Text style={styles.tabletext}>$ {item.it_precio}</Text>
                 </View>
                 <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tabletext}>$ {itemtotal[index].subtotal.toFixed(2)}</Text>
+                    <Text style={styles.tabletext}>$ {Number(itemtotal[index].subtotal).toFixed(2)}</Text>
                 </View>
                 <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
                         {(checked == 'second')?(<Text style={styles.tabletext}> --- </Text>):(
@@ -152,14 +163,14 @@ export default function NuevoPed(props) {
                             placeholder='0,0'
                             style={styles.tabletext}
                             onChangeText={(val)=> setDescu(val, index)}
-                            onEndEditing={()=>EditarResultados(index, item.it_codprod, itemtotal[index].cantidad, itemtotal[index].descuento, item.it_precio, item.it_costoprom, item.it_peso, item.it_referencia)}
+                            onEndEditing={()=>EditarResultados(item.it_codprod, itemtotal[index].cantidad, itemtotal[index].descuento, item.it_precio, item.it_costoprom, item.it_peso, item.it_referencia+"-"+item.it_descripcion)}
                             />)}
                 </View>
                 <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tabletext}>$ {itemtotal[index].total.toFixed(2)}</Text>
+                    <Text style={styles.tabletext}>$ {Number(itemtotal[index].total).toFixed(2)}</Text>
                 </View>
                 <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
-                <Text style={styles.tabletext}><Icon onPress={()=>eliminaItem(item.it_codigo)}
+                <Text style={styles.tabletext}><Icon onPress={()=>eliminaItem(item.it_codprod)}
                             type="material-community"
                             name="delete"
                             iconStyle={styles.iconRight}
@@ -212,8 +223,15 @@ export default function NuevoPed(props) {
   const actualizaCliente =(item) =>{
     setCliente(item)
     setTcodigo(item.ct_tcodigo)
-    setIdnewvendedor(item.ct_idvendedor);
-    setUsuvendedor(item.ct_usuvendedor);
+    setUbicacion(item.ct_ubicacion);
+  }
+
+
+  const actualizaVendedor = (item) =>{
+    console.log("codigo inicial: "+ item);
+    setTvendedor(item);
+    setIdnewvendedor(item);
+    console.log("codigo del nuevo vendedor: "+item);
   }
 
 
@@ -221,28 +239,43 @@ export default function NuevoPed(props) {
 
 
   const actualizaItem =(newitem) =>{
-    resindex = 0;
-    console.log(newitem)
-    setDataItem(dataitem.concat(newitem))
-    console.log("dataitem. "+dataitem);
-    
-    agregaResultados(valindex,newitem.it_codprod, 0,0, 0, 0, 0, "-");
-    resindex = valindex + 1;
-    setValIndex(resindex);
-    setLoading(true)
+    if(noElementoSimilar(newitem.it_codprod)){
+        resindex = 0;
+        console.log(newitem)
+        setDataItem(dataitem.concat(newitem))
+        console.log("dataitem. "+dataitem);
+        
+        agregaResultados(newitem.it_codprod, 0,0, 0, 0, 0,  "-");
+        resindex = valindex + 1;
+        setValIndex(resindex);
+        setLoading(true)
+    }else{
+        Alert.alert("El Item ya ha sido ingresado");
+    }
+   
   }
 
+  const noElementoSimilar = (codigo) =>{
+    var variable = true;
+    for (let i = 0; i < itemtotal.length; i++) {
+        if(itemtotal[i].codprod == codigo) 
+            variable = false;
+    }
+    return variable;
+  }
+
+ 
+
   eliminaItem = (nameItem)=>{
-    setDataItem(dataitem.filter(item => item.it_codigo !== nameItem));
+    setDataItem(dataitem.filter(item => item.it_codprod !== nameItem));
     console.log("ingreso: "+nameItem)
     eliminardeArray(nameItem);
-    
   }
 
   eliminardeArray = (codigo)=>{
     var vindex = 0;
-    for (let i = 0; i < itemtotal.length; ++i) {
-        if(itemtotal[i].codigo == codigo) 
+    for (let i = 0; i < itemtotal.length; i++) {
+        if(itemtotal[i].codprod == codigo) 
             vindex = i;
     }
 
@@ -260,6 +293,15 @@ export default function NuevoPed(props) {
     setPlazo(temp);
 }
 
+const registrarVendedores = (dataVend) =>{
+    var temp = [];
+    for (let i = 0; i < dataVend.length; ++i) {
+        temp.push({ label: dataVend[i].vd_vendedor, value:dataVend[i].vd_codigo })
+    }
+    console.log("se encontro vendedor: "+ temp);
+    setVvendedor(temp);
+}
+
 const registrarTransporte = (dataTransporte) =>{
     var temp = [];
     for (let i = 0; i < dataTransporte.length; ++i) {
@@ -269,17 +311,17 @@ const registrarTransporte = (dataTransporte) =>{
     setTransp(temp);
 }
 
-const agregaResultados = (codigo, codprod, cant, desc, precio, costo, peso, descripcion) =>{
+const agregaResultados = ( codprod, cant, desc, precio, costo, peso, descripcion) =>{
    var temp = [];
    for (let i = 0; i < itemtotal.length; ++i) {
-        temp.push({codigo: itemtotal[i].codigo, codprod: itemtotal[i].codprod,  descripcion: itemtotal[i].descripcion , cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento,subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso});
+        temp.push({codprod: itemtotal[i].codprod,  descripcion: itemtotal[i].descripcion , cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento,subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso});
     }
 
     var ressub = 0, restot = 0;
     ressub = Number(cant) * Number(precio);
     restot = (ressub - ((ressub * desc)/100));
 
-    temp.push({codigo: codigo, codprod: codprod,  descripcion: descripcion,cantidad:cant, precio: precio, costo: costo, descuento:desc, subtotal: ressub, total: restot, peso: peso});
+    temp.push({codprod: codprod,  descripcion: descripcion,cantidad:cant, precio: precio, costo: costo, descuento:desc, subtotal: ressub, total: restot, peso: peso});
     setItemTotal(temp);
 
 }
@@ -301,12 +343,12 @@ const CargarResultados = () =>{
     var cadenita1 = "";
     
 
-    for (let i = 0; i < itemtotal.length; ++i) {
+    for (let i = 0; i < itemtotal.length; i++) {
             numcod ++;
-            temp.push({codigo: itemtotal[i].codigo, codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion ,cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso });
+            temp.push({codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion ,cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso });
             varsubtotal = varsubtotal + itemtotal[i].subtotal;
             totpeso = totpeso + itemtotal[i].peso;
-            porcpor = porcpor + itemtotal[i].descuento;
+            porcpor = Number(porcpor) + Number(itemtotal[i].descuento);
             resdes = resdes +  Number(itemtotal[i].subtotal * itemtotal[i].descuento)/100;
             itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+itemtotal[i].codprod+"\" d2=\""+itemtotal[i].cantidad+"\" d3=\""+itemtotal[i].precio+"\" d4=\""+itemtotal[i].descripcion+"\" d5=\""+itemtotal[i].peso+"\" d6=\""+itemtotal[i].descuento+"\" d7=\""+0+"\"></detalle>";
             cadenita1 = cadenita1 + "*"+numcod+";"+itemtotal[i].codprod+";"+itemtotal[i].descripcion+";"+itemtotal[i].cantidad+";"+itemtotal[i].precio+";"+itemtotal[i].descuento+";"+itemtotal[i].total;
@@ -315,34 +357,47 @@ const CargarResultados = () =>{
      setCadenaint(itemtext);
      setCadenita(cadenita1);
 
-     porcpor = (porcpor/itemtotal.length);
+     
      cargarTarifas(tcodigo, ttrans);
 
      setItemTotal(temp);
      setSubtotal(varsubtotal);
-     varseguro = (varsubtotal * 1.12)/100;
-     setSeguro(varseguro);
+
+    
      if(vpeso.pl_peso != 0){
         if(totpeso < vpeso.pl_peso){
-            vartransp = (totpeso * vpeso.pl_tarifa1);
+            vartransp = Number(vpeso.pl_tarifa1);
             setTransporte(vartransp);
         }else{
             vartransp = (totpeso * vpeso.pl_tarifa2);
             setTransporte(vartransp);
         }
     }   
-     variva = varsubtotal * 0.12;
-     setIva(variva);
+     
+    
 
      if(checked == 'second'){
         vardesc = (varsubtotal * porcent)/100;
      }else{
         vardesc = resdes;
+        porcpor = (vardesc/varsubtotal)*100;
         setPorcent(porcpor);
      }
      setDescuento(vardesc);
+
+      /*validación de seguro*/
+
+
+      varseguro = ((varsubtotal-vardesc) * vseguro)/100;
+      setSeguro(varseguro);
+
+     variva = (varsubtotal-vardesc+varseguro) * 0.12;
+     setIva(variva);
      
-     vartotal = (varsubtotal + varseguro + vartransp + variva) - vardesc;
+     
+     vartotal = (varsubtotal - vardesc) + varseguro + vartransp + variva;
+     setTotal(vartotal);
+
      console.log("valor del total: "+vartotal);
      setTotal(vartotal);
 
@@ -357,7 +412,7 @@ const CargarResultados = () =>{
      setGnGastos(vargastos);
 }
 
-const EditarResultados = (codigo, codprod, cant, desc, precio, costo, peso, descripcion) =>{
+const EditarResultados = ( codprod, cant, desc, precio, costo, peso, descripcion) =>{
     var temp = [];
     var varsubtotal = 0;
     var varseguro = 0;
@@ -377,9 +432,9 @@ const EditarResultados = (codigo, codprod, cant, desc, precio, costo, peso, desc
     var varsubtotalcosto = 0;
     itemtext = "";
 
-    for (let i = 0; i < itemtotal.length; ++i) {
+    for (let i = 0; i < itemtotal.length; i++) {
         numcod++;
-        if(itemtotal[i].codigo == codigo){
+        if(itemtotal[i].codprod == codprod){
             var ressub = 0, restot = 0;
             ressub = Number(cant) * Number(precio);
             rescosto = Number(cant) * Number(costo);
@@ -387,46 +442,47 @@ const EditarResultados = (codigo, codprod, cant, desc, precio, costo, peso, desc
 
             restot = (ressub - ((ressub * desc)/100));
             
-            temp.push({codigo: codigo, codprod: codprod, descripcion: descripcion, cantidad: cant, precio: precio, costo:costo, descuento: desc, subtotal: ressub, total: restot, peso: peso});
+            temp.push({codprod: codprod, descripcion: descripcion, cantidad: cant, precio: precio, costo:costo, descuento: desc, subtotal: ressub, total: restot, peso: peso});
             
             varsubtotal = varsubtotal + ressub;
             varsubtotalcosto = varsubtotalcosto + rescosto;
             resdes = resdes + Number(ressub * desc)/100;
             totpeso= totpeso + valpeso;
-            porcpor = porcpor + desc;
+            porcpor = porcpor + Number(desc);
 
             itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+codprod+"\" d2=\""+cant+"\" d3=\""+precio+"\" d4=\""+descripcion+"\" d5=\""+peso+"\" d6=\""+desc+"\" d7=\""+0+"\"></detalle>"; 
             cadenita1 = cadenita1 + "*"+numcod+";"+codprod+";"+descripcion+";"+cant+";"+precio+";"+desc+";"+restot;
         }else{
            
-            temp.push({codigo: itemtotal[i].codigo, codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion, cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso});
+            temp.push({codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion, cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso});
 
             valpeso = Number(itemtotal[i].cantidad) *  Number(itemtotal[i].peso);
             rescosto = Number(itemtotal[i].cantidad) *  Number(itemtotal[i].costo);
             varsubtotal = varsubtotal + itemtotal[i].subtotal;
             varsubtotalcosto = varsubtotalcosto + rescosto;
             resdes = resdes +  Number(itemtotal[i].subtotal * itemtotal[i].descuento)/100;
-            porcpor = porcpor + itemtotal[i].descuento;
+            porcpor = porcpor + Number(itemtotal[i].descuento);
             totpeso = totpeso + valpeso;
+
+
 
             itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+itemtotal[i].codprod+"\" d2=\""+itemtotal[i].cantidad+"\" d3=\""+itemtotal[i].precio+"\" d4=\""+itemtotal[i].descripcion+"\" d5=\""+itemtotal[i].peso+"\" d6=\""+itemtotal[i].descuento+"\" d7=\""+0+"\"></detalle>"; 
             cadenita1 = cadenita1 + "*"+numcod+";"+itemtotal[i].codprod+";"+itemtotal[i].descripcion+";"+itemtotal[i].cantidad+";"+itemtotal[i].precio+";"+itemtotal[i].descuento+";"+itemtotal[i].total;
         }
 
+        console.log("Val del peso: "+ valpeso);
         
      }
 
      setCadenaint(itemtext);
      setCadenita(cadenita1);
 
-     porcpor = (porcpor/itemtotal.length);
+     
      setItemTotal(temp);
      setSubtotal(varsubtotal);
-     varseguro = (varsubtotal * 1.12)/100;
-     setSeguro(varseguro);
+    
      
-     variva = varsubtotal * 0.12;
-     setIva(variva);
+     
 
      cargarTarifas(tcodigo, ttrans);
 
@@ -436,23 +492,39 @@ const EditarResultados = (codigo, codprod, cant, desc, precio, costo, peso, desc
         vardesc = (varsubtotal * porcent)/100;
      }else{
         vardesc = resdes;
+        porcpor = (vardesc/varsubtotal)*100;
         setPorcent(porcpor);
      }
      setDescuento(vardesc);
 
+     console.log("valor del peso: "+totpeso);
+     console.log("vpeso: "+ vpeso.pl_peso);
+
      if(vpeso.pl_peso != 0){
             if(totpeso < vpeso.pl_peso){
-                vartransp = (totpeso * vpeso.pl_tarifa1);
+                vartransp =  Number(vpeso.pl_tarifa1);
+                console.log("valor de tarifa 1: "+ vpeso.pl_tarifa1);
                 setTransporte(vartransp);
                 
             }else{
                 vartransp = (totpeso * vpeso.pl_tarifa2);
+                console.log("valor de tarifa 2: "+ vpeso.pl_tarifa2);
                 setTransporte(vartransp);
             }
     }
+
+    /*validación de seguro*/
+
+
+    varseguro = ((varsubtotal-vardesc) * vseguro)/100;
+    setSeguro(varseguro);
+
+
+    variva = (varsubtotal-vardesc+varseguro) * 0.12;
+     setIva(variva);
      
      
-     vartotal = (varsubtotal + varseguro + vartransp + variva) - vardesc;
+     vartotal = (varsubtotal - vardesc) + varseguro + vartransp + variva;
      setTotal(vartotal);
 
      console.log("valor del total: "+vartotal);
@@ -502,10 +574,36 @@ const cargarTransporte = async () => {
     }
 };
 
+const cargarVendedores = async () => {
+    try {
+     
+      const response = await fetch(
+        "https://app.cotzul.com/Pedidos/getVendedoresList.php"
+      );
+      const jsonResponse = await response.json();
+      console.log(jsonResponse?.vendedores);
+      registrarVendedores(jsonResponse?.vendedores);
+    } catch (error) {
+      console.log("un error cachado listar vendedores");
+      console.log(error);
+    }
+};
+
 
 const cargarTarifas = async (ttcodigo, idtransporte) =>{
     try{
         console.log("Entro en tarifas: "+ tcodigo+ "- "+ttrans);
+        if((ubicacion == 1 || ubicacion == 4 || ubicacion == 24) && idtransporte == 6){
+            setVseguro(0);
+        }else if(ubicacion == 1 && idtransporte == 12){
+            setVseguro(0);
+        }else if(idtransporte == 0 || idtransporte == 62 || idtransporte == 215){
+            setVseguro(0);
+        }else{
+            setVseguro(1.20);
+        }
+
+
         if(ttcodigo != 0 && ttrans != 0){
             const response = await fetch(
                 "https://app.cotzul.com/Pedidos/pd_getTarifa.php?ttcodigo="+ttcodigo+"&tarifa="+idtransporte
@@ -518,6 +616,8 @@ const cargarTarifas = async (ttcodigo, idtransporte) =>{
             setVpeso(jsonResponse?.tarifa[0]);
 
         }
+
+
        
     }catch(error){
         console.log("un error cachado listar transporte");
@@ -532,6 +632,7 @@ const cargarTarifas = async (ttcodigo, idtransporte) =>{
 useEffect(()=>{
     cargarPlazo()
     cargarTransporte()
+    cargarVendedores()
 },[]);
 
 useEffect(()=>{
@@ -541,12 +642,11 @@ useEffect(()=>{
 
 GrabarPedido = async () =>{
     try {
-      if(cadenaint != "")
+      if(cadenaint != "" && numdoc != 0 && ttrans != 0 && cliente.ct_codigo != 0 && doc != 0 && tplazo != 0 && itemtotal.length > 0){
       //var textofinal = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><c c0=\"2\" c1=\"1\" c2=\""+numdoc+"\" c3=\""+dataUser.vn_codigo+"\" c4=\""+ttrans+"\" c5=\""+cliente.ct_codigo+"\" c6=\""+doc+"\" c7=\""+tplazo+"\" c8=\""+obs+"\" c9=\""+subtotal+"\" c10=\""+porcent+"\" c11=\""+descuento+"\" c12=\""+seguro+"\" c13=\""+transporte+"\" c14=\""+iva+"\" c15=\""+total+"\" c16=\""+0+"\" c17=\""+0+"\" c18=\""+dataUser.vn_usuario+"\" >"+cadenaint+"</c>";
-      var textofinal = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><c c0=\"2\" c1=\"1\" c2=\""+numdoc+"\" c3=\""+dataUser.vn_codigo+"\" c4=\""+ttrans+"\" c5=\""+cliente.ct_codigo+"\" c6=\""+doc+"\" c7=\""+tplazo+"\" c8=\""+obs+"\" c9=\""+subtotal+"\" c10=\""+porcent+"\" c11=\""+descuento+"\" c12=\""+seguro+"\" c13=\""+transporte+"\" c14=\""+iva+"\" c15=\""+total+"\" c16=\""+0+"\" c17=\""+0+"\" c18=\"pduran\" >"+cadenaint+"</c>";
-      console.log("https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido="+numdoc+"&idvendedor="+dataUser.vn_codigo+"&usuvendedor="+dataUser.vn_usuario+"&fecha="+fechaped+"&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones="+obs+"&idcliente="+cliente.ct_codigo+"&tipodoc="+doc+"&tipodesc="+((checked=='second')?1:0)+"&valordesc="+descuento+"&gnorden="+gnorden+"&gnventas="+gnventas+"&gngastos="+gngastos+"&subtotal="+subtotal+"&descuento="+descuento+"&transporte="+transporte+"&seguro="+seguro+"&iva="+iva+"&total="+total+"&idnewvendedor="+idnewvendedor+"&usunewvendedor="+usuvendedor+"&cadenaxml="+textofinal+"&cadena="+cadenita);
-      console.log("https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido="+numdoc+"&idvendedor="+dataUser.vn_codigo+"&usuvendedor="+dataUser.vn_usuario+"&fecha="+fechaped+"&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones="+obs+"&idcliente="+cliente.ct_codigo+"&tipodoc="+doc+"&tipodesc="+((checked=='second')?1:0)+"&valordesc="+descuento+"&gnorden="+gnorden+"&gnventas="+gnventas+"&gngastos="+gngastos+"&subtotal="+subtotal+"&descuento="+descuento+"&transporte="+transporte+"&seguro="+seguro+"&iva="+iva+"&total="+total+"&idnewvendedor="+idnewvendedor+"&usunewvendedor="+usuvendedor+"&cadenaxml="+textofinal+"&cadena="+cadenita);
-      const response = await fetch("https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido="+numdoc+"&idvendedor="+dataUser.vn_codigo+"&usuvendedor="+dataUser.vn_usuario+"&fecha="+fechaped+"&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones="+obs+"&idcliente="+cliente.ct_codigo+"&tipodoc="+doc+"&tipodesc="+((checked=='second')?1:0)+"&valordesc="+descuento+"&gnorden="+gnorden+"&gnventas="+gnventas+"&gngastos="+gngastos+"&subtotal="+subtotal+"&descuento="+descuento+"&transporte="+transporte+"&seguro="+seguro+"&iva="+iva+"&total="+total+"&idnewvendedor="+idnewvendedor+"&usunewvendedor="+usuvendedor+"&cadenaxml="+textofinal+"&cadena="+cadenita);
+      var textofinal = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><c c0=\"2\" c1=\"1\" c2=\""+numdoc+"\" c3=\""+dataUser.vn_codigo+"\" c4=\""+ttrans+"\" c5=\""+cliente.ct_codigo+"\" c6=\""+doc+"\" c7=\""+tplazo+"\" c8=\""+obs+"\" c9=\""+subtotal.toFixed(2)+"\" c10=\""+Number(porcent).toFixed(2)+"\" c11=\""+descuento.toFixed(2)+"\" c12=\""+seguro.toFixed(2)+"\" c13=\""+transporte.toFixed(2)+"\" c14=\""+iva.toFixed(2)+"\" c15=\""+total.toFixed(2)+"\" c16=\""+0+"\" c17=\""+0+"\" c18=\"pduran\" >"+cadenaint+"</c>";
+      console.log("https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido="+numdoc+"&idvendedor="+dataUser.vn_codigo+"&usuvendedor="+dataUser.vn_usuario+"&fecha="+fechaped+"&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones="+obs+"&idcliente="+cliente.ct_codigo+"&tipodoc="+doc+"&tipodesc="+((checked=='second')?1:0)+"&valordesc="+descuento+"&gnorden="+gnorden+"&gnventas="+gnventas+"&gngastos="+gngastos+"&subtotal="+subtotal+"&descuento="+descuento+"&transporte="+transporte+"&seguro="+seguro+"&iva="+iva+"&total="+total+"&idnewvendedor="+idnewvendedor+"&cadenaxml="+textofinal+"&cadena="+cadenita);
+      const response = await fetch("https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido="+numdoc+"&idvendedor="+dataUser.vn_codigo+"&usuvendedor="+dataUser.vn_usuario+"&fecha="+fechaped+"&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones="+obs+"&idcliente="+cliente.ct_codigo+"&tipodoc="+doc+"&tipodesc="+((checked=='second')?1:0)+"&valordesc="+descuento+"&gnorden="+gnorden+"&gnventas="+gnventas+"&gngastos="+gngastos+"&subtotal="+subtotal+"&descuento="+descuento+"&transporte="+transporte+"&seguro="+seguro+"&iva="+iva+"&total="+total+"&idnewvendedor="+idnewvendedor+"&cadenaxml="+textofinal+"&cadena="+cadenita);
 
       const jsonResponse = await response.json();
       console.log(jsonResponse.estatusped);
@@ -555,6 +655,9 @@ GrabarPedido = async () =>{
         //navigation.navigate("productos");
         regresarFunc();
       }
+    }else{
+        Alert.alert("Registre todos los campos para Enviar Pedido");
+    }
       
     } catch (error) {
       console.log(error);
@@ -566,10 +669,6 @@ GrabarPedido = async () =>{
 
 
 
-
-
- 
-
   
 
  return(
@@ -578,6 +677,15 @@ GrabarPedido = async () =>{
             <Text style={styles.titlesSubtitle}>Cotzul S.A.</Text>
             <Text style={styles.titlespick2}>Usuario: {dataUser.vn_nombre}</Text>
             <Text style={{fontWeight:'bold'}}></Text>
+            <View style={styles.itemrow2}><Text style={styles.tittext}>Selecciona Vendedor distinto:</Text></View>
+                    <View style={styles.itemrow2}><RNPickerSelect
+                        useNativeAndroidPickerStyle={false}
+                        style={pickerStyle}
+                        onValueChange={(tvendedor) => actualizaVendedor(tvendedor)}
+                        placeholder={{ label: "SELECCIONAR", value: 0 }}
+                        items={vvendedor}
+
+                    /></View>
             <Text style={{fontWeight:'bold'}}>Datos del Pedido:</Text>
         </View>
        
@@ -653,7 +761,7 @@ GrabarPedido = async () =>{
                 </View>
                 <View style={styles.row}>
                     <View style={styles.itemrow}><Text>{cliente.ct_cupoasignado}</Text></View>
-                    <View style={styles.itemrow}><Text>{cliente.ct_cupoasignado}</Text></View>
+                    <View style={styles.itemrow}><Text>{cliente.ct_cupodisponible}</Text></View>
                 </View>
                 <View style={styles.row}>
                     <View style={styles.itemrow}><Text style={styles.tittext}>Política de Pago:</Text></View>
@@ -738,10 +846,10 @@ GrabarPedido = async () =>{
                         <Text style={styles.tabletitle}>Stock</Text>
                     </View>
                     
-                    <View style={{width: 70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                    <View style={{width: 120, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Referencia</Text>
                     </View>
-                    <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                    <View style={{width:100, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Marca</Text>
                     </View>
                     <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
@@ -776,8 +884,6 @@ GrabarPedido = async () =>{
             </ScrollView>
                 </View>
 
-
-
                 <View style={styles.row}>
                 <View style={styles.titlesWrapper}>
                      <Text style={{fontWeight:'bold'}}>Rentabilidad estimada:</Text>
@@ -811,12 +917,12 @@ GrabarPedido = async () =>{
                     <View style={styles.itemrow}><Text style={styles.itemtext}>${seguro.toFixed(2)}</Text></View>
                 </View>
                 <View style={styles.row}>
-                    <View style={styles.itemrow}><Text style={styles.tittext}>Flete:</Text></View>
-                    <View style={styles.itemrow}><Text style={styles.itemtext}>${transporte.toFixed(2)}</Text></View>
-                </View>
-                <View style={styles.row}>
                     <View style={styles.itemrow}><Text style={styles.tittext}>IVA:</Text></View>
                     <View style={styles.itemrow}><Text style={styles.itemtext}>${iva.toFixed(2)}</Text></View>
+                </View>
+                <View style={styles.row}>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>Flete:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.itemtext}>${transporte.toFixed(2)}</Text></View>
                 </View>
                 <View style={styles.row}>
                     <View style={styles.itemrow}><Text style={styles.tittext}>Total:</Text></View>
@@ -893,6 +999,7 @@ const styles = StyleSheet.create({
 }, tabletext:{
     textAlign: 'center', 
     fontSize: 12,
+    paddingLeft:5
 },titlesWrapper:{
     marginTop: 5,
     paddingHorizontal: 20,

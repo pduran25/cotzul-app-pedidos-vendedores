@@ -85,7 +85,7 @@ registerItem =({item}) =>{
      
       <TouchableOpacity onPress={() => this.setItems(item)}>
       <View style={{flexDirection: 'row', backgroundColor: item.background, marginRight:15}}>
-          <View style={{width:75, height: 30, borderColor: 'black', borderWidth: 1}}>
+          <View style={{width:100, height: 30, borderColor: 'black', borderWidth: 1}}>
               <Text style={styles.tabletext}>{item.it_referencia}</Text>
           </View>
           
@@ -144,7 +144,7 @@ registerItem =({item}) =>{
               
               <View style={{ marginHorizontal:20, marginTop:10, height: 120}}>
                 <View style={{flexDirection: 'row'}}>
-                    <View style={{width:75, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                    <View style={{width:100, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Referencia:</Text>
                     </View>
                     <View style={{width:85, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
