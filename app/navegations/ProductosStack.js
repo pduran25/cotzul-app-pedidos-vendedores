@@ -17,10 +17,7 @@ export default function ProductosStack(){
             name="nuevoped"
             component={NuevoPed}
             options={{title:"Nuevo Pedido"}} />
-            <Stack.Screen 
-            name="perfil"
-            component={Perfil}
-            options={{title:"Perfil"}} />
+            
         </Stack.Navigator>
         
     );

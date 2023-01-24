@@ -246,10 +246,10 @@ export default function Productos(props){
                 <View style={{width:120, height: 30,   borderColor: 'black', borderWidth: 1}}>
                     <Text style={styles.tabletext}>{item.pv_cliente}</Text>
                 </View>
-                <View style={{width:60, height: 30,   borderColor: 'black', borderWidth: 1}}>
+                <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
                     <Text style={styles.tableval}>{Number(item.pv_gngastos).toFixed(2)} %</Text>
                 </View>
-                <View style={{width:110, height: 30,   borderColor: 'black', borderWidth: 1}}>
+                <View style={{width:100, height: 30,   borderColor: 'black', borderWidth: 1}}>
                     <Text style={styles.tabletext}>{(item.pv_estatus==0)?'NO APROBADO':(item.pv_estatus==1)?'NUEVOS':(item.pv_estatus==2)?'BACKORDER':(item.pv_estatus==3)?'REACTIVADOS':'NINGUNO'}</Text>
                 </View>
             </View>
@@ -313,10 +313,10 @@ export default function Productos(props){
                         <Text style={styles.tabletitle}>Cliente</Text>
                     </View>
                     
-                    <View style={{width:60, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                    <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Lote</Text>
                     </View>
-                    <View style={{width:110, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                    <View style={{width:100, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Estado</Text>
                     </View>
                 </View>

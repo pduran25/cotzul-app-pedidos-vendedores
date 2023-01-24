@@ -81,12 +81,12 @@ export default function Navigation(props){
                 <Tab.Screen 
                     name="productos" 
                     component={ProductosStack}
-                    options={{title: "Pedidos"}} 
+                    options={{headerShown: false}}
                     />
                     <Tab.Screen 
                     name="perfil" 
                     component={PerfilStack}
-                    options={{title: "Perfil"}}  />
+                    options={{headerShown: false}}  />
             </Tab.Navigator>}
                 </NavigationContainer>
                 </AuthContext.Provider>

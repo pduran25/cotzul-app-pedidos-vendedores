@@ -78,6 +78,7 @@ export default function NuevoPed(props) {
     const [bodega, setBodega] =  useState(0);
     const [doc, setDoc] =  useState(0);
     const [prioridad, setPrioridad] =  useState(0);
+    const [tprecio, setTprecio] =  useState(1);
     const [cliente, setCliente] = useState(defaultCliente);
     const [dataitem, setDataItem] = useState([]);
     const [checked, setChecked] = React.useState('first');
@@ -89,6 +90,7 @@ export default function NuevoPed(props) {
     const [subtotal, setSubtotal] = useState(0);
     const [seguro, setSeguro] = useState(0);
     const [transporte, setTransporte] = useState(0);
+    const [vtrans, setVTrans] = useState(0);
     const [iva, setIva] = useState(0);
     const [total, setTotal] = useState(0);
     const [gnorden, setGnOrden] = useState(0);
@@ -107,10 +109,11 @@ export default function NuevoPed(props) {
    const [valindex, setValIndex] = useState(0);
    const [cadenaint, setCadenaint] = useState("");
    const [cadenita, setCadenita] = useState("");
-   const [idnewvendedor, setIdnewvendedor] = useState(0);
+   const [idnewvendedor, setIdnewvendedor] = useState(dataUser.vn_codigo);
    const [ubicacion, setUbicacion] = useState(0);
    const [vseguro, setVseguro] = useState(0);
    const [vvendedor, setVvendedor] = useState([]);
+   const [ttransedit, setTransEdit] = useState(0);
    var resindex = 0;
    var itemtext = "";
 
@@ -129,12 +132,16 @@ export default function NuevoPed(props) {
         return( 
             <View>
             <View style={{flexDirection: 'row'}}>
-            <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tabletext}>{item.it_stock}</Text>
-            </View>
             
+                
                 <View style={{width:120, height: 30, borderColor: 'black', borderWidth: 1}}>
                     <Text style={styles.tabletext}>{item.it_referencia+"-"+item.it_descripcion}</Text>
+                </View>
+                <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
+                    <Text style={styles.tabletext}>{item.it_stock}</Text>
+                </View>
+                <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
+                    <Text style={styles.tabletext}>###</Text>
                 </View>
                 
                 <View style={{width:100, height: 30,   borderColor: 'black', borderWidth: 1}}>
@@ -146,12 +153,32 @@ export default function NuevoPed(props) {
                             placeholder='0,0'
                             style={styles.tabletext}
                             onChangeText={(val)=> setCanti(val, index)}
-                            onEndEditing={()=>EditarResultados(item.it_codprod, itemtotal[index].cantidad, itemtotal[index].descuento, item.it_precio, item.it_costoprom, item.it_peso, item.it_referencia+"-"+item.it_descripcion) }
+                            onEndEditing={()=>EditarResultados(item.it_codprod, itemtotal[index].cantidad, itemtotal[index].descuento, item.it_precio, item.it_pvp, item.it_preciosub, item.it_contado, itemtotal[index].preciosel, itemtotal[index].editable, item.it_costoprom, item.it_peso, item.it_referencia+"-"+item.it_descripcion) }
                             />
                 </View>
-                
+                <View style={{width:150, height: 30,   borderColor: 'black', borderWidth: 1}}>
+                <RNPickerSelect
+                        useNativeAndroidPickerStyle={false}
+                        style={pickerStyle2}
+                        onValueChange={(tprecio) => setNumprecio(tprecio, index)}
+                        placeholder={{ label: "P. CREDITO", value: 1 }}
+                        items={[
+                            { label: "P.V.P.", value: 2},
+                            { label: "P. SUBDIST.", value: 3},
+                            { label: "P. CONTADO", value: 4},
+                            { label: "EDITABLE", value: 5},
+                        ]}
+                    />
+                </View>
                 <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tabletext}>$ {item.it_precio}</Text>
+                    {(itemtotal[index].editable == 1)?(<TextInput
+                            keyboardType='numeric'
+                            placeholder='0,0'
+                            style={styles.tabletext}
+                            onChangeText={(val)=> setPrecioVal(val, index)}
+                            onEndEditing={()=>ActualizaResultados(item.it_codprod)}
+                            />):( <Text style={styles.tabletext}>$ {Number(itemtotal[index].preciosel).toFixed(2)}</Text>)}
+                   
                 </View>
                 <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
                     <Text style={styles.tabletext}>$ {Number(itemtotal[index].subtotal).toFixed(2)}</Text>
@@ -163,11 +190,14 @@ export default function NuevoPed(props) {
                             placeholder='0,0'
                             style={styles.tabletext}
                             onChangeText={(val)=> setDescu(val, index)}
-                            onEndEditing={()=>EditarResultados(item.it_codprod, itemtotal[index].cantidad, itemtotal[index].descuento, item.it_precio, item.it_costoprom, item.it_peso, item.it_referencia+"-"+item.it_descripcion)}
+                            onEndEditing={()=>EditarResultados(item.it_codprod, itemtotal[index].cantidad, itemtotal[index].descuento, item.it_precio, item.it_pvp, item.it_preciosub, item.it_contado, itemtotal[index].preciosel, itemtotal[index].editable,  item.it_costoprom, item.it_peso, item.it_referencia+"-"+item.it_descripcion)}
                             />)}
                 </View>
                 <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
                     <Text style={styles.tabletext}>$ {Number(itemtotal[index].total).toFixed(2)}</Text>
+                </View>
+                <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
+                    <Text style={styles.tabletext}>{Number(itemtotal[index].gngastos).toFixed(2)}</Text>
                 </View>
                 <View style={{width:70, height: 30,   borderColor: 'black', borderWidth: 1}}>
                 <Text style={styles.tabletext}><Icon onPress={()=>eliminaItem(item.it_codprod)}
@@ -203,6 +233,34 @@ export default function NuevoPed(props) {
             itemtotal[index].descuento = valor;
         }
             
+    }
+
+    const setNumprecio = (valor, index) =>{
+        setTprecio(valor);
+        if(valor == 1){
+            itemtotal[index].preciosel = itemtotal[index].precio;
+        }
+        if(valor == 2){
+            itemtotal[index].preciosel = itemtotal[index].pvp;
+        }
+        if(valor == 3){
+            itemtotal[index].preciosel = itemtotal[index].subdist;
+        }
+        if(valor == 4){
+            itemtotal[index].preciosel = itemtotal[index].contado;
+        }
+        if(valor == 5){
+            itemtotal[index].preciosel = 0;
+            itemtotal[index].editable = 1;
+        }
+
+        ActualizaResultados(itemtotal[index].codprod);
+    }
+
+    const setPrecioVal = (valor, index) =>{
+        if(itemtotal[index].editable == 1){
+            itemtotal[index].preciosel = valor;
+        }
     }
 
     
@@ -245,7 +303,7 @@ export default function NuevoPed(props) {
         setDataItem(dataitem.concat(newitem))
         console.log("dataitem. "+dataitem);
         
-        agregaResultados(newitem.it_codprod, 0,0, 0, 0, 0,  "-");
+        agregaResultados(newitem.it_codprod, 0,0, newitem.it_precio,newitem.it_pvp, newitem.it_preciosub, newitem.it_contado,0, 0, 0,  "-");
         resindex = valindex + 1;
         setValIndex(resindex);
         setLoading(true)
@@ -311,17 +369,20 @@ const registrarTransporte = (dataTransporte) =>{
     setTransp(temp);
 }
 
-const agregaResultados = ( codprod, cant, desc, precio, costo, peso, descripcion) =>{
+const agregaResultados = ( codprod, cant, desc, precio, pvp, subdist, contado, editable,  costo, peso, descripcion) =>{
    var temp = [];
+   var gngastosv = 0;
    for (let i = 0; i < itemtotal.length; ++i) {
-        temp.push({codprod: itemtotal[i].codprod,  descripcion: itemtotal[i].descripcion , cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento,subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso});
+        gngastosv = Number(itemtotal[i].costo) / Number(itemtotal[i].subtotal);
+        temp.push({codprod: itemtotal[i].codprod,  descripcion: itemtotal[i].descripcion , cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio,  pvp: itemtotal[i].pvp, subdist: itemtotal[i].subdist, contado: itemtotal[i].contado, preciosel: itemtotal[i].preciosel, editable: itemtotal[i].editable,   costo: itemtotal[i].costo, descuento: itemtotal[i].descuento,subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso, gngastos: gngastosv});
     }
 
     var ressub = 0, restot = 0;
     ressub = Number(cant) * Number(precio);
     restot = (ressub - ((ressub * desc)/100));
 
-    temp.push({codprod: codprod,  descripcion: descripcion,cantidad:cant, precio: precio, costo: costo, descuento:desc, subtotal: ressub, total: restot, peso: peso});
+
+    temp.push({codprod: codprod,  descripcion: descripcion,cantidad:cant, precio: precio, pvp: pvp, subdist: subdist, contado:contado,  preciosel: precio, editable: editable,  costo: costo, descuento:desc, subtotal: ressub, total: restot, peso: peso, gngastos:0});
     setItemTotal(temp);
 
 }
@@ -341,17 +402,21 @@ const CargarResultados = () =>{
     var porcpor = 0;
     itemtext = "";
     var cadenita1 = "";
+    var gngastosv = 0;
     
 
     for (let i = 0; i < itemtotal.length; i++) {
             numcod ++;
-            temp.push({codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion ,cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso });
+            
             varsubtotal = varsubtotal + itemtotal[i].subtotal;
+
+            gngastosv = Number(itemtotal[i].costo) / Number(itemtotal[i].subtotal);
+            temp.push({codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion ,cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, pvp: itemtotal[i].pvp, subdist: itemtotal[i].subdist, contado: itemtotal[i].contado, preciosel: itemtotal[i].preciosel, editable:itemtotal[i].editable,  costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso, gngastos: gngastosv });
             totpeso = totpeso + itemtotal[i].peso;
             porcpor = Number(porcpor) + Number(itemtotal[i].descuento);
             resdes = resdes +  Number(itemtotal[i].subtotal * itemtotal[i].descuento)/100;
-            itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+itemtotal[i].codprod+"\" d2=\""+itemtotal[i].cantidad+"\" d3=\""+itemtotal[i].precio+"\" d4=\""+itemtotal[i].descripcion+"\" d5=\""+itemtotal[i].peso+"\" d6=\""+itemtotal[i].descuento+"\" d7=\""+0+"\"></detalle>";
-            cadenita1 = cadenita1 + "*"+numcod+";"+itemtotal[i].codprod+";"+itemtotal[i].descripcion+";"+itemtotal[i].cantidad+";"+itemtotal[i].precio+";"+itemtotal[i].descuento+";"+itemtotal[i].total;
+            itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+itemtotal[i].codprod+"\" d2=\""+itemtotal[i].cantidad+"\" d3=\""+itemtotal[i].preciosel+"\" d4=\""+itemtotal[i].descripcion+"\" d5=\""+itemtotal[i].peso+"\" d6=\""+itemtotal[i].descuento+"\" d7=\""+0+"\"></detalle>";
+            cadenita1 = cadenita1 + "*"+numcod+";"+itemtotal[i].codprod+";"+itemtotal[i].descripcion+";"+itemtotal[i].cantidad+";"+itemtotal[i].preciosel+";"+itemtotal[i].descuento+";"+itemtotal[i].total;
      }
 
      setCadenaint(itemtext);
@@ -363,16 +428,22 @@ const CargarResultados = () =>{
      setItemTotal(temp);
      setSubtotal(varsubtotal);
 
-    
-     if(vpeso.pl_peso != 0){
-        if(totpeso < vpeso.pl_peso){
-            vartransp = Number(vpeso.pl_tarifa1);
-            setTransporte(vartransp);
-        }else{
-            vartransp = (totpeso * vpeso.pl_tarifa2);
-            setTransporte(vartransp);
-        }
-    }   
+     console.log("Valor de transedit: "+ ttransedit);
+     if(ttransedit == 0){
+        if(vpeso.pl_peso != 0){
+            if(totpeso < vpeso.pl_peso){
+                vartransp = Number(vpeso.pl_tarifa1);
+                setTransporte(vartransp);
+            }else{
+                vartransp = (totpeso * vpeso.pl_tarifa2);
+                setTransporte(vartransp);
+            }
+        }  
+     }else{
+        setTransporte(Number(vtrans));
+        vartransp = Number(vtrans);
+     }
+      
      
     
 
@@ -412,7 +483,7 @@ const CargarResultados = () =>{
      setGnGastos(vargastos);
 }
 
-const EditarResultados = ( codprod, cant, desc, precio, costo, peso, descripcion) =>{
+const ActualizaResultados = (codprod) =>{
     var temp = [];
     var varsubtotal = 0;
     var varseguro = 0;
@@ -431,18 +502,147 @@ const EditarResultados = ( codprod, cant, desc, precio, costo, peso, descripcion
     var rescosto = 0;
     var varsubtotalcosto = 0;
     itemtext = "";
+    var gngastosv = 0;
+
 
     for (let i = 0; i < itemtotal.length; i++) {
         numcod++;
         if(itemtotal[i].codprod == codprod){
             var ressub = 0, restot = 0;
-            ressub = Number(cant) * Number(precio);
+            ressub = Number(itemtotal[i].cantidad) * Number(itemtotal[i].preciosel);
+            rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
+            valpeso = Number(itemtotal[i].cantidad) * Number(itemtotal[i].peso);
+            gngastosv = rescosto/ressub;
+            restot = (ressub - ((ressub * itemtotal[i].descuento)/100));
+            temp.push({codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion, cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, pvp: itemtotal[i].pvp, subdist: itemtotal[i].subdist, contado: itemtotal[i].contado, preciosel: itemtotal[i].preciosel, editable: itemtotal[i].editable, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: ressub, total: restot, peso: itemtotal[i].peso, gngastos:gngastosv});
+
+            varsubtotal = varsubtotal + ressub;
+            varsubtotalcosto = varsubtotalcosto + rescosto;
+            resdes = resdes + Number(ressub * itemtotal[i].descuento)/100;
+            totpeso= totpeso + valpeso;
+            porcpor = porcpor + Number(itemtotal[i].descuento);
+
+            itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+itemtotal[i].codprod+"\" d2=\""+itemtotal[i].cantidad+"\" d3=\""+itemtotal[i].preciosel+"\" d4=\""+itemtotal[i].descripcion+"\" d5=\""+itemtotal[i].peso+"\" d6=\""+itemtotal[i].descuento+"\" d7=\""+0+"\"></detalle>"; 
+            cadenita1 = cadenita1 + "*"+numcod+";"+itemtotal[i].codprod+";"+itemtotal[i].descripcion+";"+itemtotal[i].cantidad+";"+itemtotal[i].preciosel+";"+itemtotal[i].descuento+";"+itemtotal[i].total;
+
+        }else{
+            temp.push({codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion, cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, pvp: itemtotal[i].pvp, subdist: itemtotal[i].subdist, contado: itemtotal[i].contado, preciosel: itemtotal[i].preciosel, editable: itemtotal[i].editable, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso, gngastos: itemtotal[i].gngastos});
+            valpeso = Number(itemtotal[i].cantidad) *  Number(itemtotal[i].peso);
+            rescosto = Number(itemtotal[i].cantidad) *  Number(itemtotal[i].costo);
+            varsubtotal = varsubtotal + itemtotal[i].subtotal;
+            varsubtotalcosto = varsubtotalcosto + rescosto;
+            resdes = resdes +  Number(itemtotal[i].subtotal * itemtotal[i].descuento)/100;
+            porcpor = porcpor + Number(itemtotal[i].descuento);
+            totpeso = totpeso + valpeso;
+
+
+
+            itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+itemtotal[i].codprod+"\" d2=\""+itemtotal[i].cantidad+"\" d3=\""+itemtotal[i].preciosel+"\" d4=\""+itemtotal[i].descripcion+"\" d5=\""+itemtotal[i].peso+"\" d6=\""+itemtotal[i].descuento+"\" d7=\""+0+"\"></detalle>"; 
+            cadenita1 = cadenita1 + "*"+numcod+";"+itemtotal[i].codprod+";"+itemtotal[i].descripcion+";"+itemtotal[i].cantidad+";"+itemtotal[i].preciosel+";"+itemtotal[i].descuento+";"+itemtotal[i].total;
+        }
+    }
+
+    setItemTotal(temp);
+    setCadenaint(itemtext);
+     setCadenita(cadenita1);
+
+     setSubtotal(varsubtotal);
+    
+     
+     
+
+     cargarTarifas(tcodigo, ttrans);
+
+
+
+     if(checked == 'second'){
+        vardesc = (varsubtotal * porcent)/100;
+     }else{
+        vardesc = resdes;
+        porcpor = (vardesc/varsubtotal)*100;
+        setPorcent(porcpor);
+     }
+     setDescuento(vardesc);
+
+     console.log("valor del peso: "+totpeso);
+     console.log("vpeso: "+ vpeso.pl_peso);
+
+     if(ttransedit == 0){
+     if(vpeso.pl_peso != 0){
+            if(totpeso < vpeso.pl_peso){
+                vartransp =  Number(vpeso.pl_tarifa1);
+                console.log("valor de tarifa 1: "+ vpeso.pl_tarifa1);
+                setTransporte(vartransp);
+                
+            }else{
+                vartransp = (totpeso * vpeso.pl_tarifa2);
+                console.log("valor de tarifa 2: "+ vpeso.pl_tarifa2);
+                setTransporte(vartransp);
+            }
+    }}else{
+        setTransporte(Number(vtrans));
+        vartransp = Number(vtrans);
+    }
+
+    /*validación de seguro*/
+
+
+    varseguro = ((varsubtotal-vardesc) * vseguro)/100;
+    setSeguro(varseguro);
+
+
+    variva = (varsubtotal-vardesc+varseguro) * 0.12;
+     setIva(variva);
+     
+     
+     vartotal = (varsubtotal - vardesc) + varseguro + vartransp + variva;
+     setTotal(vartotal);
+
+     console.log("valor del total: "+vartotal);
+
+     console.log("res. subtotal: "+Number(varsubtotal));
+     console.log("resultado var orden: "+(Number(vartotal) - Number(vardesc) - Number(varsubtotalcosto)).toFixed(2));
+     varorden = (Number(varsubtotal) - Number(vardesc) - Number(varsubtotalcosto));
+     varventas = ((gnorden/(Number(varsubtotal)-Number(vardesc)))*100);
+     vargastos = ((Number(varsubtotal)-Number(vardesc))/Number(varsubtotalcosto));
+
+     setGnOrden(varorden);
+     setGnVentas(varventas);
+     setGnGastos(vargastos);
+}
+
+const EditarResultados = ( codprod, cant, desc, precio, pvp, subdist, contado, preciosel, editable, costo, peso, descripcion) =>{
+    var temp = [];
+    var varsubtotal = 0;
+    var varseguro = 0;
+    var vartransp = 0;
+    var variva = 0;
+    var vartotal = 0;
+    var vardesc = 0;
+    var varorden = 0, varventas = 0, vargastos = 0;
+    var resdes = 0;
+    var valpeso = 0;
+    var totpeso = 0;
+    var valtarifa = 0;
+    var numcod = 0;
+    var porcpor = 0;
+    var cadenita1 = "";
+    var rescosto = 0;
+    var varsubtotalcosto = 0;
+    itemtext = "";
+    var gngastosv = 0;
+
+    for (let i = 0; i < itemtotal.length; i++) {
+        numcod++;
+        if(itemtotal[i].codprod == codprod){
+            var ressub = 0, restot = 0;
+            ressub = Number(cant) * Number(preciosel);
             rescosto = Number(cant) * Number(costo);
             valpeso = Number(cant) * Number(peso);
-
+            gngastosv = rescosto/ressub;
             restot = (ressub - ((ressub * desc)/100));
             
-            temp.push({codprod: codprod, descripcion: descripcion, cantidad: cant, precio: precio, costo:costo, descuento: desc, subtotal: ressub, total: restot, peso: peso});
+            temp.push({codprod: codprod, descripcion: descripcion, cantidad: cant, precio: precio, pvp: pvp, subdist: subdist, contado:contado, preciosel: preciosel, editable: editable, costo:costo, descuento: desc, subtotal: ressub, total: restot, peso: peso, gngastos: gngastosv});
             
             varsubtotal = varsubtotal + ressub;
             varsubtotalcosto = varsubtotalcosto + rescosto;
@@ -454,7 +654,7 @@ const EditarResultados = ( codprod, cant, desc, precio, costo, peso, descripcion
             cadenita1 = cadenita1 + "*"+numcod+";"+codprod+";"+descripcion+";"+cant+";"+precio+";"+desc+";"+restot;
         }else{
            
-            temp.push({codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion, cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso});
+            temp.push({codprod: itemtotal[i].codprod, descripcion: itemtotal[i].descripcion, cantidad: itemtotal[i].cantidad, precio: itemtotal[i].precio, pvp: itemtotal[i].pvp, subdist: itemtotal[i].subdist, contado: itemtotal[i].contado, preciosel: itemtotal[i].preciosel, editable: itemtotal[i].editable, costo: itemtotal[i].costo, descuento: itemtotal[i].descuento, subtotal: itemtotal[i].subtotal, total: itemtotal[i].total, peso: itemtotal[i].peso, gngastos: itemtotal[i].gngastos});
 
             valpeso = Number(itemtotal[i].cantidad) *  Number(itemtotal[i].peso);
             rescosto = Number(itemtotal[i].cantidad) *  Number(itemtotal[i].costo);
@@ -466,8 +666,8 @@ const EditarResultados = ( codprod, cant, desc, precio, costo, peso, descripcion
 
 
 
-            itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+itemtotal[i].codprod+"\" d2=\""+itemtotal[i].cantidad+"\" d3=\""+itemtotal[i].precio+"\" d4=\""+itemtotal[i].descripcion+"\" d5=\""+itemtotal[i].peso+"\" d6=\""+itemtotal[i].descuento+"\" d7=\""+0+"\"></detalle>"; 
-            cadenita1 = cadenita1 + "*"+numcod+";"+itemtotal[i].codprod+";"+itemtotal[i].descripcion+";"+itemtotal[i].cantidad+";"+itemtotal[i].precio+";"+itemtotal[i].descuento+";"+itemtotal[i].total;
+            itemtext = itemtext + "<detalle d0=\""+numcod+"\" d1=\""+itemtotal[i].codprod+"\" d2=\""+itemtotal[i].cantidad+"\" d3=\""+itemtotal[i].preciosel+"\" d4=\""+itemtotal[i].descripcion+"\" d5=\""+itemtotal[i].peso+"\" d6=\""+itemtotal[i].descuento+"\" d7=\""+0+"\"></detalle>"; 
+            cadenita1 = cadenita1 + "*"+numcod+";"+itemtotal[i].codprod+";"+itemtotal[i].descripcion+";"+itemtotal[i].cantidad+";"+itemtotal[i].preciosel+";"+itemtotal[i].descuento+";"+itemtotal[i].total;
         }
 
         console.log("Val del peso: "+ valpeso);
@@ -500,6 +700,8 @@ const EditarResultados = ( codprod, cant, desc, precio, costo, peso, descripcion
      console.log("valor del peso: "+totpeso);
      console.log("vpeso: "+ vpeso.pl_peso);
 
+
+     if(ttransedit == 0){
      if(vpeso.pl_peso != 0){
             if(totpeso < vpeso.pl_peso){
                 vartransp =  Number(vpeso.pl_tarifa1);
@@ -511,6 +713,11 @@ const EditarResultados = ( codprod, cant, desc, precio, costo, peso, descripcion
                 console.log("valor de tarifa 2: "+ vpeso.pl_tarifa2);
                 setTransporte(vartransp);
             }
+    }
+
+    } else{
+        setTransporte(Number(vtrans));
+        vartransp = Number(vtrans);
     }
 
     /*validación de seguro*/
@@ -629,11 +836,25 @@ const cargarTarifas = async (ttcodigo, idtransporte) =>{
 
 
 
+
+
+
 useEffect(()=>{
     cargarPlazo()
     cargarTransporte()
     cargarVendedores()
 },[]);
+
+useEffect(()=>{
+    if(ttrans != 12 && ttrans != 90 && ttrans != 215){
+        setTransEdit(1);
+    }else{
+        setTransEdit(0);
+    }
+    CargarResultados();
+},[ttrans]);
+
+
 
 useEffect(()=>{
     setDescuento(0);
@@ -677,7 +898,8 @@ GrabarPedido = async () =>{
             <Text style={styles.titlesSubtitle}>Cotzul S.A.</Text>
             <Text style={styles.titlespick2}>Usuario: {dataUser.vn_nombre}</Text>
             <Text style={{fontWeight:'bold'}}></Text>
-            <View style={styles.itemrow2}><Text style={styles.tittext}>Selecciona Vendedor distinto:</Text></View>
+            
+            {(dataUser.vn_codigo== -1)?(<><View style={styles.itemrow2}><Text style={styles.tittext}>Selecciona Vendedor distinto:</Text>
                     <View style={styles.itemrow2}><RNPickerSelect
                         useNativeAndroidPickerStyle={false}
                         style={pickerStyle}
@@ -685,7 +907,8 @@ GrabarPedido = async () =>{
                         placeholder={{ label: "SELECCIONAR", value: 0 }}
                         items={vvendedor}
 
-                    /></View>
+                    /></View></View></>):(<></>)}
+                    
             <Text style={{fontWeight:'bold'}}>Datos del Pedido:</Text>
         </View>
        
@@ -708,18 +931,17 @@ GrabarPedido = async () =>{
                 useNativeAndroidPickerStyle={false}
                 style={pickerStyle}
                 onValueChange={(bodega) => setBodega(bodega)}
-                placeholder={{ label: "SELECCIONAR", value: 0 }}
+                placeholder={{ label: "COTZUL-BODEGA", value: 1}}
                 items={[
-                    { label: "COTZUL-BODEGA", value: 1},
+                    
                 ]}
             /></View>
                     <View style={styles.itemrow}><RNPickerSelect
                 useNativeAndroidPickerStyle={false}
                 style={pickerStyle}
                 onValueChange={(prioridad) => setPrioridad(prioridad)}
-                placeholder={{ label: "SELECCIONAR", value: 0 }}
+                placeholder={{ label: "NORMAL", value: 1}}
                 items={[
-                    { label: "NORMAL", value: 1},
                     { label: "URGENTE", value: 2},
                 ]}
             /></View>
@@ -745,23 +967,23 @@ GrabarPedido = async () =>{
                 </View>
               <View style={styles.detallebody}> 
               
-              <ModalClientes actualizaCliente={actualizaCliente}></ModalClientes>
+              <ModalClientes actualizaCliente={actualizaCliente} idvendedor={dataUser.vn_codigo}></ModalClientes>
               
                 <View style={styles.row}>
                     <View style={styles.itemrow}><Text style={styles.tittext}>Cliente:</Text></View>
-                    <View style={styles.itemrow}><Text style={styles.tittext}>Teléfono:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>Ciudad:</Text></View>
                 </View>
                 <View style={styles.row}>
                     <View style={styles.itemrow}><Text>{cliente.ct_cliente}</Text></View>
-                    <View style={styles.itemrow}><Text>{cliente.ct_telefono}</Text></View>
+                    <View style={styles.itemrow}><Text>{cliente.ct_ciudad}</Text></View>
                 </View>
                 <View style={styles.row}>
-                    <View style={styles.itemrow}><Text style={styles.tittext}>Cupo Utilizado:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>Cupo Asignado:</Text></View>
                     <View style={styles.itemrow}><Text style={styles.tittext}>Cupo Disponible:</Text></View>
                 </View>
                 <View style={styles.row}>
-                    <View style={styles.itemrow}><Text>{cliente.ct_cupoasignado}</Text></View>
-                    <View style={styles.itemrow}><Text>{cliente.ct_cupodisponible}</Text></View>
+                    <View style={styles.itemrow}><Text>{Number(cliente.ct_cupoasignado).toFixed(2)}</Text></View>
+                    <View style={styles.itemrow}><Text>{Number(cliente.ct_cupodisponible).toFixed(2)}</Text></View>
                 </View>
                 <View style={styles.row}>
                     <View style={styles.itemrow}><Text style={styles.tittext}>Política de Pago:</Text></View>
@@ -842,18 +1064,25 @@ GrabarPedido = async () =>{
             <ScrollView horizontal>
             <View style={{ marginTop:10, height: 120, marginHorizontal: 10}}>
                 <View style={{flexDirection: 'row'}}>
-                <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
-                        <Text style={styles.tabletitle}>Stock</Text>
-                    </View>
+                
                     
                     <View style={{width: 120, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Referencia</Text>
+                    </View>
+                    <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                        <Text style={styles.tabletitle}>Stock</Text>
+                    </View>
+                    <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                        <Text style={styles.tabletitle}>SKU</Text>
                     </View>
                     <View style={{width:100, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Marca</Text>
                     </View>
                     <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Cantidad</Text>
+                    </View>
+                    <View style={{width:150, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                        <Text style={styles.tabletitle}>T. Precio</Text>
                     </View>
                     <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Precio</Text>
@@ -866,6 +1095,9 @@ GrabarPedido = async () =>{
                     </View>
                     <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
                         <Text style={styles.tabletitle}>Total</Text>
+                    </View>
+                    <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
+                        <Text style={styles.tabletitle}>Lote</Text>
                     </View>
                    
                     <View style={{width:70, backgroundColor:'#9c9c9c', borderColor: 'black', borderWidth: 1}}>
@@ -886,7 +1118,7 @@ GrabarPedido = async () =>{
 
                 <View style={styles.row}>
                 <View style={styles.titlesWrapper}>
-                     <Text style={{fontWeight:'bold'}}>Rentabilidad estimada:</Text>
+                     <Text style={{fontWeight:'bold'}}>Pesos:                                </Text>
                 </View>
                 <View style={styles.titlesWrapper}>
                      <Text style={{fontWeight:'bold'}}>Total Pedido:</Text>
@@ -894,12 +1126,25 @@ GrabarPedido = async () =>{
                 </View>
                 <View style={styles.row}>
                 <View style={styles.detallebody1}> 
-                <View style={styles.itemrow2}><Text style={styles.tittext}>% Gn. Orden:</Text></View>                                                                                                                                                                                                                                                                                                                             
-                    <View style={styles.itemrow2}><Text style={styles.itemtext}>${gnorden.toFixed(2)}</Text></View>
-                    <View style={styles.itemrow2}><Text style={styles.tittext}>% Gn. Ventas:</Text></View>
-                    <View style={styles.itemrow2}><Text style={styles.itemtext}>${gnventas.toFixed(2)}</Text></View>
-                    <View style={styles.itemrow2}><Text style={styles.tittext}>% Gn. Gastos:</Text></View>
-                    <View style={styles.itemrow2}><Text style={styles.itemtext}>${gngastos.toFixed(2)}</Text></View>
+                <View style={styles.row}>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>Kilo:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.itemtext}>${subtotal.toFixed(2)}</Text></View>
+                </View>
+                <View style={styles.row}>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>Tarifa.:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.itemtext}>${descuento.toFixed(2)}</Text></View>
+                </View>  
+                <View style={styles.row}>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>Cobert.:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.itemtext}>${seguro.toFixed(2)}</Text></View>
+                </View>
+                <View style={styles.row}>
+
+                </View>
+                <View style={styles.row}>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>Lote:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.itemtext}>${iva.toFixed(2)}</Text></View>
+                </View>
                 </View>
 
                 <View style={styles.detallebody1}> 
@@ -909,20 +1154,27 @@ GrabarPedido = async () =>{
                     <View style={styles.itemrow}><Text style={styles.itemtext}>${subtotal.toFixed(2)}</Text></View>
                 </View>
                 <View style={styles.row}>
-                    <View style={styles.itemrow}><Text style={styles.tittext}>Desc.:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>(-)Desc.:</Text></View>
                     <View style={styles.itemrow}><Text style={styles.itemtext}>${descuento.toFixed(2)}</Text></View>
                 </View>  
                 <View style={styles.row}>
-                    <View style={styles.itemrow}><Text style={styles.tittext}>Seguro:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>(+)Seguro:</Text></View>
                     <View style={styles.itemrow}><Text style={styles.itemtext}>${seguro.toFixed(2)}</Text></View>
                 </View>
                 <View style={styles.row}>
-                    <View style={styles.itemrow}><Text style={styles.tittext}>IVA:</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>(+)IVA:</Text></View>
                     <View style={styles.itemrow}><Text style={styles.itemtext}>${iva.toFixed(2)}</Text></View>
                 </View>
                 <View style={styles.row}>
-                    <View style={styles.itemrow}><Text style={styles.tittext}>Flete:</Text></View>
-                    <View style={styles.itemrow}><Text style={styles.itemtext}>${transporte.toFixed(2)}</Text></View>
+                    <View style={styles.itemrow}><Text style={styles.tittext}>(+)Flete:</Text></View>
+                    {(ttransedit== 0)?(<View style={styles. row}><Text style={styles.itemtext}>${transporte.toFixed(2)}</Text></View>):(<><TextInput
+                            keyboardType='numeric'
+                            placeholder='0,0'
+                            style={styles.itemtext}
+                            onChangeText={(val)=> setVTrans(val)}
+                            onEndEditing={()=>CargarResultados()}
+                            /></>)}
+                    
                 </View>
                 <View style={styles.row}>
                     <View style={styles.itemrow}><Text style={styles.tittext}>Total:</Text></View>
@@ -945,11 +1197,49 @@ GrabarPedido = async () =>{
   )
 }
 
+
+const pickerStyle2 = {
+    inputIOS: {
+        color: 'white',
+        paddingHorizontal: 10,
+        marginHorizontal: 10,
+        marginTop: 5,
+        backgroundColor: "#6f4993",
+        borderRadius: 5,
+        height: 20, 
+    },
+    placeholder: {
+        color: 'white',
+      },
+    inputAndroid: {
+        width: '85%',
+        height: 20,
+        color: 'white',
+        marginHorizontal: 20,
+        paddingLeft:10,
+        backgroundColor: '#6f4993',
+        borderRadius: 5,
+    },
+   
+    searchWrapper:{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 0,
+        marginTop: 10,
+    },
+    search:{
+        flex: 1,
+        marginLeft: 0,
+        borderBottomColor: colors.textLight,
+        borderBottomWidth: 1,
+    }
+};
+
 const pickerStyle = {
     inputIOS: {
         color: 'white',
         paddingHorizontal: 20,
-        marginTop: 10,
+        marginTop: 5,
         marginHorizontal: 20,
         backgroundColor: "#6f4993",
         borderRadius: 5,
@@ -1029,6 +1319,11 @@ itemrow:{
     alignItems: 'center',
     borderWidth: 0.5,
     padding:3
+},itemrow3:{
+    width: '100%',
+    alignItems: 'center',
+    borderWidth: 0.5,
+    paddingVertical:75
 },
 itemobserv:{
     width: '100%',

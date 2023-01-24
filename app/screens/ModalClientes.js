@@ -59,9 +59,9 @@ getClientes = async () => {
   try {
     this.setState({ isLoading: true});
     const response = await fetch(
-      "https://app.cotzul.com/Pedidos/getClientes.php?nombre="+this.state.search
+      "https://app.cotzul.com/Pedidos/getClientes.php?nombre="+this.state.search+"&idvendedor="+this.props.idvendedor
     );
-    console.log("https://app.cotzul.com/Pedidos/getClientes.php?nombre="+this.state.search);
+    console.log("https://app.cotzul.com/Pedidos/getClientes.php?nombre="+this.state.search+"&idvendedor="+this.props.idvendedor);
     const jsonResponse = await response.json();
     console.log(jsonResponse);
     this.setState({ data: jsonResponse?.clientes});
