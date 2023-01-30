@@ -12,7 +12,7 @@ import { FlatList } from "react-native-gesture-handler";
 
 /**
 * @author Pedro Durán A.
-* @function  Creación de nuevo pedido
+* @function  Creación de Edita pedido
 **/
 
 function defaultCliente(){
@@ -69,23 +69,16 @@ function defaultCliente(){
  
 
 
-  
-
- 
-
-  
-    
- 
 
     const handleClick = event => {
         console.log(event.currentTarget.id);
       };
 
-export default function NuevoPed(props) {
+export default function EditaPed(props) {
     const {navigation, route} = props;
-    const { dataUser, regresarFunc } = route.params;
+    const { dataUser, regresarFunc, idpedido } = route.params;
     const [bodega, setBodega] =  useState(0);
-    const [doc, setDoc] =  useState(0);
+    const [doc, setDoc] =  useState(-1);
     const [prioridad, setPrioridad] =  useState(0);
     const [tprecio, setTprecio] =  useState(1);
     const [cliente, setCliente] = useState(defaultCliente);
@@ -125,9 +118,29 @@ export default function NuevoPed(props) {
    const [cobertura, setCobertura] = useState("---");
    const [tarifa, setTarifa] = useState(0);
    const [vvendedor, setVvendedor] = useState([]);
+   const [pedido, setPedido] = useState([]);
+   const [itempedido, setItemPedido] = useState([]);
    const [kilos, setKilos] = useState(0);
    const [notidplazo, setNotIdplazo] = useState(0);
-   const [notnomplazo, setNotnomplazo] = useState("plazo");
+   const [notnomplazo, setNotnomplazo] = useState("SELECCIONAR");
+   const [lformapago, setLFormaPago] = useState([]);
+   const [formapagoid, setFormaPagoId] = useState(0);
+   const [formapagonom, setFormaPagoNom] = useState("SELECCIONAR");
+   const [regplazo, setRegplazo] = useState(-1);
+   const [regtrans, setRegtrans] = useState(-1);
+   const [nomtrans, setNomTrans] = useState("SELECCIONAR");
+   const [idtrans, setIdTrans] = useState(0);
+   const [regitems, setRegItems] = useState(-1);
+   
+   
+   
+
+  
+   
+
+   const [idcliente, setIdCliente] = useState(0);
+
+
    var resindex = 0;
    var itemtext = "";
 
@@ -298,11 +311,13 @@ export default function NuevoPed(props) {
   const actualizaCliente =(item) =>{
     setCliente(item)
     setTcodigo(item.ct_tcodigo);
-    setNotIdplazo(item.ct_idplazo);
-    setNotnomplazo(item.ct_plazo);
     cargarTarifas(item.ct_tcodigo, ttrans);
     setUbicacion(item.ct_ubicacion);
-    cargarPlazo();
+    setNotIdplazo(Number(item.ct_idplazo));
+    console.log(item.ct_plazo);
+    setNotnomplazo(item.ct_plazo);
+    cargarPlazo(Number(item.ct_idplazo));
+    
   }
 
   const inicializaCliente = () =>{
@@ -338,6 +353,9 @@ export default function NuevoPed(props) {
     }
    
   }
+
+
+
 
   const noElementoSimilar = (codigo) =>{
     var variable = true;
@@ -375,7 +393,10 @@ export default function NuevoPed(props) {
     }
     console.log("se encontro plazo: "+ temp);
     setPlazo(temp);
+    setRegplazo(1);
 }
+
+
 
 const registrarVendedores = (dataVend) =>{
     var temp = [];
@@ -388,11 +409,15 @@ const registrarVendedores = (dataVend) =>{
 
 const registrarTransporte = (dataTransporte) =>{
     var temp = [];
+
     for (let i = 0; i < dataTransporte.length; ++i) {
-        temp.push({ label: dataTransporte[i].pl_nombre, value:dataTransporte[i].pl_codigo })
+        if(dataTransporte[i].pl_codigo != idtrans)
+            temp.push({ label: dataTransporte[i].pl_nombre, value:dataTransporte[i].pl_codigo })
+        else
+            setNomTrans(dataTransporte[i].pl_nombre);
     }
-    console.log("se encontro plazo: "+ temp);
     setTransp(temp);
+    
 }
 
 const agregaResultados = ( codprod, cant, desc, precio, pvp, subdist, contado, editable,  costo, peso, descripcion) =>{
@@ -410,6 +435,7 @@ const agregaResultados = ( codprod, cant, desc, precio, pvp, subdist, contado, e
 
     temp.push({codprod: codprod,  descripcion: descripcion,cantidad:cant, precio: precio, pvp: pvp, subdist: subdist, contado:contado,  preciosel: precio, editable: editable,  costo: costo, descuento:desc, subtotal: ressub, total: restot, peso: peso, gngastos:0});
     setItemTotal(temp);
+    console.log("valor del itemtotal: "+editable);
 
 }
 
@@ -424,10 +450,10 @@ const CargarResultados = () =>{
     var vardesc = 0;
     var varorden = 0, varventas = 0, vargastos = 0;
     var resdes = 0;
+    var valpeso = 0;
     var totpeso = 0;
     var numcod = 0;
     var porcpor = 0;
-    var valpeso = 0;
     itemtext = "";
     var cadenita1 = "";
     var gngastosv = 0;
@@ -799,11 +825,11 @@ const EditarResultados = ( codprod, cant, desc, precio, pvp, subdist, contado, p
  
  }
 
-  const cargarPlazo = async () => {
+  const cargarPlazo = async (validplazo) => {
     try {
      
       const response = await fetch(
-        "https://app.cotzul.com/Pedidos/pd_getPlazo.php?notidplazo="+notidplazo
+        "https://app.cotzul.com/Pedidos/pd_getPlazo.php?notidplazo="+validplazo
       );
       const jsonResponse = await response.json();
       console.log("REGISTRANDO PLAZO");
@@ -814,6 +840,90 @@ const EditarResultados = ( codprod, cant, desc, precio, pvp, subdist, contado, p
       console.log(error);
     }
 };
+
+const cargarPedido = async () => {
+    try {
+     
+      const response = await fetch(
+        "https://app.cotzul.com/Pedidos/getDatosPedido.php?idpedido="+idpedido
+      );
+
+      console.log("https://app.cotzul.com/Pedidos/getDatosPedido.php?idpedido="+idpedido);
+      const jsonResponse = await response.json();
+      console.log("OBTENIENDO PEDIDO");
+      console.log(jsonResponse?.pedido);
+      setPedido(jsonResponse?.pedido);
+      setItemPedido(jsonResponse?.pedido[0].item);
+      setObs(jsonResponse?.pedido[0].dp_observacion);
+      setIdCliente(jsonResponse?.pedido[0].dp_codcliente);
+      setChecked((jsonResponse?.pedido[0].dp_tipodesc==0)?('first'):('second'));
+      setPorcent(jsonResponse?.pedido[0].dp_porcdesc);
+      setIdTrans(jsonResponse?.pedido[0].dp_ttrans);
+      setSubtotal(Number(jsonResponse?.pedido[0].dp_subtotal));
+      setDescuento(Number(jsonResponse?.pedido[0].dp_descuento));
+      setSeguro(Number(jsonResponse?.pedido[0].dp_seguro));
+      setIva(Number(jsonResponse?.pedido[0].dp_iva));
+      setTransporte(Number(jsonResponse?.pedido[0].dp_transporte));
+      setTotal(Number(jsonResponse?.pedido[0].dp_total));
+      setGnGastos(Number(jsonResponse?.pedido[0].dp_gngastos));
+      cargarFormaPago(jsonResponse?.pedido[0].dp_tipodoc);
+
+      cargarListaItems(jsonResponse?.pedido[0].item);
+      
+    } catch (error) {
+      console.log("un error cachado obtener pedidos");
+      console.log(error);
+    }
+};
+
+const cargarListaItems  = (itemes) => {
+    for (let i = 0; i < itemes.length; i++) {
+        cargarItemElegido(itemes[i].it_codprod, itemes[i].it_cantidad, itemes[i].it_descuento, 0, itemes[i].it_precio);
+    }
+
+}
+
+const cargarClienteElegido  = async () => {
+    try {
+     
+        const response = await fetch(
+          "https://app.cotzul.com/Pedidos/getClienteElegido.php?idcliente="+idcliente
+        );
+  
+        console.log("https://app.cotzul.com/Pedidos/getClienteElegido.php?idcliente="+idcliente);
+        const jsonResponse = await response.json();
+        console.log("OBTENIENDO PEDIDO");
+        console.log(jsonResponse?.cliente);
+        actualizaCliente(jsonResponse?.cliente[0]);
+        
+      } catch (error) {
+        console.log(error);
+      }
+}
+
+
+const cargarItemElegido  = async (codprod, cantidad, descuento, preciosel, editable) => {
+    try {
+     
+        const response = await fetch(
+          "https://app.cotzul.com/Pedidos/getItemElegido.php?iditem="+codprod
+        );
+  
+        console.log("https://app.cotzul.com/Pedidos/getItemElegido.php?iditem="+codprod);
+        const jsonResponse = await response.json();
+        console.log("OBTENIENDO itemes");
+        console.log(jsonResponse?.item);
+        actualizaItem(jsonResponse?.item[0]);
+        EditarResultados(jsonResponse?.item[0].it_codprod, cantidad, descuento, jsonResponse?.item[0].it_precio, jsonResponse?.item[0].it_pvp, jsonResponse?.item[0].it_preciosub, jsonResponse?.item[0].it_contado, Number(preciosel), Number(editable),  jsonResponse?.item[0].it_costoprom, jsonResponse?.item[0].it_peso, jsonResponse?.item[0].it_referencia+"-"+jsonResponse?.item[0].it_descripcion) 
+        
+      } catch (error) {
+        console.log(error);
+      }
+}
+
+
+
+
 
 
 const cargarTransporte = async () => {
@@ -846,6 +956,39 @@ const cargarVendedores = async () => {
       console.log(error);
     }
 };
+
+const cargarFormaPago = (val) => {
+        var temp = [];
+        temp.push({ label: "SELECCIONAR", value:0 })
+        temp.push({ label: "CHEQUE A FECHA", value:1 })
+        temp.push({ label: "FACT. A CRÉDITO", value:2 })
+    
+    if(val == 0){
+        
+        setFormaPagoId(0);
+        setFormaPagoNom("SELECCIONAR");
+        
+       
+        
+    }else if(val == 1){
+        
+        setFormaPagoId(1);
+        setFormaPagoNom("CHEQUE A FECHA");
+        
+
+        
+    }else if(val == 2){
+
+        setFormaPagoId(2);
+        setFormaPagoNom("FACT. A CRÉDITO");
+
+        
+        
+    }
+
+    setLFormaPago(temp);
+    setDoc(val);
+}
 
 
 const cargarTarifas = async (ttcodigo, idtransporte) =>{
@@ -890,13 +1033,37 @@ const cargarTarifas = async (ttcodigo, idtransporte) =>{
 
 
 
+useEffect(()=>{
+    cargarClienteElegido()
+},[idcliente]);
+
+useEffect(()=>{
+    if(itemtotal.length > 0){
+
+        }
+},[itemtotal]);
+
+
+
+useEffect(()=>{
+cargarTransporte()
+},[idtrans]);
+
+useEffect(()=>{
+    if(transp.length > 0)
+        setRegtrans(1);
+},[transp]);
+
+
+
 
 
 
 
 useEffect(()=>{
-    cargarTransporte()
     cargarVendedores()
+    cargarPedido()
+
 },[]);
 
 useEffect(()=>{
@@ -923,7 +1090,6 @@ const GrabarBorrador = async () =>{
       console.log(jsonResponse.estatusped);
       if(jsonResponse.estatusped == 'REGISTRADO'){
         console.log("Se registro con éxito");
-        navigation.navigate("productos");
         regresarFunc();
       }
     
@@ -946,7 +1112,7 @@ const GrabarPedido = async () =>{
       console.log(jsonResponse.estatusped);
       if(jsonResponse.estatusped == 'REGISTRADO'){
         console.log("Se registro con éxito");
-        navigation.navigate("productos");
+        //navigation.navigate("productos");
         regresarFunc();
       }
     }else{
@@ -1030,6 +1196,7 @@ const GrabarPedido = async () =>{
                         numberOfLines={5}
                         placeholder="Registre una observación"
                         style={styles.input1}
+                        value={obs}
                         onChangeText={(value) => setObs(value)}
                     />
                 </View>
@@ -1064,37 +1231,34 @@ const GrabarPedido = async () =>{
                 </View>
                 <View style={styles.row}>
                     <View style={styles.itemrow}><Text style={styles.tittext}>Forma de Pago:</Text></View>
-                    <View style={styles.itemrow}><RNPickerSelect
+                    <View style={styles.itemrow}>{(doc == -1)?(<Text style={styles.tittext}>---</Text>):(<RNPickerSelect
                 useNativeAndroidPickerStyle={false}
                 style={pickerStyle}
                 onValueChange={(doc) => setDoc(doc)}
-                placeholder={{ label: "SELECCIONAR", value: 0 }}
-                items={[
-                    { label: "CHEQUE A FECHA", value: 1},
-                    { label: "FACT. A CRÉDITO", value: 2},
-                ]}
-            /></View>
+                placeholder={{ label: formapagonom, value: formapagoid }}
+                items={lformapago}
+            />)}</View>
                 </View>
                 <View style={styles.row}>
                     <View style={styles.itemrow}><Text style={styles.tittext}>Selecciona Plazo:</Text></View>
-                    <View style={styles.itemrow}>{(notidplazo==0)?(<Text style={styles.tittext}>---</Text>):(<RNPickerSelect
-                        useNativeAndroidPickerStyle={false}
+                    <View style={styles.itemrow}>{(regplazo==-1)?(<Text style={styles.tittext}>---</Text>):(<RNPickerSelect
                         style={pickerStyle}
-                        items={plazo}
+                        useNativeAndroidPickerStyle={false}
                         onValueChange={(tplazo) => setTPlazo(tplazo)}
                         placeholder={{ label: notnomplazo, value: notidplazo }}
+                        items={plazo}
                     />)}</View>
                 </View>
                 <View style={styles.row}>
                     <View style={styles.itemrow}><Text style={styles.tittext}>Selecciona Transporte:</Text></View>
-                    <View style={styles.itemrow}><RNPickerSelect
+                    <View style={styles.itemrow}>{(regtrans==-1)?(<Text style={styles.tittext}>---</Text>):(<RNPickerSelect
                         useNativeAndroidPickerStyle={false}
                         style={pickerStyle}
                         onValueChange={(ttrans) => setTtrans(ttrans)}
-                        placeholder={{ label: "SELECCIONAR", value: 0 }}
+                        placeholder={{ label: nomtrans, value: idtrans }}
                         items={transp}
 
-                    /></View>
+                    />)}</View>
                 </View>
                 <View style={styles.row}>
                     

@@ -38,12 +38,14 @@ class ModalClientes extends Component {
   }
 
   setModalVisible = (visible) => {
+    if(visible == true)
+      this.props.inicializaCliente();
     this.setState({ modalVisible: visible });
   }
 
   componentDidUpdate() {
     console.log("nuevo texto: " + this.state.search);
-   // this.getClientes();
+   
   }
 
   setClientes(alignItems){
@@ -105,7 +107,7 @@ registerItem =({item}) =>{
 
   render() {
     const { modalVisible, texto, data, isLoading, search} = this.state;
-    const { actualizaCliente} = this.props;
+    const { actualizaCliente, inicializaCliente} = this.props;
 
     
         return (

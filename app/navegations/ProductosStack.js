@@ -2,6 +2,7 @@ import React from "react";
 import {createStackNavigator} from "@react-navigation/stack";
 import Productos from "../screens/Productos";
 import NuevoPed from "../screens/NuevoPed";
+import EditaPed from "../screens/EditaPed";
 import Perfil from "../screens/Perfil";
 
 const Stack = createStackNavigator();
@@ -17,7 +18,10 @@ export default function ProductosStack(){
             name="nuevoped"
             component={NuevoPed}
             options={{title:"Nuevo Pedido"}} />
-            
+            <Stack.Screen 
+            name="editapedido"
+            component={EditaPed}
+            options={{title:"Editar Pedido"}} />
         </Stack.Navigator>
         
     );

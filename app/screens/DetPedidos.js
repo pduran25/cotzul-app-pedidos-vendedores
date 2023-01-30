@@ -22,7 +22,7 @@ export default function DetPedidos(props) {
             <View style={styles.dividobody}> 
                     <View style={{width:80}}>
                         <Text style={{fontWeight:'bold'}}>#Docum.</Text>
-                        <Text style={styles.titlespick}>{registro.pv_codigo}</Text>
+                        <Text style={styles.titlespick}>{registro.pv_numpedido}</Text>
                     </View>
                     <View style={{width:270}}>
                         <Text style={{fontWeight:'bold'}}>Vendedor</Text>

@@ -81,6 +81,7 @@ export default function Productos(props){
     const [usuario, setUsuario] = useState(false);
     const [consta, setConsta] = useState("");
     const [cadena, setCadena] = useState("");
+    const [idpedido, setIdPedido] = useState(0);
     var cont = 0;
 
     /* FUNCIONES RECURSIVAS */
@@ -133,7 +134,7 @@ export default function Productos(props){
         if(dataUser){
             if(!usuario){
                 getDataUser();
-                
+                recargarPedidos();
                 
             }
         }
@@ -146,7 +147,7 @@ export default function Productos(props){
 
 
     const regresarFunc = () =>{
-        console.log("ingreso a regresar");
+       // console.log("ingreso a regresar");
         navigation.navigate("productos"); 
         listarPedidos();
     }
@@ -229,6 +230,8 @@ export default function Productos(props){
                 setRegistro(defaultValueRegister);
             }else{
                 setRegistro(item);
+                setIdPedido(item.pv_codigo);
+                console.log("valor idpedido: "+ item.pv_codigo);
             }
             
 
@@ -240,7 +243,7 @@ export default function Productos(props){
             <TouchableOpacity onPress={viewDetails}>
             <View style={{flexDirection: 'row', backgroundColor: item.background, marginRight:15}}>
                 <View style={{width:60, height: 30, borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tabletext}>{item.pv_codigo}</Text>
+                    <Text style={styles.tabletext}>{item.pv_numpedido}</Text>
                 </View>
                 
                 <View style={{width:120, height: 30,   borderColor: 'black', borderWidth: 1}}>
@@ -250,7 +253,7 @@ export default function Productos(props){
                     <Text style={styles.tableval}>{Number(item.pv_gngastos).toFixed(2)} %</Text>
                 </View>
                 <View style={{width:100, height: 30,   borderColor: 'black', borderWidth: 1}}>
-                    <Text style={styles.tabletext}>{(item.pv_estatus==0)?'NO APROBADO':(item.pv_estatus==1)?'NUEVOS':(item.pv_estatus==2)?'BACKORDER':(item.pv_estatus==3)?'REACTIVADOS':'NINGUNO'}</Text>
+                    <Text style={styles.tabletext}>{(item.pv_estatus==0)?'NO APROBADO':(item.pv_estatus==1)?'NUEVOS':(item.pv_estatus==2)?'BACKORDER':(item.pv_estatus==3)?'REACTIVADOS':(item.pv_estatus==-1)?'BORRADOR':'NINGUNO'}</Text>
                 </View>
             </View>
             </TouchableOpacity>
@@ -264,13 +267,10 @@ export default function Productos(props){
         navigation.navigate("nuevoped",{dataUser, regresarFunc}); 
     }
 
-    const goDetalles = () =>{
+    const editaPedido = () =>{
+        navigation.navigate("editapedido",{dataUser, idpedido, regresarFunc}); 
+    }
 
-        if(registro.cb_codigo != '')
-            navigation.navigate("nuevoped",{registro, recargarPedidos}); 
-        else
-            Alert.alert("Seleccione un Pedido");
-     }
 
      const recargarPedidos = () =>{
         listarPedidos();
@@ -336,12 +336,12 @@ export default function Productos(props){
             </View>
             <DetPedidos registro={registro} />
             <View style={{alignItems:'center'}}>
-               {/* <Button
-                    title="Ver detalles"
+               {(registro.pv_estatus == -1)?(<Button
+                    title="Continuar Editando"
                     containerStyle={styles.btnContainerLogin}
                     buttonStyle = {styles.btnLogin}
-                    onPress= {()=> Alert.alert("Por implementar...")}
-                />*/}
+                    onPress= {editaPedido}
+                />):""}
             </View>
         </ScrollView>
 
