@@ -9,6 +9,7 @@ import { AuthContext } from "../components/Context"
 import Productos from "../screens/Productos";
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
+import PedidosStack from "./PedidosStack";
 
 
 
@@ -81,12 +82,17 @@ export default function Navigation(props){
             >
              
                 <Tab.Screen 
-                    name="productos" 
+                    name="Borradores" 
                     component={ProductosStack}
                     options={{headerShown: false}}
                     />
                     <Tab.Screen 
-                    name="perfil" 
+                    name="Pedidos" 
+                    component={PedidosStack}
+                    options={{headerShown: false}}
+                    />
+                    <Tab.Screen 
+                    name="Perfil" 
                     component={PerfilStack}
                     options={{headerShown: false}}  />
             </Tab.Navigator>}
@@ -102,10 +108,13 @@ function screenOptions(route, color){
         case "sincronizar":
             iconName = "sync";
             break;
-        case "productos":
+        case "Borradores":
+            iconName = "file-document-edit-outline";
+            break;
+        case "Pedidos":
             iconName = "shopping";
             break;
-        case "perfil":
+        case "Perfil":
             iconName = "account-circle";
             break;
         default: 

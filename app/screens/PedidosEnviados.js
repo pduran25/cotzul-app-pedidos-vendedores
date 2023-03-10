@@ -73,7 +73,7 @@ const dataped = [
   },
 ];
 
-export default function Productos(props) {
+export default function PedidosEnviados(props) {
   const [tpedido, setTpedido] = useState(-1);
   const { navigation, route } = props;
   const [registro, setRegistro] = useState(defaultValueRegister);
@@ -181,7 +181,7 @@ export default function Productos(props) {
         database_size
       );
       db.transaction((tx) => {
-        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus = -1", [], (tx, results) => {
+        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus != -1", [], (tx, results) => {
           var len = results.rows.length;
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);
@@ -340,15 +340,8 @@ export default function Productos(props) {
       </View>
       {/*Search*/}
 
-      <View style={{ alignItems: "center" }}>
-        <Button
-          title="Nuevo Pedido"
-          containerStyle={styles.btnContainerLogin}
-          buttonStyle={styles.btnLogin}
-          onPress={nuevoPedido}
-        />
-      </View>
-      <Text style={styles.titlespick}>Mis Pedidos Borrador:</Text>
+      
+      <Text style={styles.titlespick}>Mis Pedidos Enviados:</Text>
       <ScrollView horizontal>
         <View style={{ marginHorizontal: 20, marginTop: 10, height: 200 }}>
           <View style={{ flexDirection: "row" }}>
