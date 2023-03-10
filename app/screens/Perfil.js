@@ -7,6 +7,7 @@ import LoginForm from "../navegations/LoginForm";
 import * as SQLite from 'expo-sqlite';
 import { AuthContext } from "../components/Context"
 import NetInfo from "@react-native-community/netinfo";
+import CargarInformacion from "../navegations/CargarInformacion";
 
 const STORAGE_KEY = '@save_data'
 
@@ -80,13 +81,18 @@ export default function Perfil(){
             resizeMode = "contain"
             style={styles.image}
         />
+        
         <Text style={styles.txtusuario}>{dataUser.vn_nombre}</Text>
+      
+            <CargarInformacion />
+      
         <Button
             title="Cerrar sesión"
             containerStyle={styles.btnContainerLogin}
             buttonStyle = {styles.btnLogin}
             onPress= {onSubmit}
         />
+        
     </View>
         
         </>

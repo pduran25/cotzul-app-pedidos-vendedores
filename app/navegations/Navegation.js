@@ -79,11 +79,7 @@ export default function Navigation(props){
                 tabBarIcon: ({ color }) => screenOptions(route, color),
               })}
             >
-                <Tab.Screen 
-                    name="sincronizar" 
-                    component={SincronizarStack}
-                    options={{headerShown: false}}
-                    />
+             
                 <Tab.Screen 
                     name="productos" 
                     component={ProductosStack}
