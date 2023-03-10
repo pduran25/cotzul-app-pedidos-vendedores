@@ -23,6 +23,8 @@ let conta = 0;
 
 export default function CargarDatos(props) {
 
+  console.log("AUSTIN *******************");
+
     const [dataUser, setdataUser] = useState(defaultValueUser());
     const [loading2, setLoading2] = useState(false);
     const [loading3, setLoading3] = useState(false);

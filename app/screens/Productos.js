@@ -130,7 +130,7 @@ export default function Productos(props){
     const [appStateVisible, setAppStateVisible] = useState(appState.current);
 
 
-  useEffect(() => {
+    useEffect(() => {
         if(dataUser){
             if(!usuario){
                 getDataUser();

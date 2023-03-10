@@ -81,12 +81,14 @@ export default function LoginForm(props) {
     const onSubmit = async () =>{
         reviewInternet()
         if(internet){
-            if(isEmpty(formData.usuario) || isEmpty(formData.password)){
+            //if(isEmpty(formData.usuario) || isEmpty(formData.password)){
+            if(false){
                 toastRef.current.show("Todos los campos son obligatorios");
             }else{
                 try {
                     const response = await fetch(
-                        'https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password
+                        //'https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password
+                        'https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario=hcruz&clave=0915895494'
                     );
                     
                     const respuesta = await response.json();

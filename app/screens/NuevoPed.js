@@ -890,10 +890,6 @@ const cargarTarifas = async (ttcodigo, idtransporte) =>{
 
 
 
-
-
-
-
 useEffect(()=>{
     cargarTransporte()
     cargarVendedores()
@@ -902,7 +898,6 @@ useEffect(()=>{
 useEffect(()=>{
     cargarTarifas(tcodigo, ttrans);
     CargarResultados();
-     
 },[ttrans]);
 
 
