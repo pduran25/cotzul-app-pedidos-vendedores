@@ -243,11 +243,9 @@ export default function Productos(props) {
 
     if (item.cb_mensaje != "X") {
       const viewDetails = (props) => {
-        console.log("Detalle pedido");
 
         for (let x = 0; x < data.length; x++) {
           cont++;
-          console.log(item.pv_codigo);
           if (data[x].pv_codigo == item.pv_codigo) {
             data[x].background = "gray";
           } else {
