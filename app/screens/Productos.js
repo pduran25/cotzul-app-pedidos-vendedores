@@ -32,12 +32,11 @@ function defaultValueRegister() {
 
 function defaultValueUser() {
   return {
-    us_codigo: "",
-    us_nombre: "",
-    us_usuario: "",
-    us_clave: "",
-    us_estatus: "",
-    us_codusuario: "",
+    vn_codigo: "",
+    vn_nombre: "",
+    vn_usuario: "",
+    vn_clave: "",
+    vn_recibo: "",
   };
 }
 
@@ -74,7 +73,6 @@ const dataped = [
 ];
 
 export default function Productos(props) {
-  const [tpedido, setTpedido] = useState(-1);
   const { navigation, route } = props;
   const [registro, setRegistro] = useState(defaultValueRegister);
   const [loading, setLoading] = useState(true);
@@ -84,10 +82,8 @@ export default function Productos(props) {
   const { signOut, signUp } = React.useContext(AuthContext);
   const [usuario, setUsuario] = useState(false);
   const [consta, setConsta] = useState("");
-  const [cadena, setCadena] = useState("");
   const [idpedido, setIdPedido] = useState(0);
 
-  const [responsePV, setResponsePV] = useState(null);
 
   var cont = 0;
 
@@ -105,40 +101,11 @@ export default function Productos(props) {
     }
   };
 
-  const getCadenaDB = async () => {
-    try {
-      const valu = await AsyncStorage.getItem(STORAGE_CAD);
-      setConsta(valu);
-      console.log("constant : " + valu);
-      const response = await fetch(
-        "https://app.cotzul.com/Pedidos/getAllPedidosN.php?idestatus=-1&usuario=" +
-          dataUser.us_usuario +
-          "&cadena=" +
-          valu
-      );
-      console.log(
-        "https://app.cotzul.com/Pedidos/getAllPedidosN.php?idestatus=-1&usuario=" +
-          dataUser.us_usuario +
-          "&cadena=" +
-          valu
-      );
-      const jsonResponse = await response.json();
-    } catch (e) {
-      console.log("Error cadena");
-      console.log(e);
-    }
-  };
 
-  const setCad = async (value) => {
-    try {
-      await AsyncStorage.setItem(STORAGE_CAD, value);
-    } catch (e) {
-      console.log(e);
-    }
-  };
+
+
 
   const appState = useRef(AppState.currentState);
-  const [appStateVisible, setAppStateVisible] = useState(appState.current);
 
   useEffect(() => {
     console.log("ENTRO JSA");
@@ -156,17 +123,13 @@ export default function Productos(props) {
   }, [dataUser]);
 
   const regresarFunc = () => {
-    // console.log("ingreso a regresar");
+
     navigation.navigate("productos");
     listarPedidos();
   };
 
   const listarPedidos = async () => {
     try {
-      /*const response = await fetch(
-        "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor=" +
-          dataUser.vn_codigo
-      );*/
       const database_name = "CotzulBD.db";
       const database_version = "1.0";
       const database_displayname = "CotzulBD";
@@ -185,19 +148,13 @@ export default function Productos(props) {
           var len = results.rows.length;
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);
-            //console.log(`PEDIDOS VENDEDOR: ` + JSON.stringify(row));
           }
           setLoading(true);
           setData(results.rows._array);
-          //const pedidosvendedor = { pedidovendedor: results.rows._array };
-          //setResponsePV(pedidosvendedor);
         });
       });
 
-      //console.log(responsePV);
-      //const jsonResponse = await JSON.stringify(responsePV);
-      //setLoading(true);
-      //setData(responsePV?.pedidovendedor);
+
     } catch (error) {
       setLoading(false);
       console.log("un error cachado listar pedidos");
@@ -205,38 +162,6 @@ export default function Productos(props) {
     }
   };
 
-  const cargarDetalles = (pedidos) => {
-    console.log(" data: " + pedidos);
-    var cont = 0;
-    var texto = "vacio";
-
-    if (pedidos != undefined) {
-      console.log("valor de mensjar: " + pedidos[0].cb_mensaje);
-
-      if (pedidos[0].cb_mensaje != "X") {
-        texto = '<?xml version="1.0" encoding="iso-8859-1"?><c c0="2" c1="1" >';
-        for (let x = 0; x < pedidos.length; x++) {
-          cont++;
-          console.log(pedidos[x].cb_coddocumento);
-          texto =
-            texto +
-            '<detalle d0="' +
-            pedidos[x].cb_coddocumento +
-            '" d1="' +
-            cont +
-            '"></detalle>';
-        }
-        texto = texto + "</c>";
-      } else {
-        //console.log(pedidos[0].cb_observacion);
-        if (pedidos[0].cb_observacion != "X")
-          Alert.alert(pedidos[0].cb_observacion);
-      }
-    }
-    console.log(texto);
-    setCadena(texto);
-    setCad(texto);
-  };
 
   const item = ({ item }) => {
     var cont = 0;
@@ -320,13 +245,6 @@ export default function Productos(props) {
 
   const recargarPedidos = () => {
     listarPedidos();
-    setRegistro(defaultValueRegister);
-  };
-
-  const actualizaPedido = (tpedido) => {
-    setLoading(false);
-    setTpedido(tpedido);
-    //listarPedidos(tpedido);
     setRegistro(defaultValueRegister);
   };
 

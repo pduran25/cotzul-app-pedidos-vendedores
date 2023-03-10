@@ -17,18 +17,16 @@ import { AuthContext } from "../components/Context";
 import moment from "moment";
 import { Button } from "react-native-elements";
 
-const APIfechaUltimaActualizacion =
-  "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor=59037";
 const APIpedidosvendedor =
-  "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor=59037";
+  "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor=";
 const APItransportes = "https://app.cotzul.com/Pedidos/pd_getTransporte.php";
 const APIVendedores = "https://app.cotzul.com/Pedidos/getVendedoresList.php";
 const APIClientes =
-  "https://app.cotzul.com/Pedidos/getClientes.php?nombre=marc&idvendedor=59037";
+  "https://app.cotzul.com/Pedidos/getClientes.php?&idvendedor=";
 const APITarifas =
   "https://app.cotzul.com/Pedidos/pd_getTarifa.php?ttcodigo=1&tarifa=1";
 const APIPlazo = "https://app.cotzul.com/Pedidos/pd_getPlazo.php?notidplazo=1";
-const APIItem = "https://app.cotzul.com/Pedidos/getItems.php?nombre=A";
+const APIItem = "https://app.cotzul.com/Pedidos/getItems.php";
 const APIDatosPedidos =
   "https://app.cotzul.com/Pedidos/getDatosPedido.php?idpedido=59";
 
@@ -37,30 +35,30 @@ const database_version = "1.0";
 const database_displayname = "CotzulBD";
 const database_size = 200000;
 
+const STORAGE_KEY = "@save_data";
+
+
+
 export default function CargarInformacion() {
-  const [loading, setLoading] = useState(false);
-  const [actualizaFecha, setActualizaFecha] = useState(false);
-  const [actualizaTablas, setActualizaTablas] = useState(false);
-  const [pedidosVendedorAPI, setPedidosVendedorAPI] = useState(false);
+  const [loading, setLoading] = useState(false);  
+  const [activo, setActivo] = useState(0);
 
-  const [fechaUltimaActualizacion, setFechaUltimaActualizacion] = useState("");
-  const [fechaUltimaActualizacionAPI, setFechaUltimaActualizacionAPI] =
-    useState("");
 
-  const [actParametros, setActParametros] = useState(-1);
-  const [actfechaSQL, setActfechaSQL] = useState(-1);
-  const [actfechaAPI, setActfechaAPI] = useState(-1);
-  const [actValidacionFechas, setActValidacionFechas] = useState(-1);
+  const [usuario, setUsuario] = useState(false);
+  const [dataUser, setdataUser] = useState(defaultValueUser());
 
-  const [terminaHandle, setTerminaHandle] = useState(false);
-  const [terminaPedidosVendedor, setTerminaPedidosVendedor] = useState(false);
-  const [terminaTransporte, setTerminaTransporte] = useState(false);
-  const [terminaVendedor, setTerminaVendedor] = useState(false);
-  const [terminaCliente, setTerminaCliente] = useState(false);
-  const [terminaPlazo, setTerminaPlazo] = useState(false);
-  const [terminaTarifa, setTerminaTarifa] = useState(false);
-  const [terminaItem, setTerminaItem] = useState(false);
-  const [terminaDatosPedido, setTerminaDatosPedido] = useState(false);
+  const getDataUser = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+      console.log("si entrego : " + jsonValue);
+      setdataUser(JSON.parse(jsonValue));
+      setUsuario(true);
+      console.log("INGRSA A PRODUCTO: " + dataUser.vn_nombre);
+    } catch (e) {
+      console.log("Error al coger el usuario");
+      console.log(e);
+    }
+  };
 
   const fechaActual = {
     parametros: [
@@ -73,265 +71,45 @@ export default function CargarInformacion() {
 
   let db = null;
 
-  useEffect(() => {
-    if (terminaHandle) {
-      terminarProceso();
-    }
-  }, [terminaHandle]);
+  function defaultValueUser() {
+    return {
+      vn_codigo: "",
+      vn_nombre: "",
+      vn_usuario: "",
+      vn_clave: "",
+      vn_recibo: "",
+    };
+  }
 
   useEffect(() => {
-    if (
-      terminaPedidosVendedor &&
-      terminaTransporte &&
-      terminaVendedor &&
-      terminaCliente &&
-      terminaPlazo &&
-      terminaTarifa &&
-      terminaItem &&
-      terminaDatosPedido
-    ) {
-      setTerminaHandle(true);
-      terminarProceso();
-    }
-  }, [
-    terminaPedidosVendedor,
-    terminaTransporte,
-    terminaVendedor,
-    terminaCliente,
-    terminaPlazo,
-    terminaTarifa,
-    terminaItem,
-    terminaDatosPedido,
-  ]);
-
-  useEffect(() => {
-    obtenerFechaActualizacionVisualizer();
-
-    if (actParametros == 0) {
-      tblparametros(1);
-      obtenerFechaActualizacion();
-    }
-
-    if (actParametros == 1) {
-      if (actualizaFecha) {
-        tblparametros(2, fechaActual);
-        //setActualizaTablas(true);
-        //actualizarTablas(1);
-        actualizarTablas();
+    if (dataUser) {
+      if (!usuario) {
+        getDataUser();
       }
     }
-  }, [actParametros]);
+  }, []);
 
   useEffect(() => {
-    if (actfechaSQL == 1) {
-      obtenerFechaActualizacion();
-    }
-  }, [actfechaSQL]);
-
-  useEffect(() => {
-    if (actfechaAPI == 1) {
-      obtenerFechaActualizacionAPI();
-    }
-  }, [actfechaAPI]);
-
-  useEffect(() => {
-    if (actValidacionFechas == 1) {
-      if (fechaUltimaActualizacionAPI === "") {
-        console.log("ERROR AL CONECTARSE AL WS");
-      } else if (fechaUltimaActualizacion >= fechaUltimaActualizacionAPI) {
-        console.log("NO ACTUALIZA");
-      } else if (
-        fechaUltimaActualizacion === "" ||
-        fechaUltimaActualizacion < fechaUltimaActualizacionAPI
-      ) {
-        setActualizaTablas(true);
-        console.log("ACTUALIZA DATOS");
-      }
-      setActParametros(1);
-    }
-  }, [actValidacionFechas]);
-
-  useEffect(() => {
-    if (actualizaTablas) {
-      setActualizaTablas(true);
+    if(activo == 1){
+      setLoading(true);
       actualizarTablas();
     }
-  }, [actualizaTablas]);
+    if(activo == 2){
+      setLoading(false);
+    }
+  }, [activo]);
+
+
+
 
   const sincronizarDatos = async () => {
     try {
-      setLoading(true);
-      setActParametros(0);
-      //setActualizaTablas(false);
+      
+      setActivo(1);
+      
     } catch (error) {
-      setLoading(false);
       console.log("un error cachado listar pedidos");
       console.log(error);
-    }
-  };
-
-  const terminarLoader = async () => {
-    try {
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-      console.log("un error cachado listar pedidos");
-      console.log(error);
-    }
-  };
-
-  const terminarProceso = () => {
-    if (terminaHandle) {
-      obtenerFechaActualizacionVisualizer();
-      terminarLoader();
-    }
-  };
-
-  /** PARAMETROS**/
-
-  const obtenerFechaActualizacionVisualizer = async () => {
-    db = SQLite.openDatabase(
-      database_name,
-      database_version,
-      database_displayname,
-      database_size
-    );
-
-    console.log("obtenerFechaActualizacionVisualizer");
-
-    db.transaction((tx) => {
-      tx.executeSql(
-        "SELECT pa_valor, pa_codigo FROM parametros where pa_codigo = ? order by pa_valor desc limit 1",
-        ["ACTFECHA"],
-        (tx, results) => {
-          var len = results.rows.length;
-          if (len > 0) {
-            for (let i = 0; i < len; i++) {
-              let row = results.rows.item(i);
-              setFechaUltimaActualizacion(row.pa_valor);
-              console.log(
-                "fechaUltimaActualizacion :::" + fechaUltimaActualizacion
-              );
-            }
-          } else {
-            console.log("No se encontró registro de actualización");
-          }
-        }
-      );
-    });
-  };
-
-  const tblparametros = async (nextStatus, myResponse) => {
-    db = SQLite.openDatabase(
-      database_name,
-      database_version,
-      database_displayname,
-      database_size
-    );
-
-    console.log("PARAMETROS Registro de Datos Paramtros ... ");
-
-    var cont = 0;
-    db.transaction((txn) => {
-      txn.executeSql("DROP TABLE IF EXISTS parametros");
-      txn.executeSql(
-        "CREATE TABLE IF NOT EXISTS parametros(pa_codigo VARCHAR(20) , pa_valor VARCHAR(50));"
-      );
-
-      myResponse?.parametros.map((value, index) => {
-        txn.executeSql(
-          "INSERT INTO parametros(pa_codigo,pa_valor) VALUES (?, ?); ",
-          [value.pa_codigo, value.pa_valor],
-          //["ACTFECHA","2037-03-04"],
-          (txn, results) => {
-            if (results.rowsAffected > 0) {
-              cont++;
-            }
-          }
-        );
-      });
-    });
-
-    if (nextStatus === 1) {
-      setActfechaSQL(1);
-    } else if (nextStatus === 2) {
-      setActfechaAPI(1);
-    }
-    console.log("PARAMETROS registros afectados:", cont);
-  };
-
-  const obtenerFechaActualizacion = async () => {
-    db = SQLite.openDatabase(
-      database_name,
-      database_version,
-      database_displayname,
-      database_size
-    );
-
-    console.log("obtenerFechaActualizacion");
-
-    db.transaction((tx) => {
-      tx.executeSql(
-        "SELECT pa_valor, pa_codigo FROM parametros where pa_codigo = ? order by pa_valor desc limit 1",
-        ["ACTFECHA"],
-        (tx, results) => {
-          var len = results.rows.length;
-          if (len > 0) {
-            for (let i = 0; i < len; i++) {
-              let row = results.rows.item(i);
-              setFechaUltimaActualizacion(row.pa_valor);
-              console.log(
-                "fechaUltimaActualizacion :::" + fechaUltimaActualizacion
-              );
-            }
-          } else {
-            console.log("No se encontró registro de actualización");
-          }
-          obtenerFechaActualizacionAPI();
-        }
-      );
-    });
-  };
-
-  const obtenerFechaActualizacionAPI = async () => {
-    console.log("obtenerFechaActualizacionAPI");
-    try {
-      //const responseFechaAPI = await fetch(APIfechaUltimaActualizacion);
-      //const jsonResponseAPIFecha = await responseFechaAPI.json();
-
-      const jsonResponseAPIFecha = {
-        fecha: [{ fechaUltimaActualizacion: "22-02-2023 22:50:44" }],
-      };
-
-      jsonResponseAPIFecha?.fecha.map((value, index) => {
-        setFechaUltimaActualizacionAPI(value.fechaUltimaActualizacion);
-        //setFechaUltimaActualizacionAPI("");
-        console.log(
-          "fechaUltimaActualizacionAPI:::" + fechaUltimaActualizacionAPI
-        );
-      });
-    } catch (error) {
-      console.log("un error cachado");
-      console.log(error);
-    }
-
-    setActValidacionFechas(1);
-    if (actValidacionFechas == 1) {
-      if (fechaUltimaActualizacionAPI === "") {
-        setActualizaFecha(false);
-        console.log("ERROR AL CONECTARSE AL WS");
-      } else if (fechaUltimaActualizacion >= fechaUltimaActualizacionAPI) {
-        setActualizaFecha(true);
-        console.log("NO ACTUALIZA");
-      } else if (
-        fechaUltimaActualizacion === "" ||
-        fechaUltimaActualizacion < fechaUltimaActualizacionAPI
-      ) {
-        //setActualizaTablas(true); //Aquí actualiza los datos de las tablas
-        setActualizaFecha(true);
-        console.log("ACTUALIZA DATOS");
-      }
-      setActParametros(1);
     }
   };
 
@@ -339,23 +117,17 @@ export default function CargarInformacion() {
 
   /** TABLAS **/
   async function actualizarTablas() {
-    const results = await Promise.allSettled([
-      pedidosVendedor(),
-      transportes(),
-      vendedores(),
-      clientes(),
-      plazo(),
-      tarifas(),
-      items(),
-      datospedidos(),
-    ]);
+
+     obtenerClientes()
+      /*datospedidos(),*/
+
   }
   /** FIN TABLAS **/
 
   /** PEDIDOS VENDEDOR **/
-  const pedidosVendedor = async () => {
+  const obtenerPedidosVendedor = async () => {
     console.log("GET API pedidovendedor");
-    const response = await fetch(APIpedidosvendedor);
+    const response = await fetch(APIpedidosvendedor+dataUser.us_codigo);
     const jsonResponse = await response.json();
 
     savePedidosVendedor(jsonResponse);
@@ -406,12 +178,8 @@ export default function CargarInformacion() {
         );
       });
     });
-    //console.log("pedidosclientes afectados: ", results.rowsAffected);
 
     listarPedidosVendedor();
-    //setActualizaTablas(2);
-    //actualizarTablas(2);
-    //}
   };
 
   const listarPedidosVendedor = () => {
@@ -425,19 +193,19 @@ export default function CargarInformacion() {
     db.transaction((tx) => {
       tx.executeSql("SELECT * FROM pedidosvendedor", [], (tx, results) => {
         var len = results.rows.length;
+        console.log("total pedidos vendedor: "+ len);
         for (let i = 0; i < len; i++) {
           let row = results.rows.item(i);
-          //console.log(`PEDIDOS VENDEDOR: ` + JSON.stringify(row));
+          console.log(`PEDIDOS VENDEDOR: ` + JSON.stringify(row));
         }
-        setTerminaPedidosVendedor(true);
-        terminarProceso();
       });
     });
+    obtenerTransportes();
   };
   /** FIN PEDIDOS VENDEDOR **/
 
   /** TRANSPORTES **/
-  const transportes = async () => {
+  const obtenerTransportes = async () => {
     console.log("GET API transportes");
     const response = await fetch(APItransportes);
     const jsonResponse = await response.json();
@@ -483,11 +251,8 @@ export default function CargarInformacion() {
         );
       });
     });
-    //console.log("pedidosclientes afectados: ", results.rowsAffected);
 
     listarTransportes();
-    //actualizarTablas(3);
-    //}
   };
 
   const listarTransportes = () => {
@@ -505,15 +270,14 @@ export default function CargarInformacion() {
           let row = results.rows.item(i);
           //console.log(`TRANSPORTE: ` + JSON.stringify(row));
         }
-        setTerminaTransporte(true);
-        terminarProceso();
       });
     });
+    obtenerVendedores();
   };
   /** FIN TRANSPORTES **/
 
   /** VENDEDORES **/
-  const vendedores = async () => {
+  const obtenerVendedores = async () => {
     console.log("GET API vendedores");
     const response = await fetch(APIVendedores);
     const jsonResponse = await response.json();
@@ -571,19 +335,20 @@ export default function CargarInformacion() {
           let row = results.rows.item(i);
           //console.log(`VENDEDORES: ` + JSON.stringify(row));
         }
-        setTerminaVendedor(true);
-        terminarProceso();
       });
     });
+    obtenerPlazo();
   };
   /** FIN VENDEDORES **/
 
   /** CLIENTES **/
-  const clientes = async () => {
-    console.log("GET API clientes");
-    const response = await fetch(APIClientes);
-    const jsonResponse = await response.json();
+  const obtenerClientes = async () => {
 
+
+    console.log("GET API clientes: "+APIClientes+dataUser.vn_codigo);
+    const response = await fetch(APIClientes+dataUser.vn_codigo);
+    const jsonResponse = await response.json();
+    console.log("Response Cliente: "+jsonResponse.clientes);
     saveClientes(jsonResponse);
   };
 
@@ -600,7 +365,7 @@ export default function CargarInformacion() {
     var cont = 0;
     db.transaction((txn) => {
       txn.executeSql("DROP TABLE IF EXISTS clientes");
-      txn.executeSql(
+     txn.executeSql(
         "CREATE TABLE IF NOT EXISTS " +
           "clientes " +
           "(ct_codigo INTEGER, ct_cedula VARCHAR(20), ct_tipoid VARCHAR(20)" +
@@ -665,15 +430,16 @@ export default function CargarInformacion() {
           let row = results.rows.item(i);
           //console.log(`CLIENTES: ` + JSON.stringify(row));
         }
-        setTerminaCliente(true);
-        terminarProceso();
+        
       });
+      obtenerItems();
     });
+    
   };
   /** FIN CLIENTES **/
 
   /** PLAZO **/
-  const plazo = async () => {
+  const obtenerPlazo = async () => {
     console.log("GET API Plazo");
     const response = await fetch(APIPlazo);
     const jsonResponse = await response.json();
@@ -734,15 +500,14 @@ export default function CargarInformacion() {
           let row = results.rows.item(i);
           //console.log(`PLAZOS: ` + JSON.stringify(row));
         }
-        setTerminaPlazo(true);
-        terminarProceso();
       });
     });
+    obtenerTarifas();
   };
   /** FIN PLAZO **/
 
   /** TARIFA **/
-  const tarifas = async () => {
+  const obtenerTarifas = async () => {
     console.log("GET API Tarifa");
     const response = await fetch(APITarifas);
     const jsonResponse = await response.json();
@@ -810,15 +575,14 @@ export default function CargarInformacion() {
           let row = results.rows.item(i);
           //console.log(`TARIFAS: ` + JSON.stringify(row));
         }
-        setTerminaTarifa(true);
-        terminarProceso();
       });
     });
+    setActivo(2);
   };
   /** FIN TARIFA **/
 
   /** ITEM **/
-  const items = async () => {
+  const obtenerItems = async () => {
     console.log("GET API Items");
     const response = await fetch(APIItem);
     const jsonResponse = await response.json();
@@ -901,10 +665,9 @@ export default function CargarInformacion() {
           let row = results.rows.item(i);
           //console.log(`ITEMS: ` + JSON.stringify(row));
         }
-        setTerminaItem(true);
-        terminarProceso();
       });
     });
+    obtenerPedidosVendedor();
   };
   /** FIN ITEM **/
 
@@ -1030,7 +793,7 @@ console.log("NNNNNNN");
   return (
     <>
       <Text style={styles.titlesSubtitle}>Fecha Última Actualización:</Text>
-      <Text style={styles.titlesSubtitle}>{fechaUltimaActualizacion}</Text>
+      <Text style={styles.titlesSubtitle}>######</Text>
       {loading ? (
         <View style={{ marginHorizontal: 20, marginTop: 10, height: 200 }}>
           <Text style={styles.titlesSubtitle}>cargando...</Text>
