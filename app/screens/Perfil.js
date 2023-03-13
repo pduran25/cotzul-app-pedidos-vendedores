@@ -23,7 +23,7 @@ export default function Perfil(){
     const [user, setUser] = useState(true);
     const {signOut, signUp} = React.useContext(AuthContext);
     const [internet, setInternet] = useState(true);
-
+    const [activo, setActivo] = useState(false);
    
     
 
@@ -31,13 +31,15 @@ export default function Perfil(){
         try {
           const jsonValue = await AsyncStorage.getItem(STORAGE_KEY)
           setdataUser(JSON.parse(jsonValue));
+          setActivo(true);
         } catch(e) {
            console.log(e)
         }
     }
 
    useEffect(()=>{
-        getData();
+        if(!activo)
+            getData();
    });
     
 

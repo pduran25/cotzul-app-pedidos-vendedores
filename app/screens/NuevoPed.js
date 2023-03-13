@@ -128,6 +128,7 @@ export default function NuevoPed(props) {
   const [vvendedor, setVvendedor] = useState([]);
   const [kilos, setKilos] = useState(0);
   const [notidplazo, setNotIdplazo] = useState(0);
+  const [cargado, setCargado] = useState(0);
   const [notnomplazo, setNotnomplazo] = useState("plazo");
   var resindex = 0;
   var itemtext = "";
@@ -409,7 +410,6 @@ export default function NuevoPed(props) {
     }
   };
 
-  console.log(dataUser);
 
   const getCurrentDate = () => {
     var date = new Date().getDate();
@@ -445,6 +445,7 @@ export default function NuevoPed(props) {
   };
 
   const actualizaItem = (newitem) => {
+    console.log("newitem:"+newitem);
     if (noElementoSimilar(newitem.it_codprod)) {
       resindex = 0;
       console.log(newitem);
@@ -460,7 +461,7 @@ export default function NuevoPed(props) {
         newitem.it_preciosub,
         newitem.it_contado,
         0,
-        0,
+        newitem.it_costoprom,
         0,
         "-"
       );
@@ -519,6 +520,7 @@ export default function NuevoPed(props) {
     }
     console.log("se encontro vendedor: " + temp);
     setVvendedor(temp);
+    setCargado(2);
   };
 
   const registrarTransporte = (dataTransporte) => {
@@ -531,6 +533,8 @@ export default function NuevoPed(props) {
     }
     console.log("se encontro plazo: " + temp);
     setTransp(temp);
+    cargarVendedores();
+
   };
 
   const agregaResultados = (
@@ -742,6 +746,8 @@ export default function NuevoPed(props) {
       "resultado var orden: " +
         (Number(vartotal) - Number(vardesc) - Number(varsubtotal)).toFixed(2)
     );
+
+    console.log("valores total: "+Number(vartotal)+" vardesc: "+ Number(vardesc)+" varsubtotal: "+Number(varsubtotal) );
     varorden = Number(vartotal) - Number(vardesc) - Number(varsubtotal);
     varventas = (gnorden / (Number(vartotal) - Number(vardesc))) * 100;
     vargastos = (Number(vartotal) - Number(vardesc)) / Number(varsubtotal);
@@ -865,8 +871,7 @@ export default function NuevoPed(props) {
         rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
         varsubtotal = varsubtotal + itemtotal[i].subtotal;
         varsubtotalcosto = varsubtotalcosto + rescosto;
-        resdes =
-          resdes + Number(itemtotal[i].subtotal * itemtotal[i].descuento) / 100;
+        resdes = resdes + Number(itemtotal[i].subtotal * itemtotal[i].descuento) / 100;
         porcpor = porcpor + Number(itemtotal[i].descuento);
         totpeso = totpeso + valpeso;
 
@@ -973,6 +978,8 @@ export default function NuevoPed(props) {
     varventas = (gnorden / (Number(varsubtotal) - Number(vardesc))) * 100;
     vargastos =
       (Number(varsubtotal) - Number(vardesc)) / Number(varsubtotalcosto);
+    
+    console.log("varsubtotal: "+ varsubtotal+ "vardesc "+ vardesc+ "varsubtotalcosto: "+ varsubtotalcosto);
 
     setGnOrden(varorden);
     setGnVentas(varventas);
@@ -1021,6 +1028,7 @@ export default function NuevoPed(props) {
         var ressub = 0,
           restot = 0;
         ressub = Number(cant) * Number(preciosel);
+        console.log("costo 1: "+costo);
         rescosto = Number(cant) * Number(costo);
         valpeso = Number(cant) * Number(peso);
         gngastosv = rescosto / ressub;
@@ -1045,7 +1053,10 @@ export default function NuevoPed(props) {
         });
 
         varsubtotal = varsubtotal + ressub;
+        
         varsubtotalcosto = varsubtotalcosto + rescosto;
+        console.log("valsubtotalcosto 1 : " + varsubtotalcosto);
+        console.log("rescosto 1: "+ rescosto);
         resdes = resdes + Number(ressub * desc) / 100;
         totpeso = totpeso + valpeso;
         porcpor = porcpor + Number(desc);
@@ -1107,9 +1118,10 @@ export default function NuevoPed(props) {
         valpeso = Number(itemtotal[i].cantidad) * Number(itemtotal[i].peso);
         rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
         varsubtotal = varsubtotal + itemtotal[i].subtotal;
+        console.log("valsubtotalcosto : " + varsubtotalcosto);
+        console.log("rescosto: "+ rescosto);
         varsubtotalcosto = varsubtotalcosto + rescosto;
-        resdes =
-          resdes + Number(itemtotal[i].subtotal * itemtotal[i].descuento) / 100;
+        resdes = resdes + Number(itemtotal[i].subtotal * itemtotal[i].descuento) / 100;
         porcpor = porcpor + Number(itemtotal[i].descuento);
         totpeso = totpeso + valpeso;
 
@@ -1223,14 +1235,14 @@ export default function NuevoPed(props) {
     console.log("res. subtotal: " + Number(varsubtotal));
     console.log(
       "resultado var orden: " +
-        (Number(vartotal) - Number(vardesc) - Number(varsubtotalcosto)).toFixed(
-          2
-        )
+        (Number(vartotal) - Number(vardesc) - Number(varsubtotalcosto)).toFixed(2)
     );
     varorden = Number(varsubtotal) - Number(vardesc) - Number(varsubtotalcosto);
     varventas = (gnorden / (Number(varsubtotal) - Number(vardesc))) * 100;
     vargastos =
       (Number(varsubtotal) - Number(vardesc)) / Number(varsubtotalcosto);
+
+    console.log("varsubtotal: "+varsubtotal+ " vardesc: "+ vardesc+ "varsubtotalcosto :"+varsubtotalcosto);
 
     setGnOrden(varorden);
     setGnVentas(varventas);
@@ -1356,8 +1368,8 @@ export default function NuevoPed(props) {
   };
 
   useEffect(() => {
-    cargarTransporte();
-    cargarVendedores();
+    if(cargado == 0)
+      cargarTransporte();
   }, []);
 
   useEffect(() => {

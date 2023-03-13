@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   AppState,
+  RefreshControl
 } from "react-native";
 import { colors } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
@@ -83,6 +84,7 @@ export default function Productos(props) {
   const [usuario, setUsuario] = useState(false);
   const [consta, setConsta] = useState("");
   const [idpedido, setIdPedido] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
 
   var cont = 0;
@@ -122,8 +124,14 @@ export default function Productos(props) {
     listarPedidos();
   }, [dataUser]);
 
-  const regresarFunc = () => {
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    listarPedidos();
+}, []);
+
+
+  const regresarFunc = () => {
     navigation.navigate("productos");
     listarPedidos();
   };
@@ -154,6 +162,7 @@ export default function Productos(props) {
         });
       });
 
+      setRefreshing(false);
 
     } catch (error) {
       setLoading(false);
@@ -248,8 +257,11 @@ export default function Productos(props) {
     setRegistro(defaultValueRegister);
   };
 
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} refreshControl={
+      <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+    }>
       <View style={styles.titlesWrapper}>
         <Text style={styles.titlesSubtitle}>Cotzul S.A.</Text>
         <Text style={styles.titlespick2}>Usuario: {dataUser.vn_nombre}</Text>

@@ -30,11 +30,13 @@ class ModalItems extends Component {
   };
 
   setTextoSearch(texto) {
+    console.log("nuevo texto cargando item: " + this.state.search);
     this.setState({ search: texto });
     this.getClientes();
   }
 
   componentDidMount() {
+    console.log("nuevo texto montando item: " + this.state.search);
     this.setState({ modalVisible: false });
     this.getClientes();
   }
@@ -43,10 +45,6 @@ class ModalItems extends Component {
     this.setState({ modalVisible: visible });
   };
 
-  componentDidUpdate() {
-    console.log("nuevo texto: AAAA" + this.state.search);
-    //this.getClientes();
-  }
 
   setItems(valItem) {
     this.props.actualizaItem(valItem);

@@ -2,7 +2,6 @@ import React, { useState,useRef, useEffect, useMemo } from "react";
 import {NavigationContainer} from "@react-navigation/native";
 import ProductosStack from "../navegations/ProductosStack";
 import PerfilStack from "../navegations/PerfilStack";
-import SincronizarStack from "../navegations/SincronizarStack";
 import { Icon } from "react-native-elements";
 import LoginForm from "./LoginForm";
 import { AuthContext } from "../components/Context"
@@ -105,9 +104,6 @@ export default function Navigation(props){
 function screenOptions(route, color){
     let iconName;
     switch(route.name){
-        case "sincronizar":
-            iconName = "sync";
-            break;
         case "Borradores":
             iconName = "file-document-edit-outline";
             break;

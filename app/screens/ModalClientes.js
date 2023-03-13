@@ -44,9 +44,6 @@ class ModalClientes extends Component {
     this.setState({ modalVisible: visible });
   };
 
-  componentDidUpdate() {
-    console.log("nuevo texto: " + this.state.search);
-  }
 
   setClientes(alignItems) {
     console.log("paso por aqui " + alignItems.ct_cliente);

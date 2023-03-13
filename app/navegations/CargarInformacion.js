@@ -84,6 +84,7 @@ export default function CargarInformacion() {
   useEffect(() => {
     if (dataUser) {
       if (!usuario) {
+        console.log("Ingreso 1 vez");
         getDataUser();
       }
     }
@@ -117,7 +118,7 @@ export default function CargarInformacion() {
 
   /** TABLAS **/
   async function actualizarTablas() {
-
+    console.log("Ingreso 2 vez");
      obtenerClientes()
       /*datospedidos(),*/
 
@@ -127,8 +128,9 @@ export default function CargarInformacion() {
   /** PEDIDOS VENDEDOR **/
   const obtenerPedidosVendedor = async () => {
     console.log("GET API pedidovendedor");
-    const response = await fetch(APIpedidosvendedor+dataUser.us_codigo);
+    const response = await fetch(APIpedidosvendedor+dataUser.vn_codigo);
     const jsonResponse = await response.json();
+    console.log("PEDIDOS VENDEDORES: "+jsonResponse?.pedidovendedor);
 
     savePedidosVendedor(jsonResponse);
   };
@@ -161,7 +163,7 @@ export default function CargarInformacion() {
             " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?); ",
           [
             Number(value.pv_codigo),
-            Number(value.pv_codigovendedor),
+            Number(value.pv_codvendedor),
             value.pv_vendedor,
             Number(value.pv_codcliente),
             value.pv_cliente,
@@ -609,7 +611,7 @@ export default function CargarInformacion() {
           "(it_codigo VARCHAR(200), it_codprod VARCHAR(20), it_referencia VARCHAR(50)" +
           ", it_descripcion VARCHAR(200), it_precio VARCHAR(20), it_pvp VARCHAR(20) " +
           ", it_preciosub VARCHAR(20), it_contado VARCHAR(20), it_stock VARCHAR(20) " +
-          ", it_marca VARCHAR(50), it_familia VARCHAR(50), it_costprom VARCHAR(20) " +
+          ", it_marca VARCHAR(50), it_familia VARCHAR(50), it_costoprom VARCHAR(20) " +
           ", it_peso VARCHAR(50), it_sku VARCHAR(10) " +
           " );"
       );
@@ -619,7 +621,7 @@ export default function CargarInformacion() {
           "INSERT INTO items(it_codigo , it_codprod , it_referencia " +
             ", it_descripcion , it_precio , it_pvp " +
             ", it_preciosub , it_contado , it_stock  " +
-            ", it_marca , it_familia , it_costprom  " +
+            ", it_marca , it_familia , it_costoprom  " +
             ", it_peso,it_sku) " +
             " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
           [
@@ -634,7 +636,7 @@ export default function CargarInformacion() {
             value.it_stock,
             value.it_marca,
             value.it_familia,
-            value.it_costprom,
+            value.it_costoprom,
             value.it_peso,
             value.it_sku,
           ],
@@ -663,7 +665,7 @@ export default function CargarInformacion() {
         var len = results.rows.length;
         for (let i = 0; i < len; i++) {
           let row = results.rows.item(i);
-          //console.log(`ITEMS: ` + JSON.stringify(row));
+          console.log(`ITEMS: ` + JSON.stringify(row));
         }
       });
     });
