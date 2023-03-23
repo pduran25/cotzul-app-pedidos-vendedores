@@ -33,7 +33,7 @@ function defaultValueRegister() {
 
 function defaultValueUser() {
   return {
-    vn_codigo: "",
+    vn_codigo: 0,
     vn_nombre: "",
     vn_usuario: "",
     vn_clave: "",
@@ -80,11 +80,10 @@ export default function Productos(props) {
   const [loading2, setLoading2] = useState(true);
   const [data, setData] = useState([]);
   const [dataUser, setdataUser] = useState(defaultValueUser());
-  const { signOut, signUp } = React.useContext(AuthContext);
   const [usuario, setUsuario] = useState(false);
-  const [consta, setConsta] = useState("");
   const [idpedido, setIdPedido] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [idvendedor, setIdvendedor] = useState(0); 
 
 
   var cont = 0;
@@ -95,8 +94,9 @@ export default function Productos(props) {
       const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
       console.log("si entrego : " + jsonValue);
       setdataUser(JSON.parse(jsonValue));
-      setUsuario(true);
-      console.log("INGRSA A PRODUCTO: " + dataUser.vn_nombre);
+      setIdvendedor(JSON.parse(jsonValue).vn_codigo);
+      console.log("valor de codigo: "+JSON.parse(jsonValue).vn_codigo);
+      listarPedidos(JSON.parse(jsonValue).vn_codigo);
     } catch (e) {
       console.log("Error al coger el usuario");
       console.log(e);
@@ -109,34 +109,35 @@ export default function Productos(props) {
 
   const appState = useRef(AppState.currentState);
 
-  useEffect(() => {
-    console.log("ENTRO JSA");
-    if (dataUser) {
+useEffect(() => {
+    console.log("ENTRO JSA*");
       if (!usuario) {
         getDataUser();
-        recargarPedidos();
         console.log("ENTRO JSA2");
       }
-    }
-  }, []);
+  }, [usuario]);
 
-  useEffect(() => {
-    listarPedidos();
-  }, [dataUser]);
 
+
+useEffect(()=> {
+  console.log("Veces que ingresa a datauser ****");
+  if(idvendedor != 0){
+    setUsuario(true);
+    console.log("INGRSA A PRODUCTO:* " + idvendedor);
+  }
+}, [idvendedor])
 
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    listarPedidos();
+    getDataUser();
 }, []);
 
 
   const regresarFunc = () => {
     navigation.navigate("productos");
-    listarPedidos();
+    getDataUser();
   };
 
-  const listarPedidos = async () => {
+  const listarPedidos = async (numvendedor) => {
     try {
       const database_name = "CotzulBD.db";
       const database_version = "1.0";
@@ -144,7 +145,7 @@ export default function Productos(props) {
       const database_size = 200000;
 
       let db = null;
-      console.log("LISTAR pedidovendedor");
+      console.log("LISTAR pedidovendedor Productos entro una vez");
       db = SQLite.openDatabase(
         database_name,
         database_version,
@@ -152,7 +153,7 @@ export default function Productos(props) {
         database_size
       );
       db.transaction((tx) => {
-        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus = -1", [], (tx, results) => {
+        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus = -1 AND pv_codigovendedor = "+numvendedor, [], (tx, results) => {
           var len = results.rows.length;
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);

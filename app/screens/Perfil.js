@@ -54,6 +54,18 @@ export default function Perfil(){
    const onSubmit = async() =>{
         try {
 
+            db = SQLite.openDatabase(
+                database_name,
+                database_version,
+                database_displayname,
+                database_size
+              );
+
+              db.transaction((tx) => {
+                tx.executeSql("DROP TABLE IF EXISTS Usuario");
+              });
+                
+
             await AsyncStorage.removeItem(STORAGE_KEY)
             setUser(false)
             signOut()

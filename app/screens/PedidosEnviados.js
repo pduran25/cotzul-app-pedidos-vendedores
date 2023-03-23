@@ -173,7 +173,7 @@ export default function PedidosEnviados(props) {
       const database_size = 200000;
 
       let db = null;
-      console.log("LISTAR pedidovendedor");
+      console.log("LISTAR pedidovendedor pedidos enviados");
       db = SQLite.openDatabase(
         database_name,
         database_version,

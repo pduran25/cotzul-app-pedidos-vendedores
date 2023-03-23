@@ -36,9 +36,10 @@ class ModalItems extends Component {
   }
 
   componentDidMount() {
-    console.log("nuevo texto montando item: " + this.state.search);
     this.setState({ modalVisible: false });
-    this.getClientes();
+    //console.log("nuevo texto montando item: " + this.state.search);
+    
+    //this.getClientes();
   }
 
   setModalVisible = (visible) => {

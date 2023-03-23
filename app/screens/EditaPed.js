@@ -21,6 +21,7 @@ import ModalItems from "./ModalItems";
 import { RadioButton } from "react-native-paper";
 import { Button } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
+import * as SQLite from "expo-sqlite";
 
 /**
  * @author Pedro Durán A.
@@ -39,6 +40,48 @@ function defaultCliente() {
     ct_plazo: "-----",
     ct_telefono: "-----",
     ct_tipoid: 0,
+  };
+}
+
+/*dp_codigo INTEGER, dp_codvendedor INTEGER, dp_codcliente INTEGER" +
+          ", dp_subtotal VARCHAR(200), dp_descuento VARCHAR(20), dp_transporte VARCHAR(20) " +
+          ", dp_seguro VARCHAR(20), dp_iva VARCHAR(20), dp_total VARCHAR(20) " +
+          ", dp_estatus VARCHAR(50), dp_codpedven VARCHAR(50)" +
+          ", dp_idvendedor VARCHAR(50), dp_fecha VARCHAR(50), dp_empresa VARCHAR(20) " +
+          ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50)" +
+          ", dp_tipodoc VARCHAR(50), dp_tipodesc VARCHAR(50), dp_porcdesc VARCHAR(50), dp_valordesc VARCHAR(20) " +
+          ", dp_ttrans VARCHAR(50), dp_gnorden VARCHAR(50), dp_gnventas VARCHAR(20) " +
+          ", dp_gngastos VARCHAR(50), item TEXT*/ 
+
+function defaultPedido() {
+  return {
+    dp_codigo: 0, 
+    dp_codvendedor: 0,
+    dp_codcliente: 0,
+    dp_subtotal: "",
+    dp_descuento: "",
+    dp_transporte: "",
+    dp_seguro: "",
+    dp_iva: "",
+    dp_total: "",
+    dp_estatus: "",
+    dp_codpedven: "",
+    dp_idvendedor: "",
+    dp_fecha: "",
+    dp_empresa: "",
+    dp_prioridad: "",
+    dp_observacion: "",
+    dp_tipodoc: "",
+    dp_tipodesc: "",
+    dp_pordesc: "",
+    dp_valordesc: "",
+    dp_ttrans: "",
+    dp_gnorden: "",
+    dp_gnventas: "",
+    dp_gngastos: "",
+    item: ""
+
+
   };
 }
 
@@ -145,6 +188,8 @@ export default function EditaPed(props) {
   const [nomtrans, setNomTrans] = useState("SELECCIONAR");
   const [idtrans, setIdTrans] = useState(0);
   const [regitems, setRegItems] = useState(-1);
+  const [activa, setActiva] = useState(0);
+  const [datopedido, setDatoPedido] = useState([]);
 
   const [idcliente, setIdCliente] = useState(0);
 
@@ -434,7 +479,6 @@ export default function EditaPed(props) {
     }
   };
 
-  console.log(dataUser);
 
   const getCurrentDate = () => {
     var date = new Date().getDate();
@@ -1301,7 +1345,7 @@ export default function EditaPed(props) {
   const cargarPedido = async () => {
     try {
 
-      console.log("JJJJJJJJJJJJJ");
+      console.log("***INGRESA A CARGAR PEDIDO***");
       /*const response = await fetch(
         "https://app.cotzul.com/Pedidos/getDatosPedido.php?idpedido=" + idpedido
       );*/
@@ -1312,23 +1356,30 @@ export default function EditaPed(props) {
         database_displayname,
         database_size
       );
+
+
+      let temp = [];
+
+      console.log("busqueda datos pedidos ****");
       db.transaction((tx) => {
-        tx.executeSql("SELECT * FROM datospedidos  ", [], (tx, results) => {
+        tx.executeSql("SELECT * FROM datospedidos WHERE dp_codigo = ?", [idpedido], (tx, results) => {
           var len = results.rows.length;
           for (let i = 0; i < len; i++) {
-            let row = results.rows.item(i);
-            
+            temp.push(results.rows.item(i));
           }
-          registrarPlazo(results.rows._array);
-          console.log("JSA: "+JSON.stringify(results));
+         
+          console.log("JSA: "+JSON.stringify(results.rows));
+          console.log(temp);
+          setDatoPedido(temp[0]);
+          console.log("COD CLIENTE: "+temp[0].dp_codcliente);
         });
       });
 
-      
-      const jsonResponse = await response.json();
       console.log("OBTENIENDO PEDIDO");
-      console.log(jsonResponse?.pedido);
-      setPedido(jsonResponse?.pedido);
+      
+
+
+     /* setPedido(jsonResponse?.pedido);
       setItemPedido(jsonResponse?.pedido[0].item);
       setObs(jsonResponse?.pedido[0].dp_observacion);
       setIdCliente(jsonResponse?.pedido[0].dp_codcliente);
@@ -1344,7 +1395,9 @@ export default function EditaPed(props) {
       setGnGastos(Number(jsonResponse?.pedido[0].dp_gngastos));
       cargarFormaPago(jsonResponse?.pedido[0].dp_tipodoc);
 
-      cargarListaItems(jsonResponse?.pedido[0].item);
+      cargarListaItems(jsonResponse?.pedido[0].item);*/
+
+      setActiva(1);
     } catch (error) {
       console.log("un error cachado obtener pedidos");
       console.log(error);
@@ -1352,15 +1405,44 @@ export default function EditaPed(props) {
   };
 
   const cargarListaItems = (itemes) => {
-    for (let i = 0; i < itemes.length; i++) {
+
+  //  itemes = itemes.substring(1,itemes.length-1);
+
+  try{
+    console.log("Items: "+ itemes);
+    let datositems =JSON.parse(itemes);
+    console.log(datositems);
+  }catch(e){
+    console.log("error: +e");
+  }
+    
+   // setItemTotal(datositems);
+
+
+   /* var novedad = "texto incluido para presentar";
+    console.log("texto novedad: "+ novedad.substring(1,5));
+    
+    
+    let datositems =JSON.parse(itemes);
+    console.log("Total de datos: "+ datositems[0]);*/
+    //  JSON.parse(itemes);
+    //
+    /*let varitem = itemes.split("[")[0];
+    varitem = varitem.split["]"][0];
+    console.log("Valores de split: "+ varitem);*/
+    
+
+    //let datositems =  JSON.parse(itemes);
+    //console.log("cantidad de items: "+datositems.length);
+    /*for (let i = 0; i < datositems.length; i++) {
       cargarItemElegido(
-        itemes[i].it_codprod,
-        itemes[i].it_cantidad,
-        itemes[i].it_descuento,
+        datositems[i].it_codprod,
+        datositems[i].it_cantidad,
+        datositems[i].it_descuento,
         0,
-        itemes[i].it_precio
+        datositems[i].it_precio
       );
-    }
+    }*/
   };
 
   const cargarClienteElegido = async () => {
@@ -1375,7 +1457,6 @@ export default function EditaPed(props) {
           idcliente
       );
       const jsonResponse = await response.json();
-      console.log("OBTENIENDO PEDIDO");
       console.log(jsonResponse?.cliente);
       actualizaCliente(jsonResponse?.cliente[0]);
     } catch (error) {
@@ -1522,14 +1603,14 @@ export default function EditaPed(props) {
     }
   };
 
-  useEffect(() => {
+  /*useEffect(() => {
     cargarClienteElegido();
   }, [idcliente]);
 
-  useEffect(() => {
-    if (itemtotal.length > 0) {
-    }
-  }, [itemtotal]);
+
+
+
+ 
 
   useEffect(() => {
     cargarTransporte();
@@ -1539,10 +1620,7 @@ export default function EditaPed(props) {
     if (transp.length > 0) setRegtrans(1);
   }, [transp]);
 
-  useEffect(() => {
-    cargarVendedores();
-    cargarPedido();
-  }, []);
+  
 
   useEffect(() => {
     cargarTarifas(tcodigo, ttrans);
@@ -1551,7 +1629,43 @@ export default function EditaPed(props) {
 
   useEffect(() => {
     setDescuento(0);
-  }, [checked]);
+  }, [checked]);*/
+
+
+  useEffect(() => {
+    if (itemtotal.length > 0) {
+        agregaResultados()
+    }
+  }, [itemtotal]);
+
+
+  useEffect(() => {
+    //cargarVendedores();
+    if(setActiva != 1)
+      cargarPedido();
+  }, []);
+
+  useEffect(() => {
+    if(datopedido.dp_codvendedor != 0){
+      setPedido(datopedido.dp_codigo);
+      setItemPedido(datopedido.item);
+      setObs(datopedido.dp_observacion);
+      setIdCliente(datopedido.dp_codcliente);
+      setChecked(datopedido.dp_tipodesc == 0 ? "first" : "second");
+      setPorcent(datopedido.dp_pordesc);
+      setIdTrans(datopedido.dp_ttrans);
+      setSubtotal(Number(datopedido.dp_subtotal));
+      setDescuento(Number(datopedido.dp_descuento));
+      setSeguro(Number(datopedido.dp_seguro));
+      setIva(Number(datopedido.dp_iva));
+      setTransporte(Number(datopedido.dp_transporte));
+      setTotal(Number(datopedido.dp_total));
+      setGnGastos(Number(datopedido.dp_gngastos));
+      cargarFormaPago(datopedido.dp_tipodoc);
+      cargarListaItems(""+datopedido.item);
+    }
+  }, [datopedido]);
+
 
   const GrabarBorrador = async () => {
     try {

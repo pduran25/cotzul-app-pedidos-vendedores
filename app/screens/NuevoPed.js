@@ -137,6 +137,7 @@ export default function NuevoPed(props) {
   const database_version = "1.0";
   const database_displayname = "CotzulBD";
   const database_size = 200000;
+
   let db = null;
 
   const [valrecibo, setRecibo] = useState(
@@ -158,7 +159,7 @@ export default function NuevoPed(props) {
               height: 30,
               borderColor: "black",
               borderWidth: 1,
-            }}
+            }} 
           >
             <Text style={styles.tabletext}>
               {item.it_referencia + "-" + item.it_descripcion}
@@ -1382,6 +1383,15 @@ export default function NuevoPed(props) {
   }, [checked]);
 
   const GrabarBorrador = async () => {
+
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+
+
     try {
       var textofinal =
         '<?xml version="1.0" encoding="iso-8859-1"?><c c0="2" c1="1" c2="' +
@@ -1515,6 +1525,124 @@ export default function NuevoPed(props) {
           "&cadena=" +
           cadenita
       );
+
+      /*"(pv_codigo INTEGER, pv_codigovendedor INTEGER,  pv_vendedor VARCHAR(100), pv_codcliente INTEGER, pv_cliente VARCHAR(200)," +
+          "pv_total VARCHAR(50), pv_estatus VARCHAR(50), pv_gngastos VARCHAR(100), pv_numpedido INTEGER);*/
+
+      try{
+      db.transaction((txn) => {
+          txn.executeSql(
+            "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido) " +
+              " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+            [
+              /*1,59037,"VENDEDOR 1", 2084, "CLIENTE 1", "100", "-1", "0.90", 5*/
+              parseInt(dataUser.vn_recibo),
+              parseInt(dataUser.vn_codigo),
+              dataUser.vn_nombre,
+              parseInt(cliente.ct_codigo),
+              cliente.ct_cliente,
+              total.toString(),
+              "-1",
+              gngastos.toString(),
+              parseInt(dataUser.vn_recibo)
+            ],
+            (txn, results) => {
+              if (results.rowsAffected > 0) {
+                console.log("Entro bien a grabar primera table");
+              }
+            }
+          );
+
+          txn.executeSql("SELECT * FROM pedidosvendedor", [], (txn, results) => {
+            var len = results.rows.length;
+            for (let i = 0; i < len; i++) {
+              let row = results.rows.item(i);
+              console.log(`PEDIDOS VENDEDOR: ` + JSON.stringify(row));
+            }
+          });
+
+          /*"(dp_codigo INTEGER, dp_codvendedor INTEGER, dp_codcliente INTEGER" +
+          ", dp_subtotal VARCHAR(200), dp_descuento VARCHAR(20), dp_transporte VARCHAR(20) " +
+          ", dp_seguro VARCHAR(20), dp_iva VARCHAR(20), dp_total VARCHAR(20) " +
+          ", dp_estatus VARCHAR(50), dp_codpedven VARCHAR(50), dp_numpedido VARCHAR(20) " +
+          ", dp_idvendedor VARCHAR(50), dp_fecha VARCHAR(50), dp_empresa VARCHAR(20) " +
+          ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50)" +
+          ", dp_tipodoc VARCHAR(50), dp_tipodesc VARCHAR(50), dp_porcdesc VARCHAR(50), dp_valordesc VARCHAR(20) " +
+          ", dp_ttrans VARCHAR(50), dp_gnorden VARCHAR(50), dp_gnventas VARCHAR(20) " +
+          ", dp_gngastos VARCHAR(50), item TEXT " +
+          " );"*/
+     
+
+
+        txn.executeSql(
+          "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
+            ", dp_subtotal , dp_descuento , dp_transporte  " +
+            ", dp_seguro , dp_iva , dp_total  " +
+            ", dp_estatus , dp_codpedven " +
+            ", dp_idvendedor , dp_fecha , dp_empresa  " +
+            ", dp_prioridad , dp_observacion" +
+            ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
+            ", dp_ttrans , dp_gnorden , dp_gnventas  " +
+            ", dp_gngastos, item ) " +
+            " VALUES (?, ?, ?, ?, ?" +
+            ", ?, ?, ?, ?, ?" +
+            ", ?, ?, ?, ?" +
+            ", ?, ?, ?, ?" +
+            ", ?, ?, ?, ?, ?" +
+            ", ?, ?); ",
+          [
+            parseInt(dataUser.vn_recibo),
+            parseInt(dataUser.vn_codigo),
+            parseInt(cliente.ct_codigo),
+            subtotal.toString(),
+            descuento.toString(),
+            transporte.toString(),
+            seguro.toString(),
+            iva.toString(),
+            total.toString(),
+            "-1",
+            dataUser.vn_recibo.toString(),
+            parseInt(dataUser.vn_codigo),
+            fechaped.toString(),
+           'COTZUL',
+           'NORMAL',
+            obs,
+            doc.toString(),
+            (checked == "second" ? "1" : "0"),
+            porcent.toString(),
+            descuento.toString(),
+            transporte.toString(),
+            gnorden.toString(),
+            gnventas.toString(),
+            gngastos.toString(),
+            cadenita.toString(),
+          ],
+          (txn, results) => {
+            console.log("WWWWW"+JSON.stringify(results));
+            if (results.rowsAffected > 0) {
+              console.log("Entro bien a grabar segunda table");
+            }
+          }
+        );
+
+        txn.executeSql("SELECT * FROM datospedidos", [], (txn, results) => {
+          var len = results.rows.length;
+          for (let i = 0; i < len; i++) {
+            let row = results.rows.item(i);
+            console.log(`DATOS PEDIDOS: ` + JSON.stringify(row));
+          }
+        });
+
+        txn.executeSql("UPDATE usuario SET us_numrecibo = ? WHERE us_numunico = 1 ", [parseInt(dataUser.vn_recibo)+1], (txn, results) => {
+          if (results.rowsAffected > 0) {
+            console.log("Actualizo el nuevo numero recibo");
+          }
+        });
+      });
+
+    }catch(e){
+      console.log("se cayo"+e)
+    }
 
       const jsonResponse = await response.json();
       console.log(jsonResponse.estatusped);

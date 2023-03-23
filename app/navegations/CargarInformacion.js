@@ -28,7 +28,7 @@ const APITarifas =
 const APIPlazo = "https://app.cotzul.com/Pedidos/pd_getPlazo.php?notidplazo=1";
 const APIItem = "https://app.cotzul.com/Pedidos/getItems.php";
 const APIDatosPedidos =
-  "https://app.cotzul.com/Pedidos/getDatosPedido.php?idpedido=59";
+  "https://app.cotzul.com/Pedidos/getDatosPedidoxVendedor.php?idvendedor=";
 
 const database_name = "CotzulBD.db";
 const database_version = "1.0";
@@ -50,7 +50,7 @@ export default function CargarInformacion() {
   const getDataUser = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-      console.log("si entrego : " + jsonValue);
+      console.log("si entrego carga informacion: " + jsonValue);
       setdataUser(JSON.parse(jsonValue));
       setUsuario(true);
       console.log("INGRSA A PRODUCTO: " + dataUser.vn_nombre);
@@ -185,7 +185,7 @@ export default function CargarInformacion() {
   };
 
   const listarPedidosVendedor = () => {
-    console.log("LISTAR pedidovendedor");
+    console.log("LISTAR pedidovendedor cargarinfomracion");
     db = SQLite.openDatabase(
       database_name,
       database_version,
@@ -579,7 +579,9 @@ export default function CargarInformacion() {
         }
       });
     });
-    setActivo(2);
+    
+    datospedidos();
+    
   };
   /** FIN TARIFA **/
 
@@ -676,11 +678,12 @@ export default function CargarInformacion() {
   /** DATOS PEDIDOS **/
   const datospedidos = async () => {
     console.log("GET API datospedidos");
-    const response = await fetch(APIDatosPedidos);
+    const response = await fetch(APIDatosPedidos+dataUser.vn_codigo);
     const jsonResponse = await response.json();
-
+ 
+    
     saveDatosPedidos(jsonResponse);
-    console.log(JSON.stringify(jsonResponse));
+   //console.log(JSON.stringify(jsonResponse));
   };
 
   saveDatosPedidos = (myResponse) => {
@@ -699,32 +702,32 @@ export default function CargarInformacion() {
       txn.executeSql(
         "CREATE TABLE IF NOT EXISTS " +
           "datospedidos " +
-          "(dp_codigo VARCHAR(200), dp_codvendedor VARCHAR(20), dp_codcliente VARCHAR(50)" +
+          "(dp_codigo INTEGER, dp_codvendedor INTEGER, dp_codcliente INTEGER" +
           ", dp_subtotal VARCHAR(200), dp_descuento VARCHAR(20), dp_transporte VARCHAR(20) " +
           ", dp_seguro VARCHAR(20), dp_iva VARCHAR(20), dp_total VARCHAR(20) " +
-          ", dp_estatus VARCHAR(50), dp_codpedven VARCHAR(50), dp_numpedido VARCHAR(20) " +
+          ", dp_estatus VARCHAR(50), dp_codpedven VARCHAR(50)" +
           ", dp_idvendedor VARCHAR(50), dp_fecha VARCHAR(50), dp_empresa VARCHAR(20) " +
-          ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50), dp_idcliente VARCHAR(20) " +
+          ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50)" +
           ", dp_tipodoc VARCHAR(50), dp_tipodesc VARCHAR(50), dp_porcdesc VARCHAR(50), dp_valordesc VARCHAR(20) " +
           ", dp_ttrans VARCHAR(50), dp_gnorden VARCHAR(50), dp_gnventas VARCHAR(20) " +
-          ", dp_gngastos VARCHAR(50), item VARCHAR(500) " +
+          ", dp_gngastos VARCHAR(50), item TEXT " +
           " );"
       );
-console.log("NNNNNNN");
+
       myResponse?.pedido.map((value, index) => {
         txn.executeSql(
           "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
             ", dp_subtotal , dp_descuento , dp_transporte  " +
             ", dp_seguro , dp_iva , dp_total  " +
-            ", dp_estatus , dp_codpedven , dp_numpedido  " +
+            ", dp_estatus , dp_codpedven " +
             ", dp_idvendedor , dp_fecha , dp_empresa  " +
-            ", dp_prioridad , dp_observacion , dp_idcliente  " +
-            ", dp_tipodoc , dp_tipodesc ,dp_porcdesc dp_valordesc  " +
+            ", dp_prioridad , dp_observacion " +
+            ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
             ", dp_ttrans , dp_gnorden , dp_gnventas  " +
             ", dp_gngastos, item ) " +
             " VALUES (?, ?, ?, ?, ?" +
-            ", ?, ?, ?, ?, ?" +
-            ", ?, ?, ?, ?, ?" +
+            ", ?, ?, ?, ?" +
+            ", ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
             ", ?, ?); ",
@@ -740,13 +743,11 @@ console.log("NNNNNNN");
             value.dp_total,
             value.dp_estatus,
             value.dp_codpedven,
-            value.dp_numpedido,
             value.dp_idvendedor,
             value.dp_fecha,
             value.dp_empresa,
             value.dp_prioridad,
             value.dp_observacion,
-            value.dp_idcliente,
             value.dp_tipodoc,
             value.dp_tipodesc,
             value.dp_porcdesc,
@@ -755,19 +756,20 @@ console.log("NNNNNNN");
             value.dp_gnorden,
             value.dp_gnventas,
             value.dp_gngastos,
-            JSON.stringify(value.item),
+           /* JSON.stringify(value.item),*/
+            value.item
           ],
           (txn, results) => {
-            console.log("WWWWW"+JSON.stringify(results));
             if (results.rowsAffected > 0) {
-              cont++;
+              console.log("numero de filas registradas: "+ results.rowsAffected);
             }
           }
         );
       });
     });
 
-    listarDatosPedidos();
+  
+   listarDatosPedidos();
   };
 
   const listarDatosPedidos = () => {
@@ -785,8 +787,8 @@ console.log("NNNNNNN");
           let row = results.rows.item(i);
           console.log(`DATOS PEDIDOS: ` + JSON.stringify(row));
         }
-        setTerminaDatosPedido(true);
-        terminarProceso();
+        //setTerminaDatosPedido(true);
+        setActivo(2);
       });
     });
   };
