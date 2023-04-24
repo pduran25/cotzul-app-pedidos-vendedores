@@ -666,6 +666,23 @@ export default function NuevoPed(props) {
         '" d7="' +
         0 +
         '"></detalle>';
+
+
+        /*codprod: itemtotal[i].codprod,
+        descripcion: itemtotal[i].descripcion,
+        cantidad: itemtotal[i].cantidad,
+        precio: itemtotal[i].precio,
+        pvp: itemtotal[i].pvp,
+        subdist: itemtotal[i].subdist,
+        contado: itemtotal[i].contado,
+        preciosel: itemtotal[i].preciosel,
+        editable: itemtotal[i].editable,
+        costo: itemtotal[i].costo,
+        descuento: itemtotal[i].descuento,
+        subtotal: itemtotal[i].subtotal,
+        total: itemtotal[i].total,
+        peso: itemtotal[i].peso,
+        gngastos: gngastosv, */
       cadenita1 =
         cadenita1 +
         "*" +
@@ -1294,9 +1311,7 @@ export default function NuevoPed(props) {
               registrarTransporte(results.rows._array);
             });
           });
-      /*const response = await fetch(
-        "https://app.cotzul.com/Pedidos/pd_getTransporte.php"
-      );*/
+
     
       
     } catch (error) {
@@ -1526,8 +1541,6 @@ export default function NuevoPed(props) {
           cadenita
       );
 
-      /*"(pv_codigo INTEGER, pv_codigovendedor INTEGER,  pv_vendedor VARCHAR(100), pv_codcliente INTEGER, pv_cliente VARCHAR(200)," +
-          "pv_total VARCHAR(50), pv_estatus VARCHAR(50), pv_gngastos VARCHAR(100), pv_numpedido INTEGER);*/
 
       try{
       db.transaction((txn) => {
@@ -1535,7 +1548,6 @@ export default function NuevoPed(props) {
             "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido) " +
               " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?); ",
             [
-              /*1,59037,"VENDEDOR 1", 2084, "CLIENTE 1", "100", "-1", "0.90", 5*/
               parseInt(dataUser.vn_recibo),
               parseInt(dataUser.vn_codigo),
               dataUser.vn_nombre,
@@ -1559,19 +1571,7 @@ export default function NuevoPed(props) {
               let row = results.rows.item(i);
               console.log(`PEDIDOS VENDEDOR: ` + JSON.stringify(row));
             }
-          });
-
-          /*"(dp_codigo INTEGER, dp_codvendedor INTEGER, dp_codcliente INTEGER" +
-          ", dp_subtotal VARCHAR(200), dp_descuento VARCHAR(20), dp_transporte VARCHAR(20) " +
-          ", dp_seguro VARCHAR(20), dp_iva VARCHAR(20), dp_total VARCHAR(20) " +
-          ", dp_estatus VARCHAR(50), dp_codpedven VARCHAR(50), dp_numpedido VARCHAR(20) " +
-          ", dp_idvendedor VARCHAR(50), dp_fecha VARCHAR(50), dp_empresa VARCHAR(20) " +
-          ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50)" +
-          ", dp_tipodoc VARCHAR(50), dp_tipodesc VARCHAR(50), dp_porcdesc VARCHAR(50), dp_valordesc VARCHAR(20) " +
-          ", dp_ttrans VARCHAR(50), dp_gnorden VARCHAR(50), dp_gnventas VARCHAR(20) " +
-          ", dp_gngastos VARCHAR(50), item TEXT " +
-          " );"*/
-     
+          }); 
 
 
         txn.executeSql(

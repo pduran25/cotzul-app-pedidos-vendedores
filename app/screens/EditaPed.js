@@ -22,6 +22,7 @@ import { RadioButton } from "react-native-paper";
 import { Button } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
 import * as SQLite from "expo-sqlite";
+import { LogBox } from 'react-native';
 
 /**
  * @author Pedro Durán A.
@@ -43,15 +44,7 @@ function defaultCliente() {
   };
 }
 
-/*dp_codigo INTEGER, dp_codvendedor INTEGER, dp_codcliente INTEGER" +
-          ", dp_subtotal VARCHAR(200), dp_descuento VARCHAR(20), dp_transporte VARCHAR(20) " +
-          ", dp_seguro VARCHAR(20), dp_iva VARCHAR(20), dp_total VARCHAR(20) " +
-          ", dp_estatus VARCHAR(50), dp_codpedven VARCHAR(50)" +
-          ", dp_idvendedor VARCHAR(50), dp_fecha VARCHAR(50), dp_empresa VARCHAR(20) " +
-          ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50)" +
-          ", dp_tipodoc VARCHAR(50), dp_tipodesc VARCHAR(50), dp_porcdesc VARCHAR(50), dp_valordesc VARCHAR(20) " +
-          ", dp_ttrans VARCHAR(50), dp_gnorden VARCHAR(50), dp_gnventas VARCHAR(20) " +
-          ", dp_gngastos VARCHAR(50), item TEXT*/ 
+
 
 function defaultPedido() {
   return {
@@ -186,12 +179,17 @@ export default function EditaPed(props) {
   const [regplazo, setRegplazo] = useState(-1);
   const [regtrans, setRegtrans] = useState(-1);
   const [nomtrans, setNomTrans] = useState("SELECCIONAR");
-  const [idtrans, setIdTrans] = useState(0);
+  const [idtrans, setIdTrans] = useState(-1);
   const [regitems, setRegItems] = useState(-1);
   const [activa, setActiva] = useState(0);
-  const [datopedido, setDatoPedido] = useState([]);
-
+  const [datopedido, setDatoPedido] = useState(null);
+  const [numitem, setNumItem] = useState(0);
   const [idcliente, setIdCliente] = useState(0);
+  const [datositems, setDatosItems] = useState();
+
+  LogBox.ignoreLogs([
+    'Non-serializable values were found in the navigation state',
+  ]);
 
   var resindex = 0;
   var itemtext = "";
@@ -264,6 +262,7 @@ export default function EditaPed(props) {
               keyboardType="numeric"
               placeholder="0,0"
               style={styles.tabletext}
+              value={itemtotal[index].cantidad}
               onChangeText={(val) => setCanti(val, index)}
               onEndEditing={() =>
                 EditarResultados(
@@ -294,6 +293,7 @@ export default function EditaPed(props) {
             <RNPickerSelect
               useNativeAndroidPickerStyle={false}
               style={pickerStyle2}
+              
               onValueChange={(tprecio) => setNumprecio(tprecio, index)}
               placeholder={{ label: "P. CREDITO", value: 1 }}
               items={[
@@ -313,10 +313,11 @@ export default function EditaPed(props) {
               borderWidth: 1,
             }}
           >
-            {(itemtotal.length > 0 ? itemtotal[index].editable : 0) == 1 ? (
+            {(itemtotal.length > 0)                                                                                                                                                                                                                                     ? (
               <TextInput
                 keyboardType="numeric"
                 placeholder="0,0"
+                value={itemtotal[index].preciosel}
                 style={styles.tabletext}
                 onChangeText={(val) => setPrecioVal(val, index)}
                 onEndEditing={() => ActualizaResultados(item.it_codprod)}
@@ -360,6 +361,7 @@ export default function EditaPed(props) {
                 keyboardType="numeric"
                 placeholder="0,0"
                 style={styles.tabletext}
+                value={itemtotal[index].descuento}
                 onChangeText={(val) => setDescu(val, index)}
                 onEndEditing={() =>
                   EditarResultados(
@@ -516,11 +518,10 @@ export default function EditaPed(props) {
 
   const actualizaItem = (newitem) => {
     if (noElementoSimilar(newitem.it_codprod)) {
-      resindex = 0;
+     // resindex = 0;
       console.log("dataitem. " + JSON.stringify(dataitem));
       console.log("newitem. " + JSON.stringify(newitem));
       setDataItem(dataitem.concat(newitem));
-      //console.log("dataitem. " + JSON.stringify(dataitem));
 
       agregaResultados(
         newitem.it_codprod,
@@ -530,13 +531,14 @@ export default function EditaPed(props) {
         newitem.it_pvp,
         newitem.it_preciosub,
         newitem.it_contado,
+        newitem.it_precio,
         0,
         0,
         0,
         "-"
       );
-      resindex = valindex + 1;
-      setValIndex(resindex);
+      //resindex = valindex + 1;
+      //setValIndex(resindex);
       setLoading(true);
     } else {
       Alert.alert("El Item ya ha sido ingresado");
@@ -596,16 +598,39 @@ export default function EditaPed(props) {
   const registrarTransporte = (dataTransporte) => {
     var temp = [];
 
+    console.log("cantidad de transportes: "+ dataTransporte.length);
     for (let i = 0; i < dataTransporte.length; ++i) {
-      if (dataTransporte[i].pl_codigo != idtrans)
+      if (dataTransporte[i].pl_codigo != idtrans){
         temp.push({
           label: dataTransporte[i].pl_nombre,
           value: dataTransporte[i].pl_codigo,
         });
-      else setNomTrans(dataTransporte[i].pl_nombre);
+        console.log("****NO ENCUENTRA transporte****"+dataTransporte[i].pl_codigo+ "valor de idtrans:"+idtrans);
+      }
+      else{
+        console.log("****cargo el nombre transporte****");
+        setNomTrans(dataTransporte[i].pl_nombre);
+      } 
     }
+    
     setTransp(temp);
+    
   };
+
+  useEffect(()=>{
+
+      if(transp.length>0 && regtrans== -1){
+        setRegtrans(1);
+      }
+  },[transp])
+
+
+  const registrarItems = () =>{
+   /* for (let i = 0; i < itemtotal.length; ++i) {
+      console.log("Referencia: "+itemtotal[i].it_referencia);*/
+      
+    /*}*/
+  }
 
   const agregaResultados = (
     codprod,
@@ -615,32 +640,34 @@ export default function EditaPed(props) {
     pvp,
     subdist,
     contado,
+    preciosel,
     editable,
     costo,
     peso,
     descripcion
   ) => {
-    console.log("INGRESO agregaResultados");
+    console.log("INGRESO agregaResultados len: "+itemtotal.length);
     var temp = [];
     var gngastosv = 0;
     for (let i = 0; i < itemtotal.length; ++i) {
+     console.log("Referencia: "+itemtotal[i].it_referencia);
       gngastosv = Number(itemtotal[i].costo) / Number(itemtotal[i].subtotal);
       temp.push({
         codprod: itemtotal[i].codprod,
-        descripcion: itemtotal[i].descripcion,
-        cantidad: itemtotal[i].cantidad,
-        precio: itemtotal[i].precio,
-        pvp: itemtotal[i].pvp,
-        subdist: itemtotal[i].subdist,
-        contado: itemtotal[i].contado,
-        preciosel: itemtotal[i].preciosel,
-        editable: itemtotal[i].editable,
-        costo: itemtotal[i].costo,
-        descuento: itemtotal[i].descuento,
-        subtotal: itemtotal[i].subtotal,
-        total: itemtotal[i].total,
-        peso: itemtotal[i].peso,
-        gngastos: gngastosv,
+          descripcion: itemtotal[i].descripcion,
+          cantidad: itemtotal[i].cantidad,
+          precio: itemtotal[i].precio,
+          pvp: itemtotal[i].pvp,
+          subdist: itemtotal[i].subdist,
+          contado: itemtotal[i].contado,
+          preciosel: itemtotal[i].preciosel,
+          editable: itemtotal[i].editable,
+          costo: itemtotal[i].costo,
+          descuento: itemtotal[i].descuento,
+          subtotal: itemtotal[i].subtotal,
+          total: itemtotal[i].total,
+          peso: itemtotal[i].peso,
+          gngastos: gngastos,
       });
     }
 
@@ -648,6 +675,8 @@ export default function EditaPed(props) {
       restot = 0;
     ressub = Number(cant) * Number(precio);
     restot = ressub - (ressub * desc) / 100;
+
+    console.log("Valor de cantidad: "+cant);
 
     temp.push({
       codprod: codprod,
@@ -657,7 +686,7 @@ export default function EditaPed(props) {
       pvp: pvp,
       subdist: subdist,
       contado: contado,
-      preciosel: precio,
+      preciosel: preciosel,
       editable: editable,
       costo: costo,
       descuento: desc,
@@ -666,8 +695,11 @@ export default function EditaPed(props) {
       peso: peso,
       gngastos: 0,
     });
+    console.log(temp);
     setItemTotal(temp);
-    console.log("valor del itemtotal: " + editable);
+    
+    
+    console.log("valor del itemtotal: " + temp[0].cantidad);
   };
 
   const CargarResultados = () => {
@@ -799,7 +831,7 @@ export default function EditaPed(props) {
     }
     setDescuento(vardesc);
 
-    /*validación de seguro*/
+ 
 
     varseguro = ((varsubtotal - vardesc) * vseguro) / 100;
     setSeguro(varseguro);
@@ -1069,6 +1101,8 @@ export default function EditaPed(props) {
     peso,
     descripcion
   ) => {
+
+    console.log("ENTRO A EDITAR*** CANTIDAD DE ITEMS REGISTRADOS: "+itemtotal.length);
     var temp = [];
     var varsubtotal = 0;
     var varseguro = 0;
@@ -1330,12 +1364,6 @@ export default function EditaPed(props) {
           registrarPlazo(results.rows._array);
         });
       });
-      /*
-      const response = await fetch(
-        "https://app.cotzul.com/Pedidos/pd_getPlazo.php?notidplazo=" +
-          validplazo
-      );
-      */
     } catch (error) {
       console.log("un error cachado listar pedidos");
       console.log(error);
@@ -1346,9 +1374,6 @@ export default function EditaPed(props) {
     try {
 
       console.log("***INGRESA A CARGAR PEDIDO***");
-      /*const response = await fetch(
-        "https://app.cotzul.com/Pedidos/getDatosPedido.php?idpedido=" + idpedido
-      );*/
 
       db = SQLite.openDatabase(
         database_name,
@@ -1367,37 +1392,20 @@ export default function EditaPed(props) {
           for (let i = 0; i < len; i++) {
             temp.push(results.rows.item(i));
           }
-         
+          
           console.log("JSA: "+JSON.stringify(results.rows));
           console.log(temp);
+          setActiva(1);
+          setLoading(false);
           setDatoPedido(temp[0]);
           console.log("COD CLIENTE: "+temp[0].dp_codcliente);
+          console.log("OBTENIENDO PEDIDO");
+          
+          
         });
       });
 
-      console.log("OBTENIENDO PEDIDO");
       
-
-
-     /* setPedido(jsonResponse?.pedido);
-      setItemPedido(jsonResponse?.pedido[0].item);
-      setObs(jsonResponse?.pedido[0].dp_observacion);
-      setIdCliente(jsonResponse?.pedido[0].dp_codcliente);
-      setChecked(jsonResponse?.pedido[0].dp_tipodesc == 0 ? "first" : "second");
-      setPorcent(jsonResponse?.pedido[0].dp_porcdesc);
-      setIdTrans(jsonResponse?.pedido[0].dp_ttrans);
-      setSubtotal(Number(jsonResponse?.pedido[0].dp_subtotal));
-      setDescuento(Number(jsonResponse?.pedido[0].dp_descuento));
-      setSeguro(Number(jsonResponse?.pedido[0].dp_seguro));
-      setIva(Number(jsonResponse?.pedido[0].dp_iva));
-      setTransporte(Number(jsonResponse?.pedido[0].dp_transporte));
-      setTotal(Number(jsonResponse?.pedido[0].dp_total));
-      setGnGastos(Number(jsonResponse?.pedido[0].dp_gngastos));
-      cargarFormaPago(jsonResponse?.pedido[0].dp_tipodoc);
-
-      cargarListaItems(jsonResponse?.pedido[0].item);*/
-
-      setActiva(1);
     } catch (error) {
       console.log("un error cachado obtener pedidos");
       console.log(error);
@@ -1406,17 +1414,33 @@ export default function EditaPed(props) {
 
   const cargarListaItems = (itemes) => {
 
-  //  itemes = itemes.substring(1,itemes.length-1);
 
   try{
-    console.log("Items: "+ itemes);
-    let datositems =JSON.parse(itemes);
-    console.log(datositems);
-  }catch(e){
-    console.log("error: +e");
-  }
+    if(itemes.length > 0){
+      console.log("Items----: "+ itemes);
+      setDatosItems(JSON.parse(itemes));
+      let datoIt = JSON.parse(itemes);
+      console.log("Cantidad de items: "+ datoIt.length);
+
+      cargarItemElegido(
+        datoIt[numitem].it_codprod,
+        datoIt[numitem].it_cantidad,
+        datoIt[numitem].it_descuento,
+        datoIt[numitem].it_precio,
+        0
+      );
+      setNumItem(numitem+1);
+    }
     
-   // setItemTotal(datositems);
+  }catch(e){
+    console.log("error: "+e);
+  }
+
+ 
+ 
+
+  
+    
 
 
    /* var novedad = "texto incluido para presentar";
@@ -1447,18 +1471,44 @@ export default function EditaPed(props) {
 
   const cargarClienteElegido = async () => {
     try {
-      const response = await fetch(
+     /* const response = await fetch(
         "https://app.cotzul.com/Pedidos/getClienteElegido.php?idcliente=" +
           idcliente
       );
 
       console.log(
         "https://app.cotzul.com/Pedidos/getClienteElegido.php?idcliente=" +
-          idcliente
+        idcliente
       );
       const jsonResponse = await response.json();
       console.log(jsonResponse?.cliente);
-      actualizaCliente(jsonResponse?.cliente[0]);
+      actualizaCliente(jsonResponse?.cliente[0]);*/
+
+
+      console.log("revisando cliente elegido: "+idcliente);
+    try {
+
+      db = SQLite.openDatabase(
+        database_name,
+        database_version,
+        database_displayname,
+        database_size
+      );
+      db.transaction((tx) => {
+        tx.executeSql("SELECT * FROM clientes WHERE ct_codigo = "+idcliente, [], (tx, results) => {
+          var len = results.rows.length;
+          console.log("selecciono: "+len);
+          for (let i = 0; i < len; i++) {
+            let row = results.rows.item(i);
+            actualizaCliente(row);
+          }
+          
+        });
+      });
+    } catch (error) {
+      console.log("un error cachado listar pedidos");
+      console.log(error);
+    }
     } catch (error) {
       console.log(error);
     }
@@ -1471,6 +1521,60 @@ export default function EditaPed(props) {
     preciosel,
     editable
   ) => {
+
+    console.log("revisando elegido: "+codprod);
+    try {
+
+      db = SQLite.openDatabase(
+        database_name,
+        database_version,
+        database_displayname,
+        database_size
+      );
+      db.transaction((tx) => {
+        tx.executeSql("SELECT * FROM items WHERE it_codprod = "+codprod, [], (tx, results) => {
+          var len = results.rows.length;
+          console.log("selecciono: "+len);
+          for (let i = 0; i < len; i++) {
+            let row = results.rows.item(i);
+            console.log("codigo precio: " + row.it_precio);
+            console.log("valor descuento: " + descuento);
+          //actualizaItem(row);
+          if (noElementoSimilar(row.it_codprod)) {
+            resindex = 0;
+            console.log("dataitem+ " + JSON.stringify(dataitem));
+            console.log("newitem+ " + JSON.stringify(row));
+            setDataItem(dataitem.concat(row));
+          agregaResultados(
+              row.it_codprod,
+              cantidad,
+              descuento,
+              row.it_precio,
+              row.it_pvp,
+              row.it_preciosub,
+              row.it_contado,
+              preciosel,
+              editable,
+              row.it_costoprom,
+              row.it_peso,
+              row.it_referencia +
+                "-" +
+              row.it_descripcion
+            );
+            
+          } else {
+            Alert.alert("El Item ya ha sido ingresado");
+          }
+          }
+          //registrarPlazo(results.rows._array);
+        });
+      });
+    } catch (error) {
+      console.log("un error cachado listar pedidos");
+      console.log(error);
+    }
+
+    /*
     try {
       const response = await fetch(
         "https://app.cotzul.com/Pedidos/getItemElegido.php?iditem=" + codprod
@@ -1501,18 +1605,27 @@ export default function EditaPed(props) {
       );
     } catch (error) {
       console.log(error);
-    }
+    }*/
   };
 
   const cargarTransporte = async () => {
     try {
-      const response = await fetch(
-        "https://app.cotzul.com/Pedidos/pd_getTransporte.php"
+
+
+      db = SQLite.openDatabase(
+        database_name,
+        database_version,
+        database_displayname,
+        database_size
       );
-      const jsonResponse = await response.json();
-      //console.log("REGISTRANDO TRANSPORTE");
-      //console.log(jsonResponse?.transporte);
-      registrarTransporte(jsonResponse?.transporte);
+      db.transaction((tx) => {
+        tx.executeSql("SELECT * FROM transportes", [], (tx, results) => {
+          var len = results.rows.length;
+          console.log("valor de transporte: "+len);
+          registrarTransporte(results.rows._array);
+        });
+      });
+
     } catch (error) {
       console.log("un error cachado listar transporte");
       console.log(error);
@@ -1603,68 +1716,89 @@ export default function EditaPed(props) {
     }
   };
 
-  /*useEffect(() => {
-    cargarClienteElegido();
-  }, [idcliente]);
 
-
-
-
- 
-
-  useEffect(() => {
-    cargarTransporte();
-  }, [idtrans]);
-
-  useEffect(() => {
-    if (transp.length > 0) setRegtrans(1);
-  }, [transp]);
-
-  
-
-  useEffect(() => {
-    cargarTarifas(tcodigo, ttrans);
-    CargarResultados();
-  }, [ttrans]);
-
-  useEffect(() => {
-    setDescuento(0);
-  }, [checked]);*/
 
 
   useEffect(() => {
-    if (itemtotal.length > 0) {
-        agregaResultados()
-    }
-  }, [itemtotal]);
-
-
-  useEffect(() => {
-    //cargarVendedores();
-    if(setActiva != 1)
+    if(activa != 1)
       cargarPedido();
   }, []);
 
+
   useEffect(() => {
-    if(datopedido.dp_codvendedor != 0){
-      setPedido(datopedido.dp_codigo);
-      setItemPedido(datopedido.item);
-      setObs(datopedido.dp_observacion);
-      setIdCliente(datopedido.dp_codcliente);
-      setChecked(datopedido.dp_tipodesc == 0 ? "first" : "second");
-      setPorcent(datopedido.dp_pordesc);
-      setIdTrans(datopedido.dp_ttrans);
-      setSubtotal(Number(datopedido.dp_subtotal));
-      setDescuento(Number(datopedido.dp_descuento));
-      setSeguro(Number(datopedido.dp_seguro));
-      setIva(Number(datopedido.dp_iva));
-      setTransporte(Number(datopedido.dp_transporte));
-      setTotal(Number(datopedido.dp_total));
-      setGnGastos(Number(datopedido.dp_gngastos));
-      cargarFormaPago(datopedido.dp_tipodoc);
-      cargarListaItems(""+datopedido.item);
+
+    if(datositems && itemtotal.length ==  datositems.length){
+      console.log("** Iniciar presentacion ** ");
+      setLoading(true);
     }
+
+    if(datositems && itemtotal.length > 0 && datositems.length > itemtotal.length){
+      if(datositems.length>numitem){
+        cargarItemElegido(
+          datositems[numitem].it_codprod,
+          datositems[numitem].it_cantidad,
+          datositems[numitem].it_descuento,
+          datositems[numitem].it_precio,
+          0
+        );
+        setNumItem(numitem+1);
+      }
+    }
+  /* if(datositems && itemtotal.length > 0){
+      console.log("Valor inicial datositems: "+datositems.length+" el numitem: "+ numitem+ "tamaño de itemstotal:"+itemtotal.length);
+     // console.log(datositems[numitem].it_cantidad);
+      if(datositems.length>numitem){
+        console.log("Cual es el tamaño del itemtotal: "+datositems.length);
+        cargarItemElegido(
+          datositems[numitem].it_codprod,
+          datositems[numitem].it_cantidad,
+          datositems[numitem].it_descuento,
+          datositems[numitem].it_precio,
+          0
+        );
+        setNumItem(numitem+1);
+      }
+    }*/
+  }, [itemtotal]);
+
+  useEffect(() => {
+
+      if(datopedido){
+        console.log("entra a datopedido");
+        setPedido(datopedido.dp_codigo);
+        setObs(datopedido.dp_observacion);
+        setIdCliente(datopedido.dp_codcliente);
+        setChecked(datopedido.dp_tipodesc == 0 ? "first" : "second");
+        setPorcent(datopedido.dp_pordesc);
+        console.log("Datos trans: "+ datopedido.dp_ttrans);
+        setIdTrans(Number(datopedido.dp_ttrans));
+        setSubtotal(Number(datopedido.dp_subtotal));
+        setDescuento(Number(datopedido.dp_descuento));
+        setSeguro(Number(datopedido.dp_seguro));
+        setIva(Number(datopedido.dp_iva));
+        setTransporte(Number(datopedido.dp_transporte));
+        setTotal(Number(datopedido.dp_total));
+        setGnGastos(Number(datopedido.dp_gngastos));
+        cargarFormaPago(datopedido.dp_tipodoc);
+        cargarListaItems(""+datopedido.item);
+        
+      }
+    
+    
   }, [datopedido]);
+
+
+  useEffect(() => {
+    if(idcliente != 0){
+      cargarClienteElegido();
+    }
+  }, [idcliente]);
+
+
+  useEffect(() =>{
+    if(idtrans != -1)
+      cargarTransporte();
+  }, [idtrans])
 
 
   const GrabarBorrador = async () => {
@@ -2140,14 +2274,13 @@ export default function EditaPed(props) {
             {regplazo == -1 ? (
               <Text style={styles.tittext}>---</Text>
             ) : (
-              // <RNPickerSelect
-              //   style={pickerStyle}
-              //   useNativeAndroidPickerStyle={false}
-              //   onValueChange={(tplazo) => setTPlazo(tplazo)}
-              //   placeholder={{ label: notnomplazo, value: Number(notidplazo) }}
-              //   items={plazo}
-              // />
-              <></>
+               <RNPickerSelect
+                 style={pickerStyle}
+                 useNativeAndroidPickerStyle={false}
+                 onValueChange={(tplazo) => setTPlazo(tplazo)}
+                 placeholder={{ label: notnomplazo, value: Number(notidplazo) }}
+                 items={plazo}
+               />
             )}
           </View>
         </View>
@@ -2166,6 +2299,7 @@ export default function EditaPed(props) {
                 placeholder={{ label: nomtrans, value: idtrans }}
                 items={transp}
               />
+              
             )}
           </View>
         </View>
@@ -2340,10 +2474,6 @@ export default function EditaPed(props) {
               </View>
             </View>
             {loading ? (
-              //   <TextInput
-              //   value={"HOLA"+JSON.stringify(Item)}
-              // />
-
               <FlatList
                 data={dataitem}
                 renderItem={Item}

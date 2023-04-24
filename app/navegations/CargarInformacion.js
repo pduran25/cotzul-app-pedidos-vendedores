@@ -756,8 +756,7 @@ export default function CargarInformacion() {
             value.dp_gnorden,
             value.dp_gnventas,
             value.dp_gngastos,
-           /* JSON.stringify(value.item),*/
-            value.item
+            JSON.stringify(value.item)
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
