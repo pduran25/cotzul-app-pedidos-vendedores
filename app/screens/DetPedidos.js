@@ -33,8 +33,8 @@ export default function DetPedidos(props) {
             <View style={styles.totalbody}> 
             
                     <View style={{width:'100%'}}>
-                        <Text style={{textAlign: 'right', paddingRight: 30,fontWeight:'bold'}}>Lote(%)</Text>
-                        <Text style={{textAlign: 'right', paddingRight: 30}}>{Number(registro.pv_gngastos).toFixed(2)}</Text>
+                        <Text style={{textAlign: 'right', paddingRight: 30,fontWeight:'bold'}}>Lote</Text>
+                        <Text style={{textAlign: 'right', paddingRight: 30}}>{(registro.pv_gngastos != null) ? Number(registro.pv_gngastos).toFixed(2):""}</Text>
                     </View>
             </View>
            

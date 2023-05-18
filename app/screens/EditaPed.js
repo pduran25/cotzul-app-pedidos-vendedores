@@ -7,6 +7,7 @@ import {
   Alert,
   TextInput,
   ActivityIndicator,
+  Linking 
 } from "react-native";
 import RNPickerSelect from "react-native-picker-select";
 import {
@@ -23,6 +24,8 @@ import { Button } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
 import * as SQLite from "expo-sqlite";
 import { LogBox } from 'react-native';
+import Picker from '@ouroboros/react-native-picker';
+import ModalTransporte from "./ModalTransporte";
 
 /**
  * @author Pedro Durán A.
@@ -118,9 +121,9 @@ const handleClick = (event) => {
   console.log(event.currentTarget.id);
 };
 
-const database_name = "CotzulBD.db";
+const database_name = "CotzulBDS.db";
 const database_version = "1.0";
-const database_displayname = "CotzulBD";
+const database_displayname = "CotzulBDS";
 const database_size = 200000;
 let db = null;
 
@@ -185,7 +188,16 @@ export default function EditaPed(props) {
   const [datopedido, setDatoPedido] = useState(null);
   const [numitem, setNumItem] = useState(0);
   const [idcliente, setIdCliente] = useState(0);
-  const [datositems, setDatosItems] = useState();
+  const [datositems, setDatosItems] = useState([]);
+
+  let [picker, setPicker] = useState(1);
+  let [pickerpri, setPickerpri] = useState(1);
+  let [pickerfp, setPickerfp] = useState(0);
+  let [pickerplz,setPickerplz] = useState(0);
+  let [pickertrp, setPickertrp] = useState(-1);
+  let [pickerven, setPickerven] = useState(0);
+
+  var valitem = "";
 
   LogBox.ignoreLogs([
     'Non-serializable values were found in the navigation state',
@@ -197,32 +209,54 @@ export default function EditaPed(props) {
   const [valrecibo, setRecibo] = useState(
     "000" + (Number(dataUser.vn_recibo) + 1)
   );
-  const [numdoc, setNumDoc] = useState(Number(dataUser.vn_recibo) + 1);
+  const [numdoc, setNumDoc] = useState(Number(dataUser.vn_borrador));
+  const [numped, setNumPed] = useState(Number(dataUser.vn_recibo) + 1);
 
   const [obs, setObs] = useState("");
 
   let nextId = 0;
 
+  const inicializaTransporte = () => {
+    console.log("entro a inicializar");
+    setPickertrp(0);
+    setTtrans(0);
+  };
+
+  const actualizaTransporte = (item) => {
+    setPickertrp(item);
+    setTtrans(item);
+  };
+
+  async function openUrl(url){
+    const isSupported = await Linking.canOpenURL(url);
+        if(isSupported){
+            await Linking.openURL(url)
+        }else{
+            Alert.alert('No se encontro el Link');
+        }
+}
+
   const Item = ({ item, index }) => {
+    console.log("Valor de ItemTotal: #"+index+" cantidad"+itemtotal[index].codprecio.toString());
     return (
       <View>
         <View style={{ flexDirection: "row" }}>
           <View
             style={{
               width: 120,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
-            <Text style={styles.tabletext}>
+            <Text style={styles.tabletext1} onPress={() =>openUrl("https://app.cotzul.com/Catalogo/Presentacion/prod/producto.php?id="+item.it_codigo)}>
               {item.it_referencia + "-" + item.it_descripcion}
             </Text>
           </View>
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -232,7 +266,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -243,7 +277,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 100,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -253,7 +287,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -262,79 +296,70 @@ export default function EditaPed(props) {
               keyboardType="numeric"
               placeholder="0,0"
               style={styles.tabletext}
-              value={itemtotal[index].cantidad}
-              onChangeText={(val) => setCanti(val, index)}
-              onEndEditing={() =>
-                EditarResultados(
-                  item.it_codprod,
-                  itemtotal[index].cantidad,
-                  itemtotal[index].descuento,
-                  item.it_precio,
-                  item.it_pvp,
-                  item.it_preciosub,
-                  item.it_contado,
-                  itemtotal[index].preciosel,
-                  itemtotal[index].editable,
-                  item.it_costoprom,
-                  item.it_peso,
-                  item.it_referencia + "-" + item.it_descripcion
-                )
-              }
+              value={itemtotal[index].cantidad.toString()}
+              onChangeText={(val) => setCanti(val, index, item.it_codprod,
+                itemtotal[index].cantidad,
+                itemtotal[index].descuento,
+                item.it_precio,
+                item.it_pvp,
+                item.it_preciosub,
+                item.it_contado,
+                itemtotal[index].preciosel,
+                itemtotal[index].editable,
+                item.it_costoprom,
+                item.it_peso,
+                item.it_referencia + "-" + item.it_descripcion)}
+              
             />
           </View>
           <View
             style={{
               width: 150,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
-            <RNPickerSelect
-              useNativeAndroidPickerStyle={false}
-              style={pickerStyle2}
-              
-              onValueChange={(tprecio) => setNumprecio(tprecio, index)}
-              placeholder={{ label: "P. CREDITO", value: 1 }}
-              items={[
-                { label: "P.V.P.", value: 2 },
-                { label: "P. SUBDIST.", value: 3 },
-                { label: "P. CONTADO", value: 4 },
-                { label: "EDITABLE", value: 5 },
+
+            <Picker
+              onChanged={(tprecio) => setNumprecio(tprecio, index)}
+              options={[
+                { text: "SUBDIST.", value: 1},
+                { text: "CONTADO", value: 2 },
+                { text: "CREDITO", value: 3 },
+                { text: "EDITABLE", value: 4 }, 
               ]}
-            />
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={itemtotal[index].codprecio}
+          />  
           </View>
 
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
-            {(itemtotal.length > 0)                                                                                                                                                                                                                                     ? (
+            {itemtotal[index].editable == 1 ? (
               <TextInput
                 keyboardType="numeric"
                 placeholder="0,0"
-                value={itemtotal[index].preciosel}
                 style={styles.tabletext}
                 onChangeText={(val) => setPrecioVal(val, index)}
                 onEndEditing={() => ActualizaResultados(item.it_codprod)}
               />
             ) : (
               <Text style={styles.tabletext}>
-                ${" "}
-                {Number(
-                  itemtotal.length > 0 ? itemtotal[index].preciosel : "0"
-                ).toFixed(2)}
+                $ {Number(itemtotal[index].preciosel).toFixed(2)}
               </Text>
             )}
           </View>
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -349,7 +374,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -361,31 +386,27 @@ export default function EditaPed(props) {
                 keyboardType="numeric"
                 placeholder="0,0"
                 style={styles.tabletext}
-                value={itemtotal[index].descuento}
-                onChangeText={(val) => setDescu(val, index)}
-                onEndEditing={() =>
-                  EditarResultados(
-                    item.it_codprod,
-                    itemtotal[index].cantidad,
-                    itemtotal[index].descuento,
-                    item.it_precio,
-                    item.it_pvp,
-                    item.it_preciosub,
-                    item.it_contado,
-                    itemtotal[index].preciosel,
-                    itemtotal[index].editable,
-                    item.it_costoprom,
-                    item.it_peso,
-                    item.it_referencia + "-" + item.it_descripcion
-                  )
-                }
+                value={itemtotal[index].descuento.toString()}
+                onChangeText={(val) => setDescu(val, index,item.it_codprod,
+                  itemtotal[index].cantidad,
+                  itemtotal[index].descuento,
+                  item.it_precio,
+                  item.it_pvp,
+                  item.it_preciosub,
+                  item.it_contado,
+                  itemtotal[index].preciosel,
+                  itemtotal[index].editable,
+                  item.it_costoprom,
+                  item.it_peso,
+                  item.it_referencia + "-" + item.it_descripcion)}
+                
               />
             )}
           </View>
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -400,7 +421,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -414,7 +435,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -433,17 +454,60 @@ export default function EditaPed(props) {
     );
   };
 
-  const setCanti = (valor, index) => {
+  const setCanti = (valor, index, codprod,
+    cant,
+    desc,
+    precio,
+    pvp,
+    subdist,
+    contado,
+    preciosel,
+    editable,
+    costo,
+    peso,
+    descripcion) => {
+    
     if (valor == "") {
       setCant(0);
       itemtotal[index].cantidad = 0;
     } else {
-      setCant(valor);
-      itemtotal[index].cantidad = valor;
+    setCant(valor);
+    itemtotal[index].cantidad = valor;
     }
+    
+
+    console.log("entro por la cantidad: "+itemtotal[index].cantidad );
+
+    EditarResultados(
+      codprod,
+      Number(itemtotal[index].cantidad),
+      desc,
+      precio,
+      pvp,
+      subdist,
+      contado,
+      Number(itemtotal[index].codprecio),
+      preciosel,
+      editable,
+      costo,
+      peso,
+      descripcion
+    )
   };
 
-  const setDescu = (valor, index) => {
+  const setDescu = (valor, index,codprod,
+    cant,
+    desc,
+    precio,
+    pvp,
+    subdist,
+    contado,
+    preciosel,
+    editable,
+    costo,
+    peso,
+    descripcion) => {
+
     if (valor == "") {
       setDesc(0);
       itemtotal[index].descuento = 0;
@@ -451,23 +515,39 @@ export default function EditaPed(props) {
       setDesc(valor);
       itemtotal[index].descuento = valor;
     }
+    
+
+    EditarResultados(
+      codprod,
+      cant,
+      Number(itemtotal[index].descuento),
+      precio,
+      pvp,
+      subdist,
+      contado,
+      Number(itemtotal[index].codprecio),
+      preciosel,
+      editable,
+      costo,
+      peso,
+      descripcion
+    )
   };
 
   const setNumprecio = (valor, index) => {
     setTprecio(valor);
+    itemtotal[index].codprecio = valor;
+
     if (valor == 1) {
-      itemtotal[index].preciosel = itemtotal[index].precio;
-    }
-    if (valor == 2) {
-      itemtotal[index].preciosel = itemtotal[index].pvp;
-    }
-    if (valor == 3) {
       itemtotal[index].preciosel = itemtotal[index].subdist;
     }
-    if (valor == 4) {
+    if (valor == 2) {
       itemtotal[index].preciosel = itemtotal[index].contado;
     }
-    if (valor == 5) {
+    if (valor == 3) {
+      itemtotal[index].preciosel = itemtotal[index].precio;
+    }
+    if (valor == 4) {
       itemtotal[index].preciosel = 0;
       itemtotal[index].editable = 1;
     }
@@ -498,6 +578,7 @@ export default function EditaPed(props) {
     cargarTarifas(item.ct_tcodigo, ttrans);
     setUbicacion(item.ct_ubicacion);
     setNotIdplazo(Number(item.ct_idplazo));
+
     console.log(item.ct_plazo);
     setNotnomplazo(item.ct_plazo);
     cargarPlazo(Number(item.ct_idplazo));
@@ -531,6 +612,7 @@ export default function EditaPed(props) {
         newitem.it_pvp,
         newitem.it_preciosub,
         newitem.it_contado,
+        1,
         newitem.it_precio,
         0,
         0,
@@ -572,9 +654,13 @@ export default function EditaPed(props) {
 
   const registrarPlazo = (dataPlazo) => {
     var temp = [];
+    temp.push({
+      text: "SELECCIONAR",
+      value: 0,
+    });
     for (let i = 0; i < dataPlazo.length; ++i) {
       temp.push({
-        label: dataPlazo[i].pl_descripcion,
+        text: dataPlazo[i].pl_descripcion,
         value: Number(dataPlazo[i].pl_codigo),
       });
     }
@@ -587,7 +673,7 @@ export default function EditaPed(props) {
     var temp = [];
     for (let i = 0; i < dataVend.length; ++i) {
       temp.push({
-        label: dataVend[i].vd_vendedor,
+        text: dataVend[i].vd_vendedor,
         value: dataVend[i].vd_codigo,
       });
     }
@@ -600,17 +686,14 @@ export default function EditaPed(props) {
 
     console.log("cantidad de transportes: "+ dataTransporte.length);
     for (let i = 0; i < dataTransporte.length; ++i) {
-      if (dataTransporte[i].pl_codigo != idtrans){
+
         temp.push({
-          label: dataTransporte[i].pl_nombre,
+          text: dataTransporte[i].pl_nombre,
           value: dataTransporte[i].pl_codigo,
         });
         console.log("****NO ENCUENTRA transporte****"+dataTransporte[i].pl_codigo+ "valor de idtrans:"+idtrans);
-      }
-      else{
-        console.log("****cargo el nombre transporte****");
-        setNomTrans(dataTransporte[i].pl_nombre);
-      } 
+
+      
     }
     
     setTransp(temp);
@@ -620,9 +703,19 @@ export default function EditaPed(props) {
   useEffect(()=>{
 
       if(transp.length>0 && regtrans== -1){
+        console.log("VAOR E TRANSPORTE ES: "+idtrans);
+        setPickertrp(idtrans);
         setRegtrans(1);
+        
       }
   },[transp])
+
+  useEffect(()=>{
+
+    if(plazo.length>0){
+      setPickerplz(notidplazo);
+    }
+},[plazo])
 
 
   const registrarItems = () =>{
@@ -640,6 +733,7 @@ export default function EditaPed(props) {
     pvp,
     subdist,
     contado,
+    codprecio,
     preciosel,
     editable,
     costo,
@@ -651,7 +745,7 @@ export default function EditaPed(props) {
     var gngastosv = 0;
     for (let i = 0; i < itemtotal.length; ++i) {
      console.log("Referencia: "+itemtotal[i].it_referencia);
-      gngastosv = Number(itemtotal[i].costo) / Number(itemtotal[i].subtotal);
+     gngastosv = (Number(itemtotal[i].subtotal) - Number((itemtotal[i].subtotal * itemtotal[i].descuento)/100)) / (Number(itemtotal[i].costo*itemtotal[i].cantidad));
       temp.push({
         codprod: itemtotal[i].codprod,
           descripcion: itemtotal[i].descripcion,
@@ -660,6 +754,7 @@ export default function EditaPed(props) {
           pvp: itemtotal[i].pvp,
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
+          codprecio: itemtotal[i].codprecio,
           preciosel: itemtotal[i].preciosel,
           editable: itemtotal[i].editable,
           costo: itemtotal[i].costo,
@@ -667,7 +762,7 @@ export default function EditaPed(props) {
           subtotal: itemtotal[i].subtotal,
           total: itemtotal[i].total,
           peso: itemtotal[i].peso,
-          gngastos: gngastos,
+          gngastos: gngastosv,
       });
     }
 
@@ -675,6 +770,13 @@ export default function EditaPed(props) {
       restot = 0;
     ressub = Number(cant) * Number(precio);
     restot = ressub - (ressub * desc) / 100;
+    gngastosv = 0;
+    if(restot > 0){
+      gngastosv = restot/(costo*cant);
+    }else{
+      gngastosv = 0;
+    }
+    
 
     console.log("Valor de cantidad: "+cant);
 
@@ -686,6 +788,7 @@ export default function EditaPed(props) {
       pvp: pvp,
       subdist: subdist,
       contado: contado,
+      codprecio: codprecio,
       preciosel: preciosel,
       editable: editable,
       costo: costo,
@@ -693,13 +796,15 @@ export default function EditaPed(props) {
       subtotal: ressub,
       total: restot,
       peso: peso,
-      gngastos: 0,
+      gngastos: gngastosv,
     });
-    console.log(temp);
+    console.log("valor temporal de row:"+temp[0].cantidad);
+    console.log("valor temporal de row:"+temp[0].precio);
+    console.log("valor temporal de row:"+temp[0].descuento);
     setItemTotal(temp);
     
     
-    console.log("valor del itemtotal: " + temp[0].cantidad);
+    console.log("valor del itemtotal: " + JSON.stringify(temp[0]));
   };
 
   const CargarResultados = () => {
@@ -721,13 +826,14 @@ export default function EditaPed(props) {
     itemtext = "";
     var cadenita1 = "";
     var gngastosv = 0;
+    var estrella = "*";
 
     for (let i = 0; i < itemtotal.length; i++) {
       numcod++;
 
       varsubtotal = varsubtotal + itemtotal[i].subtotal;
 
-      gngastosv = Number(itemtotal[i].costo) / Number(itemtotal[i].subtotal);
+      gngastosv = (Number(itemtotal[i].subtotal)-Number((itemtotal[i].subtotal * itemtotal[i].descuento)/100)) / (Number(itemtotal[i].costo)*Number(itemtotal[i].cantidad));
       temp.push({
         codprod: itemtotal[i].codprod,
         descripcion: itemtotal[i].descripcion,
@@ -736,6 +842,7 @@ export default function EditaPed(props) {
         pvp: itemtotal[i].pvp,
         subdist: itemtotal[i].subdist,
         contado: itemtotal[i].contado,
+        codprecio: itemtotal[i].codprecio,
         preciosel: itemtotal[i].preciosel,
         editable: itemtotal[i].editable,
         costo: itemtotal[i].costo,
@@ -769,9 +876,12 @@ export default function EditaPed(props) {
         '" d7="' +
         0 +
         '"></detalle>';
+
+        if(i+1 == itemtotal.length)
+        estrella = "";
+
       cadenita1 =
         cadenita1 +
-        "*" +
         numcod +
         ";" +
         itemtotal[i].codprod +
@@ -780,11 +890,14 @@ export default function EditaPed(props) {
         ";" +
         itemtotal[i].cantidad +
         ";" +
+        itemtotal[i].codprecio +
+        ";" +
         itemtotal[i].preciosel +
         ";" +
         itemtotal[i].descuento +
         ";" +
-        itemtotal[i].total;
+        itemtotal[i].total+
+        estrella
     }
 
     setCadenaint(itemtext);
@@ -881,6 +994,7 @@ export default function EditaPed(props) {
     var varsubtotalcosto = 0;
     itemtext = "";
     var gngastosv = 0;
+    var estrella = "*";
 
     for (let i = 0; i < itemtotal.length; i++) {
       numcod++;
@@ -890,7 +1004,7 @@ export default function EditaPed(props) {
         ressub = Number(itemtotal[i].cantidad) * Number(itemtotal[i].preciosel);
         rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
         valpeso = Number(itemtotal[i].cantidad) * Number(itemtotal[i].peso);
-        gngastosv = rescosto / ressub;
+        gngastosv = (ressub - itemtotal[i].descuento)/rescosto;
         restot = ressub - (ressub * itemtotal[i].descuento) / 100;
         temp.push({
           codprod: itemtotal[i].codprod,
@@ -900,6 +1014,7 @@ export default function EditaPed(props) {
           pvp: itemtotal[i].pvp,
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
+          codprecio: itemtotal[i].codprecio,
           preciosel: itemtotal[i].preciosel,
           editable: itemtotal[i].editable,
           costo: itemtotal[i].costo,
@@ -935,9 +1050,12 @@ export default function EditaPed(props) {
           '" d7="' +
           0 +
           '"></detalle>';
+
+        if(i+1 == itemtotal.length)
+          estrella = "";
+
         cadenita1 =
           cadenita1 +
-          "*" +
           numcod +
           ";" +
           itemtotal[i].codprod +
@@ -946,11 +1064,14 @@ export default function EditaPed(props) {
           ";" +
           itemtotal[i].cantidad +
           ";" +
+          itemtotal[i].codprecio +
+          ";" +
           itemtotal[i].preciosel +
           ";" +
           itemtotal[i].descuento +
           ";" +
-          itemtotal[i].total;
+          itemtotal[i].total+
+          estrella;
       } else {
         temp.push({
           codprod: itemtotal[i].codprod,
@@ -960,6 +1081,7 @@ export default function EditaPed(props) {
           pvp: itemtotal[i].pvp,
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
+          codprecio: itemtotal[i].codprecio,
           preciosel: itemtotal[i].preciosel,
           editable: itemtotal[i].editable,
           costo: itemtotal[i].costo,
@@ -997,9 +1119,12 @@ export default function EditaPed(props) {
           '" d7="' +
           0 +
           '"></detalle>';
+
+        if(i+1 == itemtotal.length)
+          estrella = "";
+
         cadenita1 =
           cadenita1 +
-          "*" +
           numcod +
           ";" +
           itemtotal[i].codprod +
@@ -1008,11 +1133,14 @@ export default function EditaPed(props) {
           ";" +
           itemtotal[i].cantidad +
           ";" +
+          itemtotal[i].codprecio +
+          ";" +
           itemtotal[i].preciosel +
           ";" +
           itemtotal[i].descuento +
           ";" +
-          itemtotal[i].total;
+          itemtotal[i].total+
+          estrella;
       }
     }
 
@@ -1095,6 +1223,7 @@ export default function EditaPed(props) {
     pvp,
     subdist,
     contado,
+    codprecio,
     preciosel,
     editable,
     costo,
@@ -1124,6 +1253,8 @@ export default function EditaPed(props) {
     var varsubtotalcosto = 0;
     itemtext = "";
     var gngastosv = 0;
+    var estrella = "*";
+
 
     for (let i = 0; i < itemtotal.length; i++) {
       numcod++;
@@ -1133,7 +1264,7 @@ export default function EditaPed(props) {
         ressub = Number(cant) * Number(preciosel);
         rescosto = Number(cant) * Number(costo);
         valpeso = Number(cant) * Number(peso);
-        gngastosv = rescosto / ressub;
+        gngastosv = (ressub - desc) / rescosto;
         restot = ressub - (ressub * desc) / 100;
 
         temp.push({
@@ -1144,6 +1275,7 @@ export default function EditaPed(props) {
           pvp: pvp,
           subdist: subdist,
           contado: contado,
+          codprecio: codprecio,
           preciosel: preciosel,
           editable: editable,
           costo: costo,
@@ -1179,9 +1311,12 @@ export default function EditaPed(props) {
           '" d7="' +
           0 +
           '"></detalle>';
+
+        if(i+1 == itemtotal.length)
+          estrella = "";
+
         cadenita1 =
           cadenita1 +
-          "*" +
           numcod +
           ";" +
           codprod +
@@ -1190,11 +1325,14 @@ export default function EditaPed(props) {
           ";" +
           cant +
           ";" +
+          codprecio +
+          ";" +
           precio +
           ";" +
           desc +
           ";" +
-          restot;
+          restot+
+          estrella;
       } else {
         temp.push({
           codprod: itemtotal[i].codprod,
@@ -1204,6 +1342,7 @@ export default function EditaPed(props) {
           pvp: itemtotal[i].pvp,
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
+          codprecio: itemtotal[i].codprecio,
           preciosel: itemtotal[i].preciosel,
           editable: itemtotal[i].editable,
           costo: itemtotal[i].costo,
@@ -1242,9 +1381,12 @@ export default function EditaPed(props) {
           '" d7="' +
           0 +
           '"></detalle>';
+
+          if(i+1 == itemtotal.length)
+          estrella = "";
+
         cadenita1 =
           cadenita1 +
-          "*" +
           numcod +
           ";" +
           itemtotal[i].codprod +
@@ -1253,11 +1395,14 @@ export default function EditaPed(props) {
           ";" +
           itemtotal[i].cantidad +
           ";" +
+          itemtotal[i].codprecio +
+          ";" +
           itemtotal[i].preciosel +
           ";" +
           itemtotal[i].descuento +
           ";" +
-          itemtotal[i].total;
+          itemtotal[i].total+
+          estrella;
       }
 
       console.log("Val del peso: " + valpeso);
@@ -1400,7 +1545,7 @@ export default function EditaPed(props) {
           setDatoPedido(temp[0]);
           console.log("COD CLIENTE: "+temp[0].dp_codcliente);
           console.log("OBTENIENDO PEDIDO");
-          
+          console.log("COD PRIORIDAD: "+temp[0].dp_prioridad);
           
         });
       });
@@ -1412,10 +1557,37 @@ export default function EditaPed(props) {
     }
   };
 
-  const cargarListaItems = (itemes) => {
+  const cargarListaItems = (itemes) => {  
+
+    console.log("Cargar Lista de Items: "+ itemes);
+    setDatosItems(itemes.split("*"));
+    valitem = itemes.split("*");
+    console.log("Cantidad de items1: "+ valitem.length);
+
+   
+
+    var itemval;
+  //  for (var x = 1; x < valitem.length; x++) {
+      console.log("Cantidad de items2: "+valitem[numitem]);
+      itemval = valitem[numitem].split(";");
+      console.log("Cantidad de items3: "+itemval[1]);
+      console.log("Cantidad de items4: "+itemval[3]);
+      console.log("Cantidad de items5: "+itemval[5]);
+      console.log("Cantidad de items6: "+itemval[4]);
+      console.log("Cantidad de items7: "+itemval[6]);
+      cargarItemElegido(
+        itemval[1],
+        Number(itemval[3]),
+        Number(itemval[6]),
+        Number(itemval[4]),
+        Number(itemval[5]),
+        0
+      );
+      setNumItem(numitem+1);
+   // }
 
 
-  try{
+ /* try{
     if(itemes.length > 0){
       console.log("Items----: "+ itemes);
       setDatosItems(JSON.parse(itemes));
@@ -1434,7 +1606,7 @@ export default function EditaPed(props) {
     
   }catch(e){
     console.log("error: "+e);
-  }
+  }*/
 
  
  
@@ -1518,6 +1690,7 @@ export default function EditaPed(props) {
     codprod,
     cantidad,
     descuento,
+    codprecio,
     preciosel,
     editable
   ) => {
@@ -1545,6 +1718,7 @@ export default function EditaPed(props) {
             console.log("dataitem+ " + JSON.stringify(dataitem));
             console.log("newitem+ " + JSON.stringify(row));
             setDataItem(dataitem.concat(row));
+            console.log("dataitem+ " + JSON.stringify(dataitem));
           agregaResultados(
               row.it_codprod,
               cantidad,
@@ -1553,6 +1727,7 @@ export default function EditaPed(props) {
               row.it_pvp,
               row.it_preciosub,
               row.it_contado,
+              codprecio,
               preciosel,
               editable,
               row.it_costoprom,
@@ -1648,9 +1823,9 @@ export default function EditaPed(props) {
 
   const cargarFormaPago = (val) => {
     var temp = [];
-    temp.push({ label: "SELECCIONAR", value: 0 });
-    temp.push({ label: "CHEQUE A FECHA", value: 1 });
-    temp.push({ label: "FACT. A CRÉDITO", value: 2 });
+    temp.push({ text: "SELECCIONAR", value: 0 });
+    temp.push({ text: "CHEQUE A FECHA", value: 1 });
+    temp.push({ text: "FACT. A CRÉDITO", value: 2 });
 
     if (val == 0) {
       setFormaPagoId(0);
@@ -1665,6 +1840,7 @@ export default function EditaPed(props) {
 
     setLFormaPago(temp);
     setDoc(val);
+    setPickerfp(val);
   };
 
   const cargarTarifas = async (ttcodigo, idtransporte) => {
@@ -1724,54 +1900,57 @@ export default function EditaPed(props) {
       cargarPedido();
   }, []);
 
+  useEffect(() => {
+    if(dataitem.length > 0)
+      console.log("DataItem+"+JSON.stringify(dataitem));
+  }, [dataitem]);
+
 
   useEffect(() => {
 
-    if(datositems && itemtotal.length ==  datositems.length){
-      console.log("** Iniciar presentacion ** ");
-      setLoading(true);
-    }
+      var itemval;
 
-    if(datositems && itemtotal.length > 0 && datositems.length > itemtotal.length){
-      if(datositems.length>numitem){
-        cargarItemElegido(
-          datositems[numitem].it_codprod,
-          datositems[numitem].it_cantidad,
-          datositems[numitem].it_descuento,
-          datositems[numitem].it_precio,
-          0
-        );
-        setNumItem(numitem+1);
+      if((datositems.length) > 0 && (datositems.length) > numitem){
+          console.log("Cantidad de items22: "+datositems[numitem]);
+          itemval = datositems[numitem].split(";");
+          console.log("Cantidad de items23: "+itemval[1]);
+          console.log("Cantidad de items24: "+itemval[3]);
+          console.log("Cantidad de items25: "+itemval[5]);
+          console.log("Cantidad de items26: "+itemval[4]);
+          console.log("Cantidad de items27: "+itemval[6]);
+          cargarItemElegido(
+            itemval[1],
+            Number(itemval[3]),
+            Number(itemval[6]),
+            Number(itemval[4]),
+            Number(itemval[5]),
+            0
+          );
+          setNumItem(numitem+1);
       }
-    }
-  /* if(datositems && itemtotal.length > 0){
-      console.log("Valor inicial datositems: "+datositems.length+" el numitem: "+ numitem+ "tamaño de itemstotal:"+itemtotal.length);
-     // console.log(datositems[numitem].it_cantidad);
-      if(datositems.length>numitem){
-        console.log("Cual es el tamaño del itemtotal: "+datositems.length);
-        cargarItemElegido(
-          datositems[numitem].it_codprod,
-          datositems[numitem].it_cantidad,
-          datositems[numitem].it_descuento,
-          datositems[numitem].it_precio,
-          0
-        );
-        setNumItem(numitem+1);
+
+     if(itemtotal.length == datositems.length){
+        setLoading(true);
+       
+       console.log("valor de datositems: "+(datositems.length-1)+ " los valores de numitem son: "+numitem);
       }
-    }*/
+     
+
   }, [itemtotal]);
 
   useEffect(() => {
 
       if(datopedido){
-        console.log("entra a datopedido");
+        console.log("entra a datopedido:" + datopedido.dp_tipodoc);
         setPedido(datopedido.dp_codigo);
+        setNumDoc(datopedido.dp_codigo);
         setObs(datopedido.dp_observacion);
         setIdCliente(datopedido.dp_codcliente);
         setChecked(datopedido.dp_tipodesc == 0 ? "first" : "second");
         setPorcent(datopedido.dp_pordesc);
         console.log("Datos trans: "+ datopedido.dp_ttrans);
-        setIdTrans(Number(datopedido.dp_ttrans));
+        setPickertrp(Number(datopedido.dp_ttrans));
+        setTtrans(Number(datopedido.dp_ttrans));
         setSubtotal(Number(datopedido.dp_subtotal));
         setDescuento(Number(datopedido.dp_descuento));
         setSeguro(Number(datopedido.dp_seguro));
@@ -1779,7 +1958,8 @@ export default function EditaPed(props) {
         setTransporte(Number(datopedido.dp_transporte));
         setTotal(Number(datopedido.dp_total));
         setGnGastos(Number(datopedido.dp_gngastos));
-        cargarFormaPago(datopedido.dp_tipodoc);
+        cargarFormaPago(Number(datopedido.dp_tipodoc));
+        console.log("Los datos del pedido son: "+datopedido.item);
         cargarListaItems(""+datopedido.item);
         
       }
@@ -1796,8 +1976,10 @@ export default function EditaPed(props) {
 
 
   useEffect(() =>{
-    if(idtrans != -1)
-      cargarTransporte();
+    if(idtrans != -1){
+        cargarTransporte();
+    }
+     
   }, [idtrans])
 
 
@@ -1936,6 +2118,112 @@ export default function EditaPed(props) {
           cadenita
       );
 
+
+      db.transaction((txn) => {
+
+        txn.executeSql(
+          "DELETE FROM pedidosvendedor WHERE pv_codigo = ?", [parseInt(numdoc)]
+        );
+
+        txn.executeSql(
+          "DELETE FROM datospedidos WHERE dp_codigo = ?", [parseInt(numdoc)]
+        );
+
+        txn.executeSql(
+          "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido) " +
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+          [
+            parseInt(numdoc),
+            parseInt(dataUser.vn_codigo),
+            dataUser.vn_nombre,
+            parseInt(cliente.ct_codigo),
+            cliente.ct_cliente,
+            total.toString(),
+            "-1",
+            gngastos.toString(),
+            parseInt(numdoc)
+          ],
+          (txn, results) => {
+            if (results.rowsAffected > 0) {
+              console.log("Entro bien a grabar primera table");
+            }
+          }
+        );
+
+        txn.executeSql("SELECT * FROM pedidosvendedor", [], (txn, results) => {
+          var len = results.rows.length;
+          console.log("len pedidovendedor: "+len);
+          for (let i = 0; i < len; i++) {
+            let row = results.rows.item(i);
+            console.log(`PEDIDOS VENDEDOR: item: `+ i + " - " + JSON.stringify(row));
+          }
+        }); 
+
+
+      txn.executeSql(
+        "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
+          ", dp_subtotal , dp_descuento , dp_transporte  " +
+          ", dp_seguro , dp_iva , dp_total  " +
+          ", dp_estatus , dp_codpedven " +
+          ", dp_idvendedor , dp_fecha , dp_empresa  " +
+          ", dp_prioridad , dp_observacion" +
+          ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
+          ", dp_ttrans , dp_gnorden , dp_gnventas  " +
+          ", dp_gngastos, item, dp_numpedido ) " +
+          " VALUES (?, ?, ?, ?, ?" +
+          ", ?, ?, ?, ?, ?" +
+          ", ?, ?, ?, ?" +
+          ", ?, ?, ?, ?" +
+          ", ?, ?, ?, ?, ?" +
+          ", ?, ?, ?); ",
+        [
+          parseInt(numdoc),
+          parseInt(dataUser.vn_codigo),
+          parseInt(cliente.ct_codigo),
+          subtotal.toString(),
+          descuento.toString(),
+          pickertrp.toString(),
+          seguro.toString(),
+          iva.toString(),
+          total.toString(),
+          "-1",
+          dataUser.vn_recibo.toString(),
+          parseInt(dataUser.vn_codigo),
+          fechaped.toString(),
+         'COTZUL',
+         'NORMAL',
+          obs,
+          pickerfp.toString(),
+          (checked == "second" ? "1" : "0"),
+          porcent.toString(),
+          descuento.toString(),
+          pickertrp.toString(),
+          gnorden.toString(),
+          gnventas.toString(),
+          gngastos.toString(),
+          cadenita.toString(),
+          parseInt(0)
+        ],
+        (txn, results) => {
+          console.log("WWWWW"+JSON.stringify(results));
+          if (results.rowsAffected > 0) {
+            console.log("Entro bien a grabar segunda table");
+          }
+        }
+      );
+
+      txn.executeSql("SELECT * FROM datospedidos", [], (txn, results) => {
+        var len = results.rows.length;
+        for (let i = 0; i < len; i++) {
+          let row = results.rows.item(i);
+          console.log(`DATOS PEDIDOS: ` + JSON.stringify(row));
+        }
+      });
+
+    });
+
+      /****************** */
+
       const jsonResponse = await response.json();
       //console.log(jsonResponse.estatusped);
       if (jsonResponse.estatusped == "REGISTRADO") {
@@ -1949,6 +2237,8 @@ export default function EditaPed(props) {
 
   const GrabarPedido = async () => {
     try {
+
+      console.log("cadenaint: "+cadenaint+" numdoc: "+ numdoc+" ttrans: "+ ttrans+" cliente: "+cliente.ct_codigo+" doc: "+doc+" tplazo: "+tplazo+" itemtotal length: "+itemtotal.length );
       if (
         cadenaint != "" &&
         numdoc != 0 &&
@@ -1958,6 +2248,8 @@ export default function EditaPed(props) {
         tplazo != 0 &&
         itemtotal.length > 0
       ) {
+
+       
         //var textofinal = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><c c0=\"2\" c1=\"1\" c2=\""+numdoc+"\" c3=\""+dataUser.vn_codigo+"\" c4=\""+ttrans+"\" c5=\""+cliente.ct_codigo+"\" c6=\""+doc+"\" c7=\""+tplazo+"\" c8=\""+obs+"\" c9=\""+subtotal+"\" c10=\""+porcent+"\" c11=\""+descuento+"\" c12=\""+seguro+"\" c13=\""+transporte+"\" c14=\""+iva+"\" c15=\""+total+"\" c16=\""+0+"\" c17=\""+0+"\" c18=\""+dataUser.vn_usuario+"\" >"+cadenaint+"</c>";
         var textofinal =
           '<?xml version="1.0" encoding="iso-8859-1"?><c c0="2" c1="1" c2="' +
@@ -2119,13 +2411,19 @@ export default function EditaPed(props) {
             <View style={styles.itemrow2}>
               <Text style={styles.tittext}>Selecciona Vendedor distinto:</Text>
               <View style={styles.itemrow2}>
-                <RNPickerSelect
+               {/* <RNPickerSelect
                   useNativeAndroidPickerStyle={false}
                   style={pickerStyle}
                   onValueChange={(tvendedor) => actualizaVendedor(tvendedor)}
                   placeholder={{ label: "SELECCIONAR", value: 0 }}
                   items={vvendedor}
-                />
+        />*/}
+               <Picker
+                    onChanged={setPickerven}
+                    options={vvendedor}
+                    style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+                    value={pickerven}
+                />  
               </View>
             </View>
           </>
@@ -2147,7 +2445,7 @@ export default function EditaPed(props) {
         </View>
         <View style={styles.row}>
           <View style={styles.itemrow}>
-            <Text>{valrecibo}</Text>
+            <Text>{"000"+numdoc}</Text>
           </View>
           <View style={styles.itemrow}>
             <Text>{fechaped}</Text>
@@ -2163,22 +2461,39 @@ export default function EditaPed(props) {
         </View>
         <View style={styles.row}>
           <View style={styles.itemrow}>
-            <RNPickerSelect
+            {/*<RNPickerSelect
               useNativeAndroidPickerStyle={false}
               style={pickerStyle}
               onValueChange={(bodega) => setBodega(bodega)}
               placeholder={{ label: "COTZUL-BODEGA", value: 1 }}
               items={[]}
-            />
+        />*/}
+            <Picker
+              onChanged={setPicker}
+              options={[
+                  {value: 1, text: 'COTZUL-BODEGA'},
+              ]}
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={picker}
+          />
           </View>
           <View style={styles.itemrow}>
-            <RNPickerSelect
+            {/*<RNPickerSelect
               useNativeAndroidPickerStyle={false}
               style={pickerStyle}
               onValueChange={(prioridad) => setPrioridad(prioridad)}
               placeholder={{ label: "NORMAL", value: 1 }}
               items={[{ label: "URGENTE", value: 2 }]}
-            />
+            />*/}
+            <Picker
+              onChanged={setPickerpri}
+              options={[
+                  {value: 1, text: 'NORMAL'},
+                  {value: 2, text: 'URGENTE'},
+              ]}
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={pickerpri}
+          />
           </View>
         </View>
         <View style={styles.row}>
@@ -2256,13 +2571,25 @@ export default function EditaPed(props) {
             {doc == -1 ? (
               <Text style={styles.tittext}>---</Text>
             ) : (
-              <RNPickerSelect
+              <Picker
+              onChanged={setPickerfp}
+              options={[
+                  {value: 0, text: 'SELECCIONAR'},
+                  {value: 1, text: 'CHEQUE A FECHA'},
+                  {value: 2, text: 'FACT. A CRÉDITO'},
+              ]}
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={pickerfp}
+          />
+          
+          /*<RNPickerSelect
                 useNativeAndroidPickerStyle={false}
                 style={pickerStyle}
                 onValueChange={(doc) => setDoc(doc)}
                 placeholder={{ label: formapagonom, value: formapagoid }}
                 items={lformapago}
-              />
+            />*/
+            
             )}
           </View>
         </View>
@@ -2271,7 +2598,7 @@ export default function EditaPed(props) {
             <Text style={styles.tittext}>Selecciona Plazo:</Text>
           </View>
           <View style={styles.itemrow}>
-            {regplazo == -1 ? (
+            {/*regplazo == -1 ? (
               <Text style={styles.tittext}>---</Text>
             ) : (
                <RNPickerSelect
@@ -2281,7 +2608,14 @@ export default function EditaPed(props) {
                  placeholder={{ label: notnomplazo, value: Number(notidplazo) }}
                  items={plazo}
                />
-            )}
+            )*/}
+            {notidplazo == 0 ? (<Text style={styles.tittext}>---</Text>):( 
+            <Picker
+              onChanged={setPickerplz}
+              options={plazo}
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={pickerplz}
+          />  )}
           </View>
         </View>
         <View style={styles.row}>
@@ -2289,17 +2623,24 @@ export default function EditaPed(props) {
             <Text style={styles.tittext}>Selecciona Transporte:</Text>
           </View>
           <View style={styles.itemrow}>
-            {regtrans == -1 ? (
+            {pickertrp == -1 ? (
               <Text style={styles.tittext}>---</Text>
             ) : (
-              <RNPickerSelect
+             /* <RNPickerSelect
                 useNativeAndroidPickerStyle={false}
                 style={pickerStyle}
                 onValueChange={(ttrans) => setTtrans(ttrans)}
                 placeholder={{ label: nomtrans, value: idtrans }}
                 items={transp}
-              />
-              
+              />*/
+              /*<Picker
+              onChanged={setPickertrp}
+              options={transp}
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={pickertrp}
+            />*/
+          <ModalTransporte inicializaTransporte={inicializaTransporte} actualizaTransporte={actualizaTransporte} pickertrp={pickertrp}></ModalTransporte> 
+            
             )}
           </View>
         </View>
@@ -2698,6 +3039,12 @@ const styles = StyleSheet.create({
   scrollview: {
     marginTop: 10,
     marginBottom: 50,
+  },
+  tabletext1: {
+    textAlign: "center",
+    fontSize: 12,
+    paddingLeft: 5,
+    color: 'blue'
   },
   input: {
     height: 40,

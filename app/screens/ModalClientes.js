@@ -31,12 +31,12 @@ class ModalClientes extends Component {
 
   setTextoSearch(texto) {
     this.setState({ search: texto });
-    this.getClientes();
+    this.getClientes(texto);
   }
 
   componentDidMount() {
     this.setState({ modalVisible: false });
-    this.getClientes();
+    this.getClientes("");
   }
 
   setModalVisible = (visible) => {
@@ -52,9 +52,9 @@ class ModalClientes extends Component {
     this.setModalVisible(!this.state.modalVisible);
   }
 
-  getClientes = async () => {
+  getClientes = async (texto) => {
     try {
-      this.setState({ isLoading: true });
+     // this.setState({ isLoading: true });
 
       let db = null;
 
@@ -62,11 +62,16 @@ class ModalClientes extends Component {
       "https://app.cotzul.com/Pedidos/getClientes.php?nombre="+this.state.search+"&idvendedor="+this.props.idvendedor
     );*/
 
-      const database_name = "CotzulBD.db";
+    console.log("valor de busqueda: "+ texto.length );
+
+      
+      const database_name = "CotzulBDS.db";
       const database_version = "1.0";
-      const database_displayname = "CotzulBD";
+      const database_displayname = "CotzulBDS";
       const database_size = 200000;
 
+
+      if(texto.length > 0){
       db = SQLite.openDatabase(
         database_name,
         database_version,
@@ -76,7 +81,7 @@ class ModalClientes extends Component {
       db.transaction((tx) => {
         tx.executeSql(
           "SELECT * FROM clientes WHERE ct_idvendedor=? AND upper(ct_cliente) LIKE ? ",
-          [this.props.idvendedor, "%"+this.state.search.toUpperCase()+"%"],
+          [this.props.idvendedor, texto.toUpperCase()+"%"],
           (tx, results) => {
             var len = results.rows.length;
             for (let i = 0; i < len; i++) {
@@ -95,6 +100,10 @@ class ModalClientes extends Component {
       });
       //this.setState({ data: responseCL?.clientes });
       //this.setState({ isLoading: false });
+      }else{
+        this.setState({ isLoading: true });
+      }
+      
     } catch (e) {
       this.setState({ isLoading: false });
       console.log("Error cadena");

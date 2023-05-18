@@ -38,6 +38,7 @@ function defaultValueUser() {
     vn_usuario: "",
     vn_clave: "",
     vn_recibo: "",
+    vn_borrador: ""
   };
 }
 
@@ -92,7 +93,7 @@ export default function Productos(props) {
   const getDataUser = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-      console.log("si entrego : " + jsonValue);
+      console.log("si entrego : " + JSON.parse(jsonValue).vn_borrador);
       setdataUser(JSON.parse(jsonValue));
       setIdvendedor(JSON.parse(jsonValue).vn_codigo);
       console.log("valor de codigo: "+JSON.parse(jsonValue).vn_codigo);
@@ -103,6 +104,7 @@ export default function Productos(props) {
     }
   };
 
+ 
 
 
 
@@ -133,19 +135,20 @@ useEffect(()=> {
 
 
   const regresarFunc = () => {
-    navigation.navigate("productos");
     getDataUser();
+    navigation.navigate("productos");
+   
   };
 
   const listarPedidos = async (numvendedor) => {
     try {
-      const database_name = "CotzulBD.db";
+      const database_name = "CotzulBDS.db";
       const database_version = "1.0";
-      const database_displayname = "CotzulBD";
+      const database_displayname = "CotzulBDS";
       const database_size = 200000;
 
+
       let db = null;
-      console.log("LISTAR pedidovendedor Productos entro una vez");
       db = SQLite.openDatabase(
         database_name,
         database_version,
@@ -153,10 +156,13 @@ useEffect(()=> {
         database_size
       );
       db.transaction((tx) => {
-        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus = -1 AND pv_codigovendedor = "+numvendedor, [], (tx, results) => {
+        
+        tx.executeSql("SELECT * FROM pedidosvendedor ", [], (tx, results) => {
           var len = results.rows.length;
+          console.log("Cantidad de lineas: "+len);
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);
+            console.log("rows: "+JSON.stringify(row));
           }
           setLoading(true);
           setData(results.rows._array);
@@ -214,7 +220,7 @@ useEffect(()=> {
                 borderWidth: 1,
               }}
             >
-              <Text style={styles.tabletext}>{item.pv_numpedido}</Text>
+              <Text style={styles.tabletext}>{item.pv_codigo}</Text>
             </View>
 
             <View
@@ -236,7 +242,7 @@ useEffect(()=> {
               }}
             >
               <Text style={styles.tableval}>
-                {Number(item.pv_gngastos).toFixed(2)} %
+                {(item.pv_gngastos != NaN) ? Number(item.pv_gngastos).toFixed(2) : 0} 
               </Text>
             </View>
           </View>

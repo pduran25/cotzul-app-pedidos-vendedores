@@ -32,7 +32,7 @@ class ModalItems extends Component {
   setTextoSearch(texto) {
     console.log("nuevo texto cargando item: " + this.state.search);
     this.setState({ search: texto });
-    this.getClientes();
+    this.getItems(texto);
   }
 
   componentDidMount() {
@@ -52,12 +52,12 @@ class ModalItems extends Component {
     this.setModalVisible(!this.state.modalVisible);
   }
 
-  getClientes = async () => {
+  getItems = async (texto) => {
     try {
       this.setState({ isLoading: true });
-      const database_name = "CotzulBD.db";
+      const database_name = "CotzulBDS.db";
       const database_version = "1.0";
-      const database_displayname = "CotzulBD";
+      const database_displayname = "CotzulBDS";
       const database_size = 200000;
       let db = null;
 
@@ -67,10 +67,12 @@ class ModalItems extends Component {
         database_displayname,
         database_size
       );
+
+      if(texto.length > 0){
       db.transaction((tx) => {
         tx.executeSql(
           "SELECT * FROM items WHERE it_referencia like ?",
-          ["%" + this.state.search + "%"],
+          [this.state.search + "%"],
           (tx, results) => {
             var len = results.rows.length;
             for (let i = 0; i < len; i++) {
@@ -81,6 +83,7 @@ class ModalItems extends Component {
           }
         );
       });
+    }
     } catch (e) {
       this.setState({ isLoading: false });
       console.log("Error cadena");

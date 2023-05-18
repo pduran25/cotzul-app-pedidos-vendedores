@@ -15,9 +15,9 @@ import * as SQLite from "expo-sqlite";
 const STORAGE_KEY = '@save_data'
 const STORAGE_DB = '@login_data'
 
-const database_name = "CotzulBD.db";
+const database_name = "CotzulBDS.db";
 const database_version = "1.0";
-const database_displayname = "CotzulBD";
+const database_displayname = "CotzulBDS";
 const database_size = 200000;
 
 
@@ -116,7 +116,8 @@ export default function LoginForm(props) {
                       vn_nombre: row.us_nombre,
                       vn_usuario: row.us_usuario,
                       vn_clave: row.us_clave,
-                      vn_recibo: row.us_numrecibo
+                      vn_recibo: row.us_numrecibo,
+                      vn_borrador: row.us_numborrador
                     });
                     console.log(`USUARIO VENDEDOR: ` + JSON.stringify(temp));
                   }
@@ -151,7 +152,7 @@ export default function LoginForm(props) {
       existeUsuario()
     },[])
 
-    function AlmacenaUsuario(usuario, user, pwd, nombre, codvendedor, numrecibo, db){
+    function AlmacenaUsuario(usuario, user, pwd, nombre, codvendedor, numrecibo, numborrador, db){
             console.log("SE registrara como nuevo usuario");
           db.transaction((txn) => {
             txn.executeSql("DROP TABLE IF EXISTS usuario");
@@ -159,13 +160,15 @@ export default function LoginForm(props) {
               "CREATE TABLE IF NOT EXISTS " +
                 "usuario " +
                 "(us_numunico INTEGER, us_usuario VARCHAR(20), us_clave VARCHAR(20)" +
-                ", us_nombre VARCHAR(200), us_codvendedor  VARCHAR(50), us_numrecibo INTEGER);"
+                ", us_nombre VARCHAR(200), us_codvendedor  VARCHAR(50), us_numrecibo INTEGER, us_numborrador INTEGER);"
             );
+
+            console.log("CREO LA NUEVA TABLA USUARIO");
       
               txn.executeSql(
                 "INSERT INTO usuario(us_numunico,us_usuario,us_clave" +
-                  ", us_nombre, us_codvendedor , us_numrecibo) " +
-                  " VALUES (?, ?, ?, ?, ?, ?); ",
+                  ", us_nombre, us_codvendedor , us_numrecibo, us_numborrador) " +
+                  " VALUES (?, ?, ?, ?, ?, ?, ?); ",
                 [
                   Number(1),
                   user,
@@ -173,6 +176,7 @@ export default function LoginForm(props) {
                   nombre,
                   codvendedor,
                   numrecibo,
+                  numborrador
                 ],
                 (txn, results) => {
                   if (results.rowsAffected > 0) {
@@ -211,22 +215,26 @@ export default function LoginForm(props) {
                 if(isEmpty(formData.usuario) || isEmpty(formData.password)){
                     toastRef.current.show("Todos los campos son obligatorios");
                 }else{
+
+                  console.log('https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password);
                     try {
                         const response = await fetch(
-                            'https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password
+                          'https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password
                         );
+
+                        console.log('https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password);
                         
                         const respuesta = await response.json();
                         if(respuesta.usuario[0].vn_codigo != 0){
-                            toastRef.current.show("Bienvenido " + respuesta.usuario[0].vn_nombre);
+                            /*toastRef.current.show("Bienvenido " + respuesta.usuario[0].vn_nombre);*/
                             console.log("usuario: "+ respuesta.usuario[0].vn_usuario);
-                            AlmacenaUsuario(respuesta.usuario[0],respuesta.usuario[0].vn_usuario,respuesta.usuario[0].vn_clave, respuesta.usuario[0].vn_nombre, respuesta.usuario[0].vn_codigo, respuesta.usuario[0].vn_recibo,db);
+                            AlmacenaUsuario(respuesta.usuario[0],respuesta.usuario[0].vn_usuario,respuesta.usuario[0].vn_clave, respuesta.usuario[0].vn_nombre, respuesta.usuario[0].vn_codigo, respuesta.usuario[0].vn_recibo, respuesta.usuario[0].vn_borrador,db);
                         }else{
                             toastRef.current.show("El usuario o contraseña estan erroneos");
                         }
                         
                     }catch(error){
-                        console.log(error);
+                        console.log("Ocurrio un error: "+ error);
                     }
                 }
               }else{

@@ -30,12 +30,17 @@ const APIItem = "https://app.cotzul.com/Pedidos/getItems.php";
 const APIDatosPedidos =
   "https://app.cotzul.com/Pedidos/getDatosPedidoxVendedor.php?idvendedor=";
 
-const database_name = "CotzulBD.db";
+const APITranstarifa = "https://app.cotzul.com/Pedidos/pd_gettranstarifa.php";
+const APITransubicacion = "https://app.cotzul.com/Pedidos/pd_gettransubicacion.php";
+
+const database_name = "CotzulBDS.db";
 const database_version = "1.0";
 const database_displayname = "CotzulBD";
 const database_size = 200000;
 
 const STORAGE_KEY = "@save_data";
+const STORAGE_DATE = "@save_date";
+
 
 
 
@@ -47,12 +52,15 @@ export default function CargarInformacion() {
   const [usuario, setUsuario] = useState(false);
   const [dataUser, setdataUser] = useState(defaultValueUser());
 
+  const [fechault, setFechaUlt] = useState("#####");
+
   const getDataUser = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
       console.log("si entrego carga informacion: " + jsonValue);
       setdataUser(JSON.parse(jsonValue));
       setUsuario(true);
+      getDateLast();
       console.log("INGRSA A PRODUCTO: " + dataUser.vn_nombre);
     } catch (e) {
       console.log("Error al coger el usuario");
@@ -68,6 +76,29 @@ export default function CargarInformacion() {
       },
     ],
   };
+
+  const setDateLast = async (value) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_DATE, value);
+      setFechaUlt(value);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const getDateLast = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem(STORAGE_DATE);
+      console.log("****** FECHA/HORA: "+jsonValue);
+      setFechaUlt(jsonValue);
+      
+    } catch (e) {
+      // console.log(e)
+      setFechaUlt("--------");
+    }
+  };
+
+
 
   let db = null;
 
@@ -107,6 +138,8 @@ export default function CargarInformacion() {
     try {
       
       setActivo(1);
+      setDateLast(moment(new Date()).format('DD/MM/YYYY HH:mm:ss').toString());
+     // setFechaUlt(moment(new Date()).format('DD/MM/YYYY hh:mm a').toString());
       
     } catch (error) {
       console.log("un error cachado listar pedidos");
@@ -120,6 +153,7 @@ export default function CargarInformacion() {
   async function actualizarTablas() {
     console.log("Ingreso 2 vez");
      obtenerClientes()
+     
       /*datospedidos(),*/
 
   }
@@ -511,14 +545,14 @@ export default function CargarInformacion() {
   /** TARIFA **/
   const obtenerTarifas = async () => {
     console.log("GET API Tarifa");
-    const response = await fetch(APITarifas);
+    const response = await fetch(APITranstarifa);
     const jsonResponse = await response.json();
 
     saveTarifas(jsonResponse);
   };
 
   saveTarifas = (myResponse) => {
-    console.log("GUARDA REGISTROS tarifas");
+    console.log("GUARDA REGISTROS transtarifa");
 
     db = SQLite.openDatabase(
       database_name,
@@ -529,26 +563,28 @@ export default function CargarInformacion() {
 
     var cont = 0;
     db.transaction((txn) => {
-      txn.executeSql("DROP TABLE IF EXISTS tarifas");
+      txn.executeSql("DROP TABLE IF EXISTS transtarifas");
       txn.executeSql(
         "CREATE TABLE IF NOT EXISTS " +
-          "tarifas " +
-          "(pl_peso VARCHAR(10), pl_tarifa1 VARCHAR(20), pl_tarifa2 VARCHAR(20)" +
-          ", pl_descripcion VARCHAR(100), ttcodigo INTEGER, tarifa INTEGER  );"
+          "transtarifas " +
+          "(tt_codigo INTEGER, tt_idtransporte INTEGER, tt_idtarifa INTEGER" +
+          ", tt_peso FLOAT, tt_tarifa1 FLOAT, tt_tarifa2 FLOAT, tt_estado VARCHAR(2), tt_usuarioing INTEGER);"
       );
 
-      myResponse?.tarifa.map((value, index) => {
+      myResponse?.transtarifas.map((value, index) => {
         txn.executeSql(
-          "INSERT INTO tarifas(pl_peso,pl_tarifa1,pl_tarifa2" +
-            ", pl_descripcion,ttcodigo,tarifa) " +
-            " VALUES (?, ?, ?, ?, ?, ?); ",
+          "INSERT INTO transtarifas(tt_codigo,tt_idtransporte,tt_idtarifa" +
+            ", tt_peso,tt_tarifa1,tt_tarifa2, tt_estado, tt_usuarioing) " +
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?); ",
           [
-            value.pl_peso,
-            value.pl_tarifa1,
-            value.pl_tarifa2,
-            value.pl_descripcion,
-            1,
-            1,
+            value.tt_codigo,
+            value.tt_idtransporte,
+            value.tt_idtarifa,
+            value.tt_peso,
+            value.tt_tarifa1,
+            value.tt_tarifa2,
+            value.tt_estado,
+            value.tt_usuarioing
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
@@ -563,7 +599,7 @@ export default function CargarInformacion() {
   };
 
   const listarTarifas = () => {
-    console.log("LISTAR tarifas");
+    console.log("LISTAR transtarifas");
     db = SQLite.openDatabase(
       database_name,
       database_version,
@@ -571,11 +607,81 @@ export default function CargarInformacion() {
       database_size
     );
     db.transaction((tx) => {
-      tx.executeSql("SELECT * FROM tarifas", [], (tx, results) => {
+      tx.executeSql("SELECT * FROM transtarifas", [], (tx, results) => {
         var len = results.rows.length;
         for (let i = 0; i < len; i++) {
           let row = results.rows.item(i);
-          //console.log(`TARIFAS: ` + JSON.stringify(row));
+          console.log(`TARIFAS: ` + JSON.stringify(row));
+        }
+      });
+    });
+    
+    obtenerUbicacion();
+    //datospedidos();
+    
+  };
+
+  const obtenerUbicacion = async () => {
+    console.log("GET API Ubicacion");
+    const response = await fetch(APITransubicacion);
+    const jsonResponse = await response.json();
+
+    saveUbicacion(jsonResponse);
+  };
+
+  saveUbicacion = (myResponse) => {
+    console.log("GUARDA REGISTROS transubicacion");
+
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+
+    var cont = 0;
+    db.transaction((txn) => {
+      txn.executeSql("DROP TABLE IF EXISTS transubicacion");
+      txn.executeSql(
+        "CREATE TABLE IF NOT EXISTS " +
+          "transubicacion " +
+          "(tu_codigo INTEGER, tu_descripcion VARCHAR(20));"
+      );
+
+      myResponse?.transubicacion.map((value, index) => {
+        txn.executeSql(
+          "INSERT INTO transubicacion(tu_codigo,tu_descripcion) " +
+            " VALUES (?, ?); ",
+          [
+            value.tu_codigo,
+            value.tu_descripcion
+          ],
+          (txn, results) => {
+            if (results.rowsAffected > 0) {
+              cont++;
+            }
+          }
+        );
+      });
+    });
+
+    listarTransUbicacion();
+  };
+
+  const listarTransUbicacion = () => {
+    console.log("LISTAR transubicacion");
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+    db.transaction((tx) => {
+      tx.executeSql("SELECT * FROM transubicacion", [], (tx, results) => {
+        var len = results.rows.length;
+        for (let i = 0; i < len; i++) {
+          let row = results.rows.item(i);
+          console.log(`TARIFAS UBICACION: ` + JSON.stringify(row));
         }
       });
     });
@@ -710,7 +816,7 @@ export default function CargarInformacion() {
           ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50)" +
           ", dp_tipodoc VARCHAR(50), dp_tipodesc VARCHAR(50), dp_porcdesc VARCHAR(50), dp_valordesc VARCHAR(20) " +
           ", dp_ttrans VARCHAR(50), dp_gnorden VARCHAR(50), dp_gnventas VARCHAR(20) " +
-          ", dp_gngastos VARCHAR(50), item TEXT " +
+          ", dp_gngastos VARCHAR(50), item TEXT , dp_numpedido INTEGER" +
           " );"
       );
 
@@ -724,13 +830,13 @@ export default function CargarInformacion() {
             ", dp_prioridad , dp_observacion " +
             ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
             ", dp_ttrans , dp_gnorden , dp_gnventas  " +
-            ", dp_gngastos, item ) " +
+            ", dp_gngastos, item , dp_numpedido) " +
             " VALUES (?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?" +
             ", ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
-            ", ?, ?); ",
+            ", ?, ?, ?); ",
           [
             value.dp_codigo,
             value.dp_codvendedor,
@@ -756,7 +862,8 @@ export default function CargarInformacion() {
             value.dp_gnorden,
             value.dp_gnventas,
             value.dp_gngastos,
-            JSON.stringify(value.item)
+            JSON.stringify(value.item),
+            value.dp_numpedido
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
@@ -796,7 +903,7 @@ export default function CargarInformacion() {
   return (
     <>
       <Text style={styles.titlesSubtitle}>Fecha Última Actualización:</Text>
-      <Text style={styles.titlesSubtitle}>######</Text>
+      <Text style={styles.titlesSubtitle}>{fechault}</Text>
       {loading ? (
         <View style={{ marginHorizontal: 20, marginTop: 10, height: 200 }}>
           <Text style={styles.titlesSubtitle}>cargando...</Text>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { LogBox, Linking } from 'react-native';
 import {
   View,
   Text,
@@ -18,10 +19,15 @@ import {
 } from "react-native-elements";
 import ModalClientes from "./ModalClientes";
 import ModalItems from "./ModalItems";
+import ModalTransporte from "./ModalTransporte";
 import { RadioButton } from "react-native-paper";
 import { Button } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
 import * as SQLite from "expo-sqlite";
+import Picker from '@ouroboros/react-native-picker';
+import moment from 'moment';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
 
 /**
  * @author Pedro Durán A.
@@ -82,6 +88,12 @@ const handleClick = (event) => {
   console.log(event.currentTarget.id);
 };
 
+LogBox.ignoreLogs([
+  'Non-serializable values were found in the navigation state',
+]);
+
+const STORAGE_KEY = '@save_data'
+
 export default function NuevoPed(props) {
   const { navigation, route } = props;
   const { dataUser, regresarFunc } = route.params;
@@ -91,7 +103,7 @@ export default function NuevoPed(props) {
   const [tprecio, setTprecio] = useState(1);
   const [cliente, setCliente] = useState(defaultCliente);
   const [dataitem, setDataItem] = useState([]);
-  const [checked, setChecked] = React.useState("first");
+  const [checked, setChecked] = useState("first");
   const [loading, setLoading] = useState(false);
   const [tcodigo, setTcodigo] = useState(0);
   const [gnventas, setGnVentas] = useState(0);
@@ -132,43 +144,67 @@ export default function NuevoPed(props) {
   const [notnomplazo, setNotnomplazo] = useState("plazo");
   var resindex = 0;
   var itemtext = "";
+  let [picker, setPicker] = useState(1);
+  let [pickerpri, setPickerpri] = useState(1);
+  let [pickerfp, setPickerfp] = useState(1);
+  let [pickerplz,setPickerplz] = useState(0);
+  let [pickertrp, setPickertrp] = useState(0);
+  let [pickerven, setPickerven] = useState(0);
+  
 
-  const database_name = "CotzulBD.db";
+
+
+  const database_name = "CotzulBDS.db";
   const database_version = "1.0";
-  const database_displayname = "CotzulBD";
+  const database_displayname = "CotzulBDS";
   const database_size = 200000;
+ 
+ 
 
   let db = null;
 
-  const [valrecibo, setRecibo] = useState(
-    "000" + (Number(dataUser.vn_recibo) + 1)
+  const [valrecibo, setRecibo] = useState( dataUser ? 
+    "000" + (Number(dataUser.vn_borrador) + 1) : "-----"
   );
-  const [numdoc, setNumDoc] = useState(Number(dataUser.vn_recibo) + 1);
-
+  const [numdoc, setNumDoc] = useState(Number(dataUser.vn_borrador) + 1);
+  const [numped, setNumPed] = useState(Number(dataUser.vn_recibo) + 1);
   const [obs, setObs] = useState("");
 
   let nextId = 0;
 
+  
+
+  const storeData = async (value) => {
+    try {
+      //await AsyncStorage.removeItem(STORAGE_KEY);
+      const jsonValue = JSON.stringify(value)
+      await AsyncStorage.setItem(STORAGE_KEY, jsonValue)
+    } catch (e) {
+      // saving error
+    }
+  }
+
   const Item = ({ item, index }) => {
-    return (
+    return ((itemtotal.length > 0) ? (
       <View>
         <View style={{ flexDirection: "row" }}>
           <View
             style={{
               width: 120,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }} 
           >
-            <Text style={styles.tabletext}>
-              {item.it_referencia + "-" + item.it_descripcion}
+          <Text style={styles.tabletext1} onPress={() =>openUrl("https://app.cotzul.com/Catalogo/Presentacion/prod/producto.php?id="+item.it_codigo)}>
+            {item.it_referencia + "-" + item.it_descripcion}
             </Text>
+            
           </View>
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -178,7 +214,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -189,7 +225,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 100,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -199,7 +235,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -208,50 +244,46 @@ export default function NuevoPed(props) {
               keyboardType="numeric"
               placeholder="0,0"
               style={styles.tabletext}
-              onChangeText={(val) => setCanti(val, index)}
-              onEndEditing={() =>
-                EditarResultados(
-                  item.it_codprod,
-                  itemtotal[index].cantidad,
-                  itemtotal[index].descuento,
-                  item.it_precio,
-                  item.it_pvp,
-                  item.it_preciosub,
-                  item.it_contado,
-                  itemtotal[index].preciosel,
-                  itemtotal[index].editable,
-                  item.it_costoprom,
-                  item.it_peso,
-                  item.it_referencia + "-" + item.it_descripcion
-                )
-              }
+              onChangeText={(val) => setCanti(val, index, item.it_codprod,
+                itemtotal[index].cantidad,
+                itemtotal[index].descuento,
+                item.it_precio,
+                item.it_pvp,
+                item.it_preciosub,
+                item.it_contado,
+                itemtotal[index].preciosel,
+                itemtotal[index].editable,
+                item.it_costoprom,
+                item.it_peso,
+                item.it_referencia + "-" + item.it_descripcion)}
+             
             />
           </View>
           <View
             style={{
               width: 150,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
-            <RNPickerSelect
-              useNativeAndroidPickerStyle={false}
-              style={pickerStyle2}
-              onValueChange={(tprecio) => setNumprecio(tprecio, index)}
-              placeholder={{ label: "P. CREDITO", value: 1 }}
-              items={[
-                { label: "P.V.P.", value: 2 },
-                { label: "P. SUBDIST.", value: 3 },
-                { label: "P. CONTADO", value: 4 },
-                { label: "EDITABLE", value: 5 },
+           
+            <Picker
+              onChanged={(tprecio) => setNumprecio(tprecio, index)}
+              options={[
+                { text: "SUBDIST.", value: 1},
+                { text: "CONTADO", value: 2 },
+                { text: "CREDITO", value: 3 },
+                { text: "EDITABLE", value: 4 }, 
               ]}
-            />
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={itemtotal[index].codprecio}
+          />  
           </View>
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -273,7 +305,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -285,7 +317,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -297,30 +329,26 @@ export default function NuevoPed(props) {
                 keyboardType="numeric"
                 placeholder="0,0"
                 style={styles.tabletext}
-                onChangeText={(val) => setDescu(val, index)}
-                onEndEditing={() =>
-                  EditarResultados(
-                    item.it_codprod,
-                    itemtotal[index].cantidad,
-                    itemtotal[index].descuento,
-                    item.it_precio,
-                    item.it_pvp,
-                    item.it_preciosub,
-                    item.it_contado,
-                    itemtotal[index].preciosel,
-                    itemtotal[index].editable,
-                    item.it_costoprom,
-                    item.it_peso,
-                    item.it_referencia + "-" + item.it_descripcion
-                  )
-                }
+                onChangeText={(val) => setDescu(val, index,item.it_codprod,
+                  itemtotal[index].cantidad,
+                  itemtotal[index].descuento,
+                  item.it_precio,
+                  item.it_pvp,
+                  item.it_preciosub,
+                  item.it_contado,
+                  itemtotal[index].preciosel,
+                  itemtotal[index].editable,
+                  item.it_costoprom,
+                  item.it_peso,
+                  item.it_referencia + "-" + item.it_descripcion)}
+                
               />
             )}
           </View>
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -332,7 +360,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -344,7 +372,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -360,10 +388,22 @@ export default function NuevoPed(props) {
           </View>
         </View>
       </View>
+    ):(<View></View>)
     );
   };
 
-  const setCanti = (valor, index) => {
+  const setCanti = (valor, index, codprod,
+    cant,
+    desc,
+    precio,
+    pvp,
+    subdist,
+    contado,
+    preciosel,
+    editable,
+    costo,
+    peso,
+    descripcion) => {
     if (valor == "") {
       setCant(0);
       itemtotal[index].cantidad = 0;
@@ -371,9 +411,49 @@ export default function NuevoPed(props) {
       setCant(valor);
       itemtotal[index].cantidad = valor;
     }
+
+    EditarResultados(
+      codprod,
+      Number(itemtotal[index].cantidad),
+      desc,
+      Number(itemtotal[index].codprecio),
+      precio,
+      pvp,
+      subdist,
+      contado,
+      preciosel,
+      editable,
+      costo,
+      peso,
+      descripcion
+    )
+
   };
 
-  const setDescu = (valor, index) => {
+
+  useEffect(() => {
+    if(plazo.length > 0)
+      setPickerplz(notidplazo);
+  }, [plazo]);
+
+
+  useEffect(() => {
+    if(cargado == 0)
+      cargarTransporte();
+  }, []);
+
+  const setDescu = (valor, index,codprod,
+    cant,
+    desc,
+    precio,
+    pvp,
+    subdist,
+    contado,
+    preciosel,
+    editable,
+    costo,
+    peso,
+    descripcion) => {
     if (valor == "") {
       setDesc(0);
       itemtotal[index].descuento = 0;
@@ -381,23 +461,49 @@ export default function NuevoPed(props) {
       setDesc(valor);
       itemtotal[index].descuento = valor;
     }
+
+    EditarResultados(
+      codprod,
+      cant,
+      Number(itemtotal[index].descuento),
+      Number(itemtotal[index].codprecio),
+      precio,
+      pvp,
+      subdist,
+      contado,
+      preciosel,
+      editable,
+      costo,
+      peso,
+      descripcion
+    )
   };
+
+  /*{ text: "P. CREDITO", value: 1},
+                { text: "P.V.P.", value: 2 },
+                { text: "SUBDIST.", value: 3 },
+                { text: "P. CONTADO", value: 4 },
+                { text: "EDITABLE", value: 5 },
+                
+                { text: "SUBDIST.", value: 1},
+                { text: "CONTADO", value: 2 },
+                { text: "CREDITO", value: 3 },
+                { text: "EDITABLE", value: 4 },*/ 
 
   const setNumprecio = (valor, index) => {
     setTprecio(valor);
+    itemtotal[index].codprecio = valor;
+
     if (valor == 1) {
-      itemtotal[index].preciosel = itemtotal[index].precio;
-    }
-    if (valor == 2) {
-      itemtotal[index].preciosel = itemtotal[index].pvp;
-    }
-    if (valor == 3) {
       itemtotal[index].preciosel = itemtotal[index].subdist;
     }
-    if (valor == 4) {
+    if (valor == 2) {
       itemtotal[index].preciosel = itemtotal[index].contado;
     }
-    if (valor == 5) {
+    if (valor == 3) {
+      itemtotal[index].preciosel = itemtotal[index].precio;
+    }
+    if (valor == 4) {
       itemtotal[index].preciosel = 0;
       itemtotal[index].editable = 1;
     }
@@ -420,22 +526,35 @@ export default function NuevoPed(props) {
     return date + "-" + month + "-" + year; //format: d-m-y;
   };
 
-  const [fechaped, setFechaPed] = useState(getCurrentDate());
+
+
+  const [fechaped, setFechaPed] = useState(moment(new Date()).format('DD/MM/YYYY'));
 
   const actualizaCliente = (item) => {
     setCliente(item);
     setTcodigo(item.ct_tcodigo);
-    setNotIdplazo(item.ct_idplazo);
+    setNotIdplazo(Number(item.ct_idplazo));
     setNotnomplazo(item.ct_plazo);
-    cargarTarifas(item.ct_tcodigo, ttrans);
     setUbicacion(item.ct_ubicacion);
+    cargarTarifas(item.ct_tcodigo, ttrans);
     cargarPlazo();
+  };
+
+  const inicializaTransporte = () => {
+    console.log("entro a inicializar");
+    setPickertrp(0);
+    setTtrans(0);
   };
 
   const inicializaCliente = () => {
     console.log("entro a inicializar");
     setNotIdplazo(0);
     setNotnomplazo("SELECCIONAR");
+  };
+
+  const actualizaTransporte = (item) => {
+    setPickertrp(item);
+    setTtrans(item);
   };
 
   const actualizaVendedor = (item) => {
@@ -458,6 +577,7 @@ export default function NuevoPed(props) {
         0,
         0,
         newitem.it_precio,
+        1,
         newitem.it_pvp,
         newitem.it_preciosub,
         newitem.it_contado,
@@ -476,6 +596,7 @@ export default function NuevoPed(props) {
 
   const noElementoSimilar = (codigo) => {
     var variable = true;
+  
     for (let i = 0; i < itemtotal.length; i++) {
       if (itemtotal[i].codprod == codigo) variable = false;
     }
@@ -499,23 +620,42 @@ export default function NuevoPed(props) {
     CargarResultados();
   };
 
+  async function openUrl(url){
+    const isSupported = await Linking.canOpenURL(url);
+        if(isSupported){
+            await Linking.openURL(url)
+        }else{
+            Alert.alert('No se encontro el Link');
+        }
+}
+
   const registrarPlazo = (dataPlazo) => {
     var temp = [];
+    temp.push({
+      text: 'SELECCIONAR',
+      value: 0,
+    });
     for (let i = 0; i < dataPlazo.length; ++i) {
       temp.push({
-        label: dataPlazo[i].pl_descripcion,
+        text: dataPlazo[i].pl_descripcion,
         value: dataPlazo[i].pl_codigo,
       });
     }
     console.log("se encontro plazo: " + temp);
     setPlazo(temp);
+    
+    
   };
 
   const registrarVendedores = (dataVend) => {
     var temp = [];
+    temp.push({
+      text: "SELECCIONAR",
+      value: 0,
+    });
     for (let i = 0; i < dataVend.length; ++i) {
       temp.push({
-        label: dataVend[i].vd_vendedor,
+        text: dataVend[i].vd_vendedor,
         value: dataVend[i].vd_codigo,
       });
     }
@@ -526,14 +666,21 @@ export default function NuevoPed(props) {
 
   const registrarTransporte = (dataTransporte) => {
     var temp = [];
+    temp.push({
+      text: "SELECCIONAR",
+      value: 0,
+    });
     for (let i = 0; i < dataTransporte.length; ++i) {
+      console.log("codigo: "+dataTransporte[i].pl_codigo+" transporte: "+dataTransporte[i].pl_nombre)
       temp.push({
-        label: dataTransporte[i].pl_nombre,
+        text: dataTransporte[i].pl_nombre,
         value: dataTransporte[i].pl_codigo,
       });
     }
-    console.log("se encontro plazo: " + temp);
+    console.log("se encontro transporte: " + temp);
+
     setTransp(temp);
+    setCargado(1);
     cargarVendedores();
 
   };
@@ -543,6 +690,7 @@ export default function NuevoPed(props) {
     cant,
     desc,
     precio,
+    codprecio,
     pvp,
     subdist,
     contado,
@@ -553,8 +701,11 @@ export default function NuevoPed(props) {
   ) => {
     var temp = [];
     var gngastosv = 0;
+   if(itemtotal.length > 0){
     for (let i = 0; i < itemtotal.length; ++i) {
-      gngastosv = Number(itemtotal[i].costo) / Number(itemtotal[i].subtotal);
+      console.log("valor del descuento: "+ Number(itemtotal[i].descuento));
+      gngastosv = (Number(itemtotal[i].subtotal) - Number((itemtotal[i].subtotal * itemtotal[i].descuento)/100)) / (Number(itemtotal[i].costo*itemtotal[i].cantidad));
+      console.log("calculo gnvgastos: "+ Number(itemtotal[i].subtotal)+ "---"+ Number(itemtotal[i].costo)+ "gngastos"+ gngastosv);
       temp.push({
         codprod: itemtotal[i].codprod,
         descripcion: itemtotal[i].descripcion,
@@ -563,6 +714,7 @@ export default function NuevoPed(props) {
         pvp: itemtotal[i].pvp,
         subdist: itemtotal[i].subdist,
         contado: itemtotal[i].contado,
+        codprecio: itemtotal[i].codprecio,
         preciosel: itemtotal[i].preciosel,
         editable: itemtotal[i].editable,
         costo: itemtotal[i].costo,
@@ -573,29 +725,46 @@ export default function NuevoPed(props) {
         gngastos: gngastosv,
       });
     }
+  }
 
     var ressub = 0,
       restot = 0;
     ressub = Number(cant) * Number(precio);
-    restot = ressub - (ressub * desc) / 100;
+    if(ressub == 0){
+      restot = 0;
+    }else{
+      restot = ressub - (ressub * desc) / 100;
+    }
+
+    if(restot > 0){
+      gngastosv = restot/(costo*cant);
+    }else{
+      gngastosv = 0;
+    }
+
+   
+    
 
     temp.push({
       codprod: codprod,
       descripcion: descripcion,
-      cantidad: cant,
+      cantidad: Number(cant),
       precio: precio,
       pvp: pvp,
       subdist: subdist,
       contado: contado,
-      preciosel: precio,
-      editable: editable,
+      codprecio: codprecio,
+      preciosel: Number(precio),
+      editable: Number(editable),
       costo: costo,
-      descuento: desc,
+      descuento: Number(desc),
       subtotal: ressub,
       total: restot,
-      peso: peso,
-      gngastos: 0,
+      peso: Number(peso),
+      gngastos: gngastosv,
     });
+
+
     setItemTotal(temp);
   };
 
@@ -618,13 +787,14 @@ export default function NuevoPed(props) {
     itemtext = "";
     var cadenita1 = "";
     var gngastosv = 0;
+    var estrella = "*";
 
     for (let i = 0; i < itemtotal.length; i++) {
       numcod++;
 
       varsubtotal = varsubtotal + itemtotal[i].subtotal;
 
-      gngastosv = Number(itemtotal[i].costo) / Number(itemtotal[i].subtotal);
+      gngastosv = (Number(itemtotal[i].subtotal)-Number((itemtotal[i].subtotal * itemtotal[i].descuento)/100)) / (Number(itemtotal[i].costo)*Number(itemtotal[i].cantidad));
       temp.push({
         codprod: itemtotal[i].codprod,
         descripcion: itemtotal[i].descripcion,
@@ -633,6 +803,7 @@ export default function NuevoPed(props) {
         pvp: itemtotal[i].pvp,
         subdist: itemtotal[i].subdist,
         contado: itemtotal[i].contado,
+        codprecio: itemtotal[i].codprecio,
         preciosel: itemtotal[i].preciosel,
         editable: itemtotal[i].editable,
         costo: itemtotal[i].costo,
@@ -683,9 +854,13 @@ export default function NuevoPed(props) {
         total: itemtotal[i].total,
         peso: itemtotal[i].peso,
         gngastos: gngastosv, */
+
+        if(i+1 == itemtotal.length)
+          estrella = "";
+
+
       cadenita1 =
-        cadenita1 +
-        "*" +
+        cadenita1  +
         numcod +
         ";" +
         itemtotal[i].codprod +
@@ -694,11 +869,14 @@ export default function NuevoPed(props) {
         ";" +
         itemtotal[i].cantidad +
         ";" +
+        itemtotal[i].codprecio +
+        ";" +
         itemtotal[i].preciosel +
         ";" +
         itemtotal[i].descuento +
         ";" +
-        itemtotal[i].total;
+        itemtotal[i].total +
+        estrella
     }
 
     setCadenaint(itemtext);
@@ -797,6 +975,7 @@ export default function NuevoPed(props) {
     var varsubtotalcosto = 0;
     itemtext = "";
     var gngastosv = 0;
+    var estrella = "*";
 
     for (let i = 0; i < itemtotal.length; i++) {
       numcod++;
@@ -806,7 +985,7 @@ export default function NuevoPed(props) {
         ressub = Number(itemtotal[i].cantidad) * Number(itemtotal[i].preciosel);
         rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
         valpeso = Number(itemtotal[i].cantidad) * Number(itemtotal[i].peso);
-        gngastosv = rescosto / ressub;
+        gngastosv = (ressub - Number((ressub *itemtotal[i].descuento)/100))  / rescosto;
         restot = ressub - (ressub * itemtotal[i].descuento) / 100;
         temp.push({
           codprod: itemtotal[i].codprod,
@@ -816,6 +995,7 @@ export default function NuevoPed(props) {
           pvp: itemtotal[i].pvp,
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
+          codprecio: itemtotal[i].codprecio,
           preciosel: itemtotal[i].preciosel,
           editable: itemtotal[i].editable,
           costo: itemtotal[i].costo,
@@ -851,9 +1031,13 @@ export default function NuevoPed(props) {
           '" d7="' +
           0 +
           '"></detalle>';
+
+          if(i+1 == itemtotal.length)
+          estrella = "";
+
+
         cadenita1 =
-          cadenita1 +
-          "*" +
+          cadenita1  +
           numcod +
           ";" +
           itemtotal[i].codprod +
@@ -862,11 +1046,14 @@ export default function NuevoPed(props) {
           ";" +
           itemtotal[i].cantidad +
           ";" +
+          itemtotal[i].codprecio +
+          ";" +
           itemtotal[i].preciosel +
           ";" +
           itemtotal[i].descuento +
           ";" +
-          itemtotal[i].total;
+          itemtotal[i].total +
+          estrella
       } else {
         temp.push({
           codprod: itemtotal[i].codprod,
@@ -876,6 +1063,7 @@ export default function NuevoPed(props) {
           pvp: itemtotal[i].pvp,
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
+          codprecio: itemtotal[i].codprecio,
           preciosel: itemtotal[i].preciosel,
           editable: itemtotal[i].editable,
           costo: itemtotal[i].costo,
@@ -914,7 +1102,6 @@ export default function NuevoPed(props) {
           '"></detalle>';
         cadenita1 =
           cadenita1 +
-          "*" +
           numcod +
           ";" +
           itemtotal[i].codprod +
@@ -923,11 +1110,14 @@ export default function NuevoPed(props) {
           ";" +
           itemtotal[i].cantidad +
           ";" +
+          itemtotal[i].codprecio +
+          ";" +
           itemtotal[i].preciosel +
           ";" +
           itemtotal[i].descuento +
           ";" +
-          itemtotal[i].total;
+          itemtotal[i].total +
+          estrella
       }
     }
 
@@ -1008,6 +1198,7 @@ export default function NuevoPed(props) {
     codprod,
     cant,
     desc,
+    codprecio,
     precio,
     pvp,
     subdist,
@@ -1039,6 +1230,7 @@ export default function NuevoPed(props) {
     var varsubtotalcosto = 0;
     itemtext = "";
     var gngastosv = 0;
+    var estrella = "*";
 
     for (let i = 0; i < itemtotal.length; i++) {
       numcod++;
@@ -1049,7 +1241,7 @@ export default function NuevoPed(props) {
         console.log("costo 1: "+costo);
         rescosto = Number(cant) * Number(costo);
         valpeso = Number(cant) * Number(peso);
-        gngastosv = rescosto / ressub;
+        gngastosv = (ressub-((ressub*desc)/100)) / rescosto;
         restot = ressub - (ressub * desc) / 100;
 
         temp.push({
@@ -1060,6 +1252,7 @@ export default function NuevoPed(props) {
           pvp: pvp,
           subdist: subdist,
           contado: contado,
+          codprecio: codprecio,
           preciosel: preciosel,
           editable: editable,
           costo: costo,
@@ -1098,9 +1291,12 @@ export default function NuevoPed(props) {
           '" d7="' +
           0 +
           '"></detalle>';
+
+          if(i+1 == itemtotal.length)
+          estrella = "";
+
         cadenita1 =
           cadenita1 +
-          "*" +
           numcod +
           ";" +
           codprod +
@@ -1109,11 +1305,14 @@ export default function NuevoPed(props) {
           ";" +
           cant +
           ";" +
+          codprecio +
+          ";" +
           precio +
           ";" +
           desc +
           ";" +
-          restot;
+          restot +
+          estrella
       } else {
         temp.push({
           codprod: itemtotal[i].codprod,
@@ -1123,6 +1322,7 @@ export default function NuevoPed(props) {
           pvp: itemtotal[i].pvp,
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
+          codprecio: itemtotal[i].codprecio,
           preciosel: itemtotal[i].preciosel,
           editable: itemtotal[i].editable,
           costo: itemtotal[i].costo,
@@ -1162,9 +1362,13 @@ export default function NuevoPed(props) {
           '" d7="' +
           0 +
           '"></detalle>';
+
+          if(i+1 == itemtotal.length)
+          estrella = "";
+
+
         cadenita1 =
-          cadenita1 +
-          "*" +
+          cadenita1  +
           numcod +
           ";" +
           itemtotal[i].codprod +
@@ -1173,11 +1377,14 @@ export default function NuevoPed(props) {
           ";" +
           itemtotal[i].cantidad +
           ";" +
+          itemtotal[i].codprecio +
+          ";" +
           itemtotal[i].preciosel +
           ";" +
           itemtotal[i].descuento +
           ";" +
-          itemtotal[i].total;
+          itemtotal[i].total+
+          estrella;
       }
 
       console.log("Val del peso: " + valpeso);
@@ -1269,10 +1476,7 @@ export default function NuevoPed(props) {
 
   const cargarPlazo = async () => {
     try {
-      /*const response = await fetch(
-        "https://app.cotzul.com/Pedidos/pd_getPlazo.php?notidplazo=" +
-          notidplazo
-      );*/
+      
       db = SQLite.openDatabase(
         database_name,
         database_version,
@@ -1354,8 +1558,38 @@ export default function NuevoPed(props) {
         setVseguro(1.2);
       }
 
+
+      /*try {
+      
+      db = SQLite.openDatabase(
+        database_name,
+        database_version,
+        database_displayname,
+        database_size
+      );
+      db.transaction((tx) => {
+        tx.executeSql("SELECT * FROM plazos ", [], (tx, results) => {
+          var len = results.rows.length;
+          for (let i = 0; i < len; i++) {
+            let row = results.rows.item(i);
+          }
+          registrarPlazo(results.rows._array);
+        });
+      });
+    } catch (error) {
+      console.log("un error cachado listar pedidos");
+      console.log(error);
+    }*/ 
+
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+
       if (ttcodigo != 0 && ttrans != 0) {
-        const response = await fetch(
+       /* const response = await fetch(
           "https://app.cotzul.com/Pedidos/pd_getTarifa.php?ttcodigo=" +
             ttcodigo +
             "&tarifa=" +
@@ -1367,35 +1601,37 @@ export default function NuevoPed(props) {
             ttcodigo +
             "&tarifa=" +
             idtransporte
-        );
-        const jsonResponse = await response.json();
+        );*/
+
+        db.transaction((tx) => {
+          tx.executeSql("SELECT a.tt_idtarifa as pl_idtarifa, a.tt_peso as pl_peso, a.tt_tarifa1 as pl_tarifa1, a.tt_tarifa2 as pl_tarifa2, b.tu_descripcion as pl_descrip FROM transtarifas a, transubicacion b WHERE a.tt_idtarifa = ? AND a.tt_idtransporte = ? AND a.tt_idtarifa = b.tu_codigo", [ttcodigo, ttrans], (tx, results) => {
+            var len = results.rows.length;
+            console.log("cantidad de len: "+len);
+            for (let i = 0; i < len; i++) {
+              let row = results.rows.item(i);
+             // setVpeso(jsonResponse?.tarifa[0]);
+             // setCobertura(jsonResponse?.tarifa[0].pl_descrip);
+             console.log("Resultado de vpeso: "+ row.descrip);
+            }
+            
+          });
+        });
+
+
+      /*  const jsonResponse = await response.json();
         console.log("REGISTRANDO TARIFAS TRANSPORTE");
         console.log("Valor del peso: " + jsonResponse?.tarifa[0].pl_peso);
         setVpeso(jsonResponse?.tarifa[0]);
         setCobertura(jsonResponse?.tarifa[0].pl_descrip);
         console.log(
           "valor de ubicacion: " + jsonResponse?.tarifa[0].pl_descrip
-        );
+        );*/
       }
     } catch (error) {
       console.log("un error cachado listar transporte");
       console.log(error);
     }
   };
-
-  useEffect(() => {
-    if(cargado == 0)
-      cargarTransporte();
-  }, []);
-
-  useEffect(() => {
-    cargarTarifas(tcodigo, ttrans);
-    CargarResultados();
-  }, [ttrans]);
-
-  useEffect(() => {
-    setDescuento(0);
-  }, [checked]);
 
   const GrabarBorrador = async () => {
 
@@ -1414,11 +1650,11 @@ export default function NuevoPed(props) {
         '" c3="' +
         dataUser.vn_codigo +
         '" c4="' +
-        ttrans +
+        pickertrp +
         '" c5="' +
         cliente.ct_codigo +
         '" c6="' +
-        doc +
+        pickerfp +
         '" c7="' +
         tplazo +
         '" c8="' +
@@ -1458,7 +1694,7 @@ export default function NuevoPed(props) {
           "&idcliente=" +
           cliente.ct_codigo +
           "&tipodoc=" +
-          doc +
+          pickerfp +
           "&tipodesc=" +
           (checked == "second" ? 1 : 0) +
           "&porcdesc=" +
@@ -1466,7 +1702,7 @@ export default function NuevoPed(props) {
           "&valordesc=" +
           descuento +
           "&ttrans=" +
-          ttrans +
+          pickertrp +
           "&gnorden=" +
           gnorden +
           "&gnventas=" +
@@ -1506,7 +1742,7 @@ export default function NuevoPed(props) {
           "&idcliente=" +
           cliente.ct_codigo +
           "&tipodoc=" +
-          doc +
+          pickerfp +
           "&tipodesc=" +
           (checked == "second" ? 1 : 0) +
           "&porcdesc=" +
@@ -1514,7 +1750,7 @@ export default function NuevoPed(props) {
           "&valordesc=" +
           descuento +
           "&ttrans=" +
-          ttrans +
+          pickertrp +
           "&gnorden=" +
           gnorden +
           "&gnventas=" +
@@ -1542,13 +1778,16 @@ export default function NuevoPed(props) {
       );
 
 
+      /*pv_codigo INTEGER, pv_codigovendedor INTEGER,  pv_vendedor VARCHAR(100), pv_codcliente INTEGER, pv_cliente VARCHAR(200)," +
+          "pv_total VARCHAR(50), pv_estatus VARCHAR(50), pv_gngastos VARCHAR(100), pv_numpedido INTEGER);"*/ 
+
       try{
       db.transaction((txn) => {
           txn.executeSql(
             "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido) " +
               " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?); ",
             [
-              parseInt(dataUser.vn_recibo),
+              parseInt(numdoc),
               parseInt(dataUser.vn_codigo),
               dataUser.vn_nombre,
               parseInt(cliente.ct_codigo),
@@ -1556,7 +1795,7 @@ export default function NuevoPed(props) {
               total.toString(),
               "-1",
               gngastos.toString(),
-              parseInt(dataUser.vn_recibo)
+              parseInt(numdoc)
             ],
             (txn, results) => {
               if (results.rowsAffected > 0) {
@@ -1567,9 +1806,10 @@ export default function NuevoPed(props) {
 
           txn.executeSql("SELECT * FROM pedidosvendedor", [], (txn, results) => {
             var len = results.rows.length;
+            console.log("len pedidovendedor: "+len);
             for (let i = 0; i < len; i++) {
               let row = results.rows.item(i);
-              console.log(`PEDIDOS VENDEDOR: ` + JSON.stringify(row));
+              console.log(`PEDIDOS VENDEDOR: item: `+ i + " - " + JSON.stringify(row));
             }
           }); 
 
@@ -1583,20 +1823,20 @@ export default function NuevoPed(props) {
             ", dp_prioridad , dp_observacion" +
             ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
             ", dp_ttrans , dp_gnorden , dp_gnventas  " +
-            ", dp_gngastos, item ) " +
+            ", dp_gngastos, item, dp_numpedido ) " +
             " VALUES (?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?" +
             ", ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
-            ", ?, ?); ",
+            ", ?, ?, ?); ",
           [
-            parseInt(dataUser.vn_recibo),
+            parseInt(numdoc),
             parseInt(dataUser.vn_codigo),
             parseInt(cliente.ct_codigo),
             subtotal.toString(),
             descuento.toString(),
-            transporte.toString(),
+            pickertrp.toString(),
             seguro.toString(),
             iva.toString(),
             total.toString(),
@@ -1607,15 +1847,16 @@ export default function NuevoPed(props) {
            'COTZUL',
            'NORMAL',
             obs,
-            doc.toString(),
+            pickerfp.toString(),
             (checked == "second" ? "1" : "0"),
             porcent.toString(),
             descuento.toString(),
-            transporte.toString(),
+            pickertrp.toString(),
             gnorden.toString(),
             gnventas.toString(),
             gngastos.toString(),
             cadenita.toString(),
+            parseInt(0)
           ],
           (txn, results) => {
             console.log("WWWWW"+JSON.stringify(results));
@@ -1632,16 +1873,57 @@ export default function NuevoPed(props) {
             console.log(`DATOS PEDIDOS: ` + JSON.stringify(row));
           }
         });
-
-        txn.executeSql("UPDATE usuario SET us_numrecibo = ? WHERE us_numunico = 1 ", [parseInt(dataUser.vn_recibo)+1], (txn, results) => {
+        var tempu = [];
+        txn.executeSql("UPDATE usuario SET us_numborrador = ? WHERE us_numunico = 1 ", [parseInt(numdoc)], (txn, results) => {
           if (results.rowsAffected > 0) {
+            dataUser.vn_borrador = dataUser.vn_borrador + 1;
+            /*tempu.push({
+              vn_codigo: dataUser.vn_codigo,
+              vn_nombre: dataUser.vn_nombre,
+              vn_usuario: dataUser.vn_usuario,
+              vn_clave: dataUser.vn_clave,
+              vn_recibo: dataUser.vn_recibo,
+              vn_borrador: parseInt(numdoc)
+            });*/
+            
+            
             console.log("Actualizo el nuevo numero recibo");
           }
         });
+
+        
+
+       
       });
 
     }catch(e){
-      console.log("se cayo"+e)
+      console.log("--------*********se cayo"+e)
+    }
+
+    const jsonValue = null;
+
+    try{
+      jsonValue = await AsyncStorage.getItem(STORAGE_KEY)
+            .then( data => {
+
+              // the string value read from AsyncStorage has been assigned to data
+              console.log( data );
+
+              // transform it back to an object
+              data = JSON.parse( data );
+              console.log( data );
+
+              // Increment
+              data.vn_borrador = parseInt(data.vn_borrador) + 1;
+
+              console.log( data );
+
+              //save the value to AsyncStorage again
+              AsyncStorage.setItem(STORAGE_KEY, JSON.stringify( data ) );
+             
+            });
+    }catch(e){
+      console.log("--------*********se cayo"+e)
     }
 
       const jsonResponse = await response.json();
@@ -1658,6 +1940,16 @@ export default function NuevoPed(props) {
 
   const GrabarPedido = async () => {
     try {
+
+      db = SQLite.openDatabase(
+        database_name,
+        database_version,
+        database_displayname,
+        database_size
+      );
+
+      console.log("cadenaint: "+cadenaint+" numdoc: "+ numdoc+" ttrans: "+ ttrans+" cliente: "+cliente.ct_codigo+" doc: "+doc+" tplazo: "+tplazo+" itemtotal length: "+itemtotal.length );
+
       if (
         cadenaint != "" &&
         numdoc != 0 &&
@@ -1667,10 +1959,12 @@ export default function NuevoPed(props) {
         tplazo != 0 &&
         itemtotal.length > 0
       ) {
+
+       
         //var textofinal = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><c c0=\"2\" c1=\"1\" c2=\""+numdoc+"\" c3=\""+dataUser.vn_codigo+"\" c4=\""+ttrans+"\" c5=\""+cliente.ct_codigo+"\" c6=\""+doc+"\" c7=\""+tplazo+"\" c8=\""+obs+"\" c9=\""+subtotal+"\" c10=\""+porcent+"\" c11=\""+descuento+"\" c12=\""+seguro+"\" c13=\""+transporte+"\" c14=\""+iva+"\" c15=\""+total+"\" c16=\""+0+"\" c17=\""+0+"\" c18=\""+dataUser.vn_usuario+"\" >"+cadenaint+"</c>";
         var textofinal =
           '<?xml version="1.0" encoding="iso-8859-1"?><c c0="2" c1="1" c2="' +
-          numdoc +
+          numped +
           '" c3="' +
           dataUser.vn_codigo +
           '" c4="' +
@@ -1706,7 +2000,7 @@ export default function NuevoPed(props) {
           "</c>";
         console.log(
           "https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido=" +
-            numdoc +
+            numped +
             "&idvendedor=" +
             dataUser.vn_codigo +
             "&usuvendedor=" +
@@ -1754,7 +2048,7 @@ export default function NuevoPed(props) {
         );
         const response = await fetch(
           "https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido=" +
-            numdoc +
+            numped +
             "&idvendedor=" +
             dataUser.vn_codigo +
             "&usuvendedor=" +
@@ -1801,6 +2095,43 @@ export default function NuevoPed(props) {
             cadenita
         );
 
+        
+
+        db.transaction((txn) => {
+           txn.executeSql("UPDATE usuario SET us_recibo = ? WHERE us_numunico = 1 ", [parseInt(dataUser.vn_recibo)+1], (txn, results) => {
+            if (results.rowsAffected > 0) {
+              dataUser.vn_recibo = dataUser.vn_recibo + 1;
+              
+              console.log("Actualizo el nuevo numero recibo");
+            }
+          });
+        });
+
+        const jsonValue = null;
+        try{
+          jsonValue = await AsyncStorage.getItem(STORAGE_KEY)
+                .then( data => {
+    
+                  // the string value read from AsyncStorage has been assigned to data
+                  console.log( data );
+    
+                  // transform it back to an object
+                  data = JSON.parse( data );
+                  console.log( data );
+    
+                  // Increment
+                  data.vn_recibo = parseInt(data.vn_recibo) + 1;
+    
+                  console.log( data );
+    
+                  //save the value to AsyncStorage again
+                  AsyncStorage.setItem(STORAGE_KEY, JSON.stringify( data ) );
+                 
+                });
+        }catch(e){
+          console.log("--------*********se cayo"+e)
+        }
+
         const jsonResponse = await response.json();
         console.log(jsonResponse.estatusped);
         if (jsonResponse.estatusped == "REGISTRADO") {
@@ -1816,11 +2147,12 @@ export default function NuevoPed(props) {
     }
   };
 
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.titlesWrapper}>
         <Text style={styles.titlesSubtitle}>Cotzul S.A.</Text>
-        <Text style={styles.titlespick2}>Usuario: {dataUser.vn_nombre}</Text>
+       <Text style={styles.titlespick2}>Usuario: {(dataUser) ? dataUser.vn_nombre: "-----"}</Text>
         <Text style={{ fontWeight: "bold" }}></Text>
 
         {dataUser.vn_codigo == -1 ? (
@@ -1828,13 +2160,19 @@ export default function NuevoPed(props) {
             <View style={styles.itemrow2}>
               <Text style={styles.tittext}>Selecciona Vendedor distinto:</Text>
               <View style={styles.itemrow2}>
-                <RNPickerSelect
+               {/* <RNPickerSelect
                   useNativeAndroidPickerStyle={false}
                   style={pickerStyle}
                   onValueChange={(tvendedor) => actualizaVendedor(tvendedor)}
                   placeholder={{ label: "SELECCIONAR", value: 0 }}
                   items={vvendedor}
-                />
+        />*/}
+                 <Picker
+                    onChanged={setPickerven}
+                    options={vvendedor}
+                    style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+                    value={pickerven}
+                />   
               </View>
             </View>
           </>
@@ -1872,22 +2210,42 @@ export default function NuevoPed(props) {
         </View>
         <View style={styles.row}>
           <View style={styles.itemrow}>
-            <RNPickerSelect
+
+          <Picker
+              onChanged={setPicker}
+              options={[
+                  {value: 1, text: 'COTZUL-BODEGA'},
+              ]}
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={picker}
+          />
+         
+           {/* <RNPickerSelect
               useNativeAndroidPickerStyle={false}
               style={pickerStyle}
               onValueChange={(bodega) => setBodega(bodega)}
               placeholder={{ label: "COTZUL-BODEGA", value: 1 }}
-              items={[]}
-            />
+              items={[{ label: "COTZUL-BODEGA", value: 1 }]}
+        />*/}
           </View>
           <View style={styles.itemrow}>
-            <RNPickerSelect
+           {/* <RNPickerSelect
               useNativeAndroidPickerStyle={false}
               style={pickerStyle}
               onValueChange={(prioridad) => setPrioridad(prioridad)}
               placeholder={{ label: "NORMAL", value: 1 }}
               items={[{ label: "URGENTE", value: 2 }]}
-            />
+      />*/}
+
+        <Picker
+              onChanged={setPickerpri}
+              options={[
+                  {value: 1, text: 'NORMAL'},
+                  {value: 2, text: 'URGENTE'},
+              ]}
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={pickerpri}
+          />
           </View>
         </View>
         <View style={styles.row}>
@@ -1896,13 +2254,13 @@ export default function NuevoPed(props) {
           </View>
         </View>
         <View style={styles.itemobserv}>
-          <TextInput
+        <TextInput
             multiline
             numberOfLines={5}
             placeholder="Registre una observación"
             style={styles.input1}
             onChangeText={(value) => setObs(value)}
-          />
+        />
         </View>
       </View>
 
@@ -1910,11 +2268,11 @@ export default function NuevoPed(props) {
         <Text style={{ fontWeight: "bold" }}>Datos del Cliente:</Text>
       </View>
       <View style={styles.detallebody}>
-        <ModalClientes
+       <ModalClientes
           inicializaCliente={inicializaCliente}
           actualizaCliente={actualizaCliente}
           idvendedor={dataUser.vn_codigo}
-        ></ModalClientes>
+      ></ModalClientes>
 
         <View style={styles.row}>
           <View style={styles.itemrow}>
@@ -1961,7 +2319,7 @@ export default function NuevoPed(props) {
             <Text style={styles.tittext}>Forma de Pago:</Text>
           </View>
           <View style={styles.itemrow}>
-            <RNPickerSelect
+            {/*<RNPickerSelect
               useNativeAndroidPickerStyle={false}
               style={pickerStyle}
               onValueChange={(doc) => setDoc(doc)}
@@ -1970,7 +2328,18 @@ export default function NuevoPed(props) {
                 { label: "CHEQUE A FECHA", value: 1 },
                 { label: "FACT. A CRÉDITO", value: 2 },
               ]}
-            />
+            />*/}
+
+            <Picker
+              onChanged={setPickerfp}
+              options={[
+                  {value: 0, text: 'SELECCIONAR'},
+                  {value: 1, text: 'CHEQUE A FECHA'},
+                  {value: 2, text: 'FACT. A CRÉDITO'},
+              ]}
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={pickerfp}
+          />    
           </View>
         </View>
         <View style={styles.row}>
@@ -1978,7 +2347,7 @@ export default function NuevoPed(props) {
             <Text style={styles.tittext}>Selecciona Plazo:</Text>
           </View>
           <View style={styles.itemrow}>
-            {notidplazo == 0 ? (
+            {/*notidplazo == 0 ? (
               <Text style={styles.tittext}>---</Text>
             ) : (
               <RNPickerSelect
@@ -1988,7 +2357,15 @@ export default function NuevoPed(props) {
                 onValueChange={(tplazo) => setTPlazo(tplazo)}
                 placeholder={{ label: notnomplazo, value: notidplazo }}
               />
-            )}
+            )*/}
+
+            {notidplazo == 0 ? (<Text style={styles.tittext}>---</Text>):( 
+            <Picker
+              onChanged={setPickerplz}
+              options={plazo}
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={pickerplz}
+          />  )}
           </View>
         </View>
         <View style={styles.row}>
@@ -1996,13 +2373,21 @@ export default function NuevoPed(props) {
             <Text style={styles.tittext}>Selecciona Transporte:</Text>
           </View>
           <View style={styles.itemrow}>
-            <RNPickerSelect
+            {/*<RNPickerSelect
               useNativeAndroidPickerStyle={false}
               style={pickerStyle}
               onValueChange={(ttrans) => setTtrans(ttrans)}
               placeholder={{ label: "SELECCIONAR", value: 0 }}
               items={transp}
-            />
+          />*/}
+
+          {/*<Picker
+              onChanged={setPickertrp}
+              options={transp}
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={pickertrp}
+        />*/}
+        <ModalTransporte inicializaTransporte={inicializaTransporte} actualizaTransporte={actualizaTransporte} pickertrp={pickertrp}></ModalTransporte>
           </View>
         </View>
         <View style={styles.row}>
@@ -2019,7 +2404,7 @@ export default function NuevoPed(props) {
               value="second"
               status={checked === "second" ? "checked" : "unchecked"}
               onPress={() => setChecked("second")}
-            />
+        />
           </View>
           <View style={styles.itemrow}>
             <Text style={styles.tittext}>Valor del Descuento:</Text>
@@ -2043,7 +2428,7 @@ export default function NuevoPed(props) {
       <View style={styles.detallebody}>
         <View style={styles.row}>
           <View style={styles.itemrow2}>
-            <ModalItems actualizaItem={actualizaItem}></ModalItems>
+            {<ModalItems actualizaItem={actualizaItem}></ModalItems>}
           </View>
         </View>
         <Text style={{ fontWeight: "bold", marginHorizontal: 10 }}>
@@ -2233,7 +2618,7 @@ export default function NuevoPed(props) {
               <Text style={styles.itemtext}>
                 {Number(gngastos).toFixed(2) != "  "
                   ? Number(gngastos).toFixed(2)
-                  : 0}
+          : 0}
               </Text>
             </View>
           </View>
@@ -2359,6 +2744,29 @@ const pickerStyle2 = {
   },
 };
 
+/*const pickerStyle = {
+    inputIOS: {
+        width: "100%",
+        color: 'white',
+        padding: 10,
+        margin: 10,
+        backgroundColor: '#9462c1',
+        borderRadius: 5,
+
+    },
+    placeholder: {
+        color: 'white',
+    },
+    inputAndroid: {
+        width: "100%",
+        color: 'white',
+        padding: 10,
+        marging: 10,
+        backgroundColor: '#9462c1',
+        borderRadius: 5,
+    },
+};*/
+
 const pickerStyle = {
   inputIOS: {
     color: "white",
@@ -2373,11 +2781,12 @@ const pickerStyle = {
     color: "white",
   },
   inputAndroid: {
-    width: "85%",
-    height: 20,
+    width: "90%",
+    height: 40,
+    overflow: 'hidden',
     color: "white",
     marginHorizontal: 20,
-    paddingLeft: 10,
+    paddingLeft: 0,
     backgroundColor: "#6f4993",
     borderRadius: 5,
   },
@@ -2411,6 +2820,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "bold",
     fontSize: 12,
+  },
+  tabletext1: {
+    textAlign: "center",
+    fontSize: 12,
+    paddingLeft: 5,
+    color: 'blue'
   },
   tabletext: {
     textAlign: "center",
@@ -2503,3 +2918,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#6f4993",
   },
 });
+
+

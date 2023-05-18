@@ -11,9 +11,9 @@ import CargarInformacion from "../navegations/CargarInformacion";
 
 const STORAGE_KEY = '@save_data'
 
-const database_name = 'CotzulBD.db';
+const database_name = 'CotzulBDS.db';
 const database_version = '1.0';
-const database_displayname = 'CotzulBD';
+const database_displayname = 'CotzulBDS';
 const database_size = 200000;
 
 export default function Perfil(){
@@ -62,7 +62,7 @@ export default function Perfil(){
               );
 
               db.transaction((tx) => {
-                tx.executeSql("DROP TABLE IF EXISTS Usuario");
+                tx.executeSql("DROP TABLE IF EXISTS usuario");
               });
                 
 
