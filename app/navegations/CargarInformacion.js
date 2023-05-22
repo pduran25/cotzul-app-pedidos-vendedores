@@ -64,6 +64,7 @@ export default function CargarInformacion() {
       setdataUser(JSON.parse(jsonValue));
       setUsuario(true);
       getDateLast();
+      reviewInternet();
       console.log("INGRSA A PRODUCTO: " + dataUser.vn_nombre);
     } catch (e) {
       console.log("Error al coger el usuario");
@@ -123,8 +124,15 @@ export default function CargarInformacion() {
     };
   }
 
-  useEffect(() => {
+  const myFunction = () => {
+    console.log('Función ejecutada');
     reviewInternet();
+  };
+
+
+  useEffect(() => {
+    
+    const interval = setInterval(myFunction, 5000);
     if (dataUser) {
       if (!usuario) {
         console.log("Ingreso 1 vez");
@@ -148,8 +156,8 @@ export default function CargarInformacion() {
 
   const sincronizarDatos = async () => {
     try {
-      
       if(internet){
+        console.log("Se esta cargando los datos");
         setActivo(1);
         setDateLast(moment(new Date()).format('DD/MM/YYYY HH:mm:ss').toString());
         ActualizarUsuario(moment(new Date()).format('DD/MM/YYYY HH:mm:ss').toString());
@@ -174,9 +182,34 @@ export default function CargarInformacion() {
       database_size
     );
 
+    console.log("Ingresando a usuario...");
+
+    const dataUsermod = Object.assign({}, dataUser, {
+        vn_codigo: dataUser.vn_codigo,
+        vn_nombre: dataUser.vn_nombre,
+        vn_clave: dataUser.vn_clave,
+        vn_recibo: dataUser.vn_recibo,
+        vn_borrador: dataUser.vn_borrador,
+        vn_loading: dataUser.vn_loading+1,
+        vn_fechaloading: dataUser.vn_fechaloading,
+        vn_login: dataUser.vn_login,
+      }); 
+
+      setdataUser(dataUsermod);
+      console.log("Usuario loading: "+dataUser.vn_loading);
+
     db.transaction((txn) => {
-      txn.executeSql("UPDATE usuario SET us_loading = ?, us_fechaloading = ? WHERE us_numunico = 1",[Number(dataUser.vn_loading+1),fechita]);
+      txn.executeSql("UPDATE usuario SET us_loading = ?, us_fechaloading = ? WHERE us_numunico = 1",[Number(dataUser.vn_loading+1),fechita],(txn, results) => {
+        console.log("Usuario Afectados: "+ results.rowsAffected);
+        if (results.rowsAffected > 0) {
+          
+          console.log("Valor afectado us_loading: "+ (dataUser.vn_loading+1) + "fecha loading: "+ (dataUser.vn_fechaloading));
+          Alert.alert("Valor afectado us_loading: "+ (dataUser.vn_loading+1) + "fecha loading: "+ (dataUser.vn_fechaloading));
+        }
+      });
     });
+
+
   }
 
   /** FIN PARAMETROS**/
@@ -725,11 +758,11 @@ export default function CargarInformacion() {
     if(dataUser.vn_loading > 0){
       
       ActualizarPedidosOffline();
-      setActivo(2);
-      signUp();
+      
     }else{
       obtenerPedidosVendedor();
     }
+
     
   };
   /** FIN TARIFA **/
@@ -781,6 +814,7 @@ export default function CargarInformacion() {
         tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_online = 0", [], (tx, results) => {
           var len = results.rows.length;
           console.log("Entra a la cantidad:--- "+len);
+          if(len > 0){
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);
             pvcodigo = Number(row.pv_codigo);
@@ -873,6 +907,9 @@ export default function CargarInformacion() {
             tx.executeSql("UPDATE pedidosvendedor SET pv_online = 1 WHERE pv_codigo = ?", [pvcodigo]); 
 
           }
+          }
+          setActivo(2);
+          signUp();
         });
       });
 
@@ -889,6 +926,7 @@ export default function CargarInformacion() {
       //console.log(jsonResponse.estatusped);
       if (jsonResponse.estatusped == "REGISTRADO") {
         console.log("Se registro con éxito");
+        
       }
 
 

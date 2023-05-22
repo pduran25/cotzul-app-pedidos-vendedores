@@ -88,6 +88,7 @@ export default function Navigation(props){
                     name="Borradores" 
                     component={ProductosStack}
                     options={{headerShown: false}}
+                   
                     />
                     <Tab.Screen 
                     name="Pedidos" 

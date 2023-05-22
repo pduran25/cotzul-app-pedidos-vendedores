@@ -549,7 +549,7 @@ export default function NuevoPed(props) {
     setNotIdplazo(Number(item.ct_idplazo));
     setNotnomplazo(item.ct_plazo);
     setUbicacion(item.ct_ubicacion);
-    cargarTarifas(item.ct_tcodigo, ttrans);
+    cargarTarifas(item.ct_tcodigo, ttrans, "actualizacliente");
     cargarPlazo();
   };
 
@@ -567,7 +567,7 @@ export default function NuevoPed(props) {
 
   const actualizaTransporte = (item) => {
     console.log("Valor de transporte"+item);
-    cargarTarifas(tcodigo, item);
+    cargarTarifas(tcodigo, item, "actualiza transporte");
     setPickertrp(item);
     setTtrans(item);
   };
@@ -803,6 +803,10 @@ export default function NuevoPed(props) {
     var cadenita1 = "";
     var gngastosv = 0;
     var estrella = "*";
+    var rescosto = 0;
+    var varsubtotalcosto = 0;
+
+    reviewInternet();
 
     for (let i = 0; i < itemtotal.length; i++) {
       numcod++;
@@ -829,6 +833,8 @@ export default function NuevoPed(props) {
         gngastos: gngastosv,
       });
       valpeso = Number(itemtotal[i].cantidad) * Number(itemtotal[i].peso);
+      rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
+      varsubtotalcosto = varsubtotalcosto + rescosto;
       totpeso = totpeso + valpeso;
       porcpor = Number(porcpor) + Number(itemtotal[i].descuento);
       resdes =
@@ -897,7 +903,7 @@ export default function NuevoPed(props) {
     setCadenaint(itemtext);
     setCadenita(cadenita1);
 
-    cargarTarifas(tcodigo, ttrans);
+    cargarTarifas(tcodigo, ttrans, "cargar resultados");
 
     setItemTotal(temp);
     setSubtotal(varsubtotal);
@@ -960,9 +966,12 @@ export default function NuevoPed(props) {
     );
 
     console.log("valores total: "+Number(vartotal)+" vardesc: "+ Number(vardesc)+" varsubtotal: "+Number(varsubtotal) );
-    varorden = Number(vartotal) - Number(vardesc) - Number(varsubtotal);
-    varventas = (gnorden / (Number(vartotal) - Number(vardesc))) * 100;
-    vargastos = (Number(vartotal) - Number(vardesc)) / Number(varsubtotal);
+    varorden = Number(varsubtotal) - Number(vardesc) - Number(varsubtotalcosto);
+    varventas = (gnorden / (Number(varsubtotal) - Number(vardesc))) * 100;
+    vargastos =
+      (Number(varsubtotal) - Number(vardesc)) / Number(varsubtotalcosto);
+    
+    console.log("varsubtotal - cargarresultados: "+ varsubtotal+ "vardesc "+ vardesc+ "varsubtotalcosto: "+ varsubtotalcosto);
 
     setGnOrden(varorden);
     setGnVentas(varventas);
@@ -1145,7 +1154,7 @@ export default function NuevoPed(props) {
 
     setKilos(totpeso);
 
-    cargarTarifas(tcodigo, ttrans);
+    cargarTarifas(tcodigo, ttrans, "actualiza resultados");
 
     if (checked == "second") {
       vardesc = (varsubtotal * porcent) / 100;
@@ -1414,7 +1423,7 @@ export default function NuevoPed(props) {
 
     setKilos(totpeso);
 
-    cargarTarifas(tcodigo, ttrans);
+    cargarTarifas(tcodigo, ttrans, "Editar Resultados");
 
     if (checked == "second") {
       vardesc = (varsubtotal * porcent) / 100;
@@ -1554,9 +1563,9 @@ export default function NuevoPed(props) {
     }
   };
 
-  const cargarTarifas = async (ttcodigo, idtransporte) => {
+  const cargarTarifas = async (ttcodigo, idtransporte, valorpre = "prueba") => {
     try {
-      console.log("Entro en tarifas: " + ttcodigo + "- " + idtransporte+" - "+ ubicacion+ "- "+ idtransporte);
+      console.log("se actualizo Entro en tarifas: "+ valorpre+" ****" + ttcodigo + "- " + idtransporte+" - "+ ubicacion+ "- "+ idtransporte);
       if (
         (ubicacion == 1 || ubicacion == 4 || ubicacion == 24) &&
         idtransporte == 6
@@ -1614,6 +1623,8 @@ export default function NuevoPed(props) {
       database_size
     );
 
+    reviewInternet();
+
 
     try {
       var textofinal =
@@ -1649,7 +1660,7 @@ export default function NuevoPed(props) {
         0 +
         '" c17="' +
         0 +
-        '" c18="pduran" >' +
+        '" c18="'+dataUser.vn_usuario+'" >' +
         cadenaint +
         "</c>";
       console.log(
@@ -1930,6 +1941,8 @@ export default function NuevoPed(props) {
         database_size
       );
 
+      reviewInternet();
+
       console.log("cadenaint: "+cadenaint+" numped: "+ numped+" ttrans: "+ pickertrp+" cliente: "+cliente.ct_codigo+" doc: "+pickerfp+" tplazo: "+tplazo+" itemtotal length: "+itemtotal.length );
 
       if (
@@ -1977,7 +1990,7 @@ export default function NuevoPed(props) {
           0 +
           '" c17="' +
           0 +
-          '" c18="pduran" >' +
+          '" c18="'+dataUser.vn_usuario+'" >' +
           cadenaint +
           "</c>";
         console.log(

@@ -233,7 +233,7 @@ export default function EditaPed(props) {
   };
 
   const actualizaTransporte = (item) => {
-    cargarTarifas(tcodigo, item);
+    cargarTarifas(tcodigo, item, "actualiza transporte");
     setPickertrp(item);
     setTtrans(item);
   };
@@ -587,13 +587,26 @@ export default function EditaPed(props) {
     setCliente(item);
     setTcodigo(item.ct_tcodigo);
     
-    setUbicacion(item.ct_ubicacion);
+    setUbicacion(Number(item.ct_ubicacion));
+    console.log("valor de ubicacion: "+Number(item.ct_ubicacion));
     setNotIdplazo(Number(item.ct_idplazo));
-    cargarTarifas(item.ct_tcodigo, ttrans);
+    //cargarTarifas(item.ct_tcodigo, ttrans, "actualiza cliente");
     console.log(item.ct_plazo);
     setNotnomplazo(item.ct_plazo);
     cargarPlazo(Number(item.ct_idplazo));
   };
+
+  useEffect(()=>{
+    console.log("se actualizo ubicacion en: " + ubicacion);
+    if(ubicacion != 0){
+      cargarTarifas(tcodigo, ttrans, "valor distinto");
+      CargarResultados();
+    }
+        
+    else
+        console.log("se actualizo en cero");
+
+  },[ubicacion])
 
   const inicializaCliente = () => {
     console.log("entro a inicializar");
@@ -843,11 +856,16 @@ useEffect(()=>{
     var cadenita1 = "";
     var gngastosv = 0;
     var estrella = "*";
+    var rescosto = 0;
+    var valrescosto = 0;
 
     for (let i = 0; i < itemtotal.length; i++) {
       numcod++;
 
       varsubtotal = varsubtotal + itemtotal[i].subtotal;
+
+      rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
+      valrescosto = valrescosto + rescosto;
 
       gngastosv = (Number(itemtotal[i].subtotal)-Number((itemtotal[i].subtotal * itemtotal[i].descuento)/100)) / (Number(itemtotal[i].costo)*Number(itemtotal[i].cantidad));
       temp.push({
@@ -919,7 +937,7 @@ useEffect(()=>{
     setCadenaint(itemtext);
     setCadenita(cadenita1);
 
-    cargarTarifas(tcodigo, ttrans);
+    cargarTarifas(tcodigo, ttrans, "cargar resultados temp");
 
     setSubtotal(varsubtotal);
     console.log("entro con el valor de transporte: " + ttrans);
@@ -959,10 +977,12 @@ useEffect(()=>{
     }
     setDescuento(vardesc);
 
- 
+    console.log("valor de varsubtotal: "+ varsubtotal);
 
     varseguro = ((varsubtotal - vardesc) * vseguro) / 100;
     setSeguro(varseguro);
+
+    console.log("valor de varseguro: "+ vseguro);
 
     variva = (varsubtotal - vardesc + varseguro) * 0.12;
     setIva(variva);
@@ -970,6 +990,7 @@ useEffect(()=>{
     vartotal = varsubtotal - vardesc + varseguro + vartransp + variva;
     setTotal(vartotal);
 
+    console.log("valor de vartotal: "+ vartotal);
     console.log("valor del total: " + vartotal);
     setTotal(vartotal);
 
@@ -980,11 +1001,13 @@ useEffect(()=>{
     );
     varorden = Number(vartotal) - Number(vardesc) - Number(varsubtotal);
     varventas = (gnorden / (Number(vartotal) - Number(vardesc))) * 100;
-    vargastos = (Number(vartotal) - Number(vardesc)) / Number(varsubtotal);
+    vargastos = (Number(vartotal) - Number(vardesc)) / Number(valrescosto);
 
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
+
+    console.log("valor de vargastos: "+ vargastos);
   };
 
   const CargarResultados = () => {
@@ -1007,6 +1030,10 @@ useEffect(()=>{
     var cadenita1 = "";
     var gngastosv = 0;
     var estrella = "*";
+    var rescosto = 0;
+    var varsubtotalcosto = 0;
+
+    reviewInternet();
 
     for (let i = 0; i < itemtotal.length; i++) {
       numcod++;
@@ -1032,7 +1059,12 @@ useEffect(()=>{
         peso: itemtotal[i].peso,
         gngastos: gngastosv,
       });
+
+
       valpeso = Number(itemtotal[i].cantidad) * Number(itemtotal[i].peso);
+      rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
+     
+      varsubtotalcosto = varsubtotalcosto + rescosto;
       totpeso = totpeso + valpeso;
       porcpor = Number(porcpor) + Number(itemtotal[i].descuento);
       resdes =
@@ -1083,7 +1115,7 @@ useEffect(()=>{
     setCadenaint(itemtext);
     setCadenita(cadenita1);
 
-    cargarTarifas(tcodigo, ttrans);
+    cargarTarifas(tcodigo, ttrans, "cargar resultados");
 
     setItemTotal(temp);
     setSubtotal(varsubtotal);
@@ -1143,9 +1175,16 @@ useEffect(()=>{
       "resultado var orden: " +
         (Number(vartotal) - Number(vardesc) - Number(varsubtotal)).toFixed(2)
     );
-    varorden = Number(vartotal) - Number(vardesc) - Number(varsubtotal);
-    varventas = (gnorden / (Number(vartotal) - Number(vardesc))) * 100;
-    vargastos = (Number(vartotal) - Number(vardesc)) / Number(varsubtotal);
+
+    console.log("valores total: "+Number(vartotal)+" vardesc: "+ Number(vardesc)+" varsubtotal: "+Number(varsubtotal) );
+    varorden = Number(varsubtotal) - Number(vardesc) - Number(varsubtotalcosto);
+    varventas = (gnorden / (Number(varsubtotal) - Number(vardesc))) * 100;
+    vargastos =
+      (Number(varsubtotal) - Number(vardesc)) / Number(varsubtotalcosto);
+    
+    console.log("varsubtotal - cargarresultados: "+ varsubtotal+ "vardesc "+ vardesc+ "varsubtotalcosto: "+ varsubtotalcosto);
+
+    console.log("valor de vargastos: "+ vargastos);
 
     setGnOrden(varorden);
     setGnVentas(varventas);
@@ -1332,7 +1371,7 @@ useEffect(()=>{
 
     setKilos(totpeso);
 
-    cargarTarifas(tcodigo, ttrans);
+    cargarTarifas(tcodigo, ttrans, "actualiza resultados");
 
     if (checked == "second") {
       vardesc = (varsubtotal * porcent) / 100;
@@ -1596,7 +1635,7 @@ useEffect(()=>{
 
     setKilos(totpeso);
 
-    cargarTarifas(tcodigo, ttrans);
+    cargarTarifas(tcodigo, ttrans, "editar REsultados");
 
     if (checked == "second") {
       vardesc = (varsubtotal * porcent) / 100;
@@ -1666,6 +1705,8 @@ useEffect(()=>{
     varventas = (gnorden / (Number(varsubtotal) - Number(vardesc))) * 100;
     vargastos =
       (Number(varsubtotal) - Number(vardesc)) / Number(varsubtotalcosto);
+
+      console.log("valor de vargastos: "+ vargastos);
 
     setGnOrden(varorden);
     setGnVentas(varventas);
@@ -1852,6 +1893,7 @@ useEffect(()=>{
           console.log("selecciono: "+len);
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);
+            console.log("Valor del cliente: "+JSON.stringify(row));
             actualizaCliente(row);
           }
           
@@ -2023,9 +2065,9 @@ useEffect(()=>{
     setPickerfp(val);
   };
 
-  const cargarTarifas = async (ttcodigo, idtransporte) => {
+  const cargarTarifas = async (ttcodigo, idtransporte, valorpre = "prueba") => {
     try {
-      console.log("Entro en tarifas: " + ttcodigo + "- " + idtransporte+" - "+ ubicacion+ "- "+ idtransporte);
+      console.log("se actualizo Entro en tarifas: "+ valorpre+" ****" + ttcodigo + "- " + idtransporte+" - "+ ubicacion+ "- "+ idtransporte);
       if (
         (ubicacion == 1 || ubicacion == 4 || ubicacion == 24) &&
         idtransporte == 6
@@ -2113,6 +2155,7 @@ useEffect(()=>{
 
      if(itemtotal.length == datositems.length){
         setLoading(true);
+        console.log("Entro en tarifas: ****");
         CargarResultadosTemp();
        console.log("valor de datositems: "+(datositems.length-1)+ " los valores de numitem son: "+numitem);
       }
@@ -2168,6 +2211,8 @@ useEffect(()=>{
 
   const GrabarBorrador = async () => {
     try {
+
+      reviewInternet();
       var textofinal =
         '<?xml version="1.0" encoding="iso-8859-1"?><c c0="2" c1="1" c2="' +
         numdoc +
@@ -2201,7 +2246,7 @@ useEffect(()=>{
         0 +
         '" c17="' +
         0 +
-        '" c18="pduran" >' +
+        '" c18="'+dataUser.vn_usuario+'" >' +
         cadenaint +
         "</c>";
       console.log(
@@ -2432,6 +2477,8 @@ useEffect(()=>{
   const GrabarPedido = async () => {
     try {
 
+
+      reviewInternet();
       console.log("cadenaint: "+cadenaint+" numdoc: "+ numdoc+" ttrans: "+ ttrans+" cliente: "+cliente.ct_codigo+" doc: "+pickerfp+" tplazo: "+tplazo+" itemtotal length: "+itemtotal.length );
       if (
         cadenaint != "" &&
@@ -2478,7 +2525,7 @@ useEffect(()=>{
           0 +
           '" c17="' +
           0 +
-          '" c18="pduran" >' +
+          '" c18="'+dataUser.vn_usuario+'" >' +
           cadenaint +
           "</c>";
         console.log(
