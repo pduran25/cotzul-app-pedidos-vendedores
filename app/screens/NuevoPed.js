@@ -27,6 +27,7 @@ import * as SQLite from "expo-sqlite";
 import Picker from '@ouroboros/react-native-picker';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import NetInfo from "@react-native-community/netinfo";
 
 
 /**
@@ -150,6 +151,7 @@ export default function NuevoPed(props) {
   let [pickerplz,setPickerplz] = useState(0);
   let [pickertrp, setPickertrp] = useState(0);
   let [pickerven, setPickerven] = useState(0);
+  const [internet, setInternet] = useState(true);
   
 
 
@@ -172,7 +174,13 @@ export default function NuevoPed(props) {
 
   let nextId = 0;
 
-  
+  const reviewInternet = () =>{
+    NetInfo.fetch().then(state => {
+        console.log("Connection type", state.type);
+        console.log("Is connected?", state.isConnected);
+        setInternet(state.isConnected)
+    });
+} 
 
   const storeData = async (value) => {
     try {
@@ -440,7 +448,12 @@ export default function NuevoPed(props) {
   useEffect(() => {
     if(cargado == 0)
       cargarTransporte();
+
+    reviewInternet();
+
   }, []);
+
+
 
   const setDescu = (valor, index,codprod,
     cant,
@@ -553,6 +566,8 @@ export default function NuevoPed(props) {
   };
 
   const actualizaTransporte = (item) => {
+    console.log("Valor de transporte"+item);
+    cargarTarifas(tcodigo, item);
     setPickertrp(item);
     setTtrans(item);
   };
@@ -887,6 +902,7 @@ export default function NuevoPed(props) {
     setItemTotal(temp);
     setSubtotal(varsubtotal);
     console.log("entro con el valor de transporte: " + ttrans);
+    console.log("valor de peso:"+ vpeso.pl_peso);
     setKilos(totpeso);
 
     if (ttrans != 12 && ttrans != 90 && ttrans != 215) {
@@ -1540,7 +1556,7 @@ export default function NuevoPed(props) {
 
   const cargarTarifas = async (ttcodigo, idtransporte) => {
     try {
-      console.log("Entro en tarifas: " + ttcodigo + "- " + ttrans);
+      console.log("Entro en tarifas: " + ttcodigo + "- " + idtransporte+" - "+ ubicacion+ "- "+ idtransporte);
       if (
         (ubicacion == 1 || ubicacion == 4 || ubicacion == 24) &&
         idtransporte == 6
@@ -1559,28 +1575,6 @@ export default function NuevoPed(props) {
       }
 
 
-      /*try {
-      
-      db = SQLite.openDatabase(
-        database_name,
-        database_version,
-        database_displayname,
-        database_size
-      );
-      db.transaction((tx) => {
-        tx.executeSql("SELECT * FROM plazos ", [], (tx, results) => {
-          var len = results.rows.length;
-          for (let i = 0; i < len; i++) {
-            let row = results.rows.item(i);
-          }
-          registrarPlazo(results.rows._array);
-        });
-      });
-    } catch (error) {
-      console.log("un error cachado listar pedidos");
-      console.log(error);
-    }*/ 
-
     db = SQLite.openDatabase(
       database_name,
       database_version,
@@ -1589,43 +1583,21 @@ export default function NuevoPed(props) {
     );
 
       if (ttcodigo != 0 && ttrans != 0) {
-       /* const response = await fetch(
-          "https://app.cotzul.com/Pedidos/pd_getTarifa.php?ttcodigo=" +
-            ttcodigo +
-            "&tarifa=" +
-            idtransporte
-        );
-
-        console.log(
-          "https://app.cotzul.com/Pedidos/pd_getTarifa.php?ttcodigo=" +
-            ttcodigo +
-            "&tarifa=" +
-            idtransporte
-        );*/
 
         db.transaction((tx) => {
-          tx.executeSql("SELECT a.tt_idtarifa as pl_idtarifa, a.tt_peso as pl_peso, a.tt_tarifa1 as pl_tarifa1, a.tt_tarifa2 as pl_tarifa2, b.tu_descripcion as pl_descrip FROM transtarifas a, transubicacion b WHERE a.tt_idtarifa = ? AND a.tt_idtransporte = ? AND a.tt_idtarifa = b.tu_codigo", [ttcodigo, ttrans], (tx, results) => {
+          tx.executeSql("SELECT a.tt_idtarifa as pl_idtarifa, a.tt_peso as pl_peso, a.tt_tarifa1 as pl_tarifa1, a.tt_tarifa2 as pl_tarifa2, b.tu_descripcion as pl_descrip FROM transtarifas a, transubicacion b WHERE a.tt_idtarifa = ? AND a.tt_idtransporte = ? AND a.tt_idtarifa = b.tu_codigo", [ttcodigo, idtransporte], (tx, results) => {
             var len = results.rows.length;
             console.log("cantidad de len: "+len);
             for (let i = 0; i < len; i++) {
               let row = results.rows.item(i);
-             // setVpeso(jsonResponse?.tarifa[0]);
-             // setCobertura(jsonResponse?.tarifa[0].pl_descrip);
-             console.log("Resultado de vpeso: "+ row.descrip);
+              console.log("Resultado de valores peso: "+  row.pl_peso);
+             
+              setVpeso(row);
+              setCobertura(row.pl_descrip);
             }
             
           });
         });
-
-
-      /*  const jsonResponse = await response.json();
-        console.log("REGISTRANDO TARIFAS TRANSPORTE");
-        console.log("Valor del peso: " + jsonResponse?.tarifa[0].pl_peso);
-        setVpeso(jsonResponse?.tarifa[0]);
-        setCobertura(jsonResponse?.tarifa[0].pl_descrip);
-        console.log(
-          "valor de ubicacion: " + jsonResponse?.tarifa[0].pl_descrip
-        );*/
       }
     } catch (error) {
       console.log("un error cachado listar transporte");
@@ -1728,64 +1700,13 @@ export default function NuevoPed(props) {
           "&cadena=" +
           cadenita
       );
-      const response = await fetch(
-        "https://app.cotzul.com/Pedidos/grabarBorrador.php?numpedido=" +
-          numdoc +
-          "&idvendedor=" +
-          dataUser.vn_codigo +
-          "&usuvendedor=" +
-          dataUser.vn_usuario +
-          "&fecha=" +
-          fechaped +
-          "&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones=" +
-          obs +
-          "&idcliente=" +
-          cliente.ct_codigo +
-          "&tipodoc=" +
-          pickerfp +
-          "&tipodesc=" +
-          (checked == "second" ? 1 : 0) +
-          "&porcdesc=" +
-          porcent +
-          "&valordesc=" +
-          descuento +
-          "&ttrans=" +
-          pickertrp +
-          "&gnorden=" +
-          gnorden +
-          "&gnventas=" +
-          gnventas +
-          "&gngastos=" +
-          gngastos +
-          "&subtotal=" +
-          subtotal +
-          "&descuento=" +
-          descuento +
-          "&transporte=" +
-          transporte +
-          "&seguro=" +
-          seguro +
-          "&iva=" +
-          iva +
-          "&total=" +
-          total +
-          "&idnewvendedor=" +
-          idnewvendedor +
-          "&cadenaxml=" +
-          textofinal +
-          "&cadena=" +
-          cadenita
-      );
 
-
-      /*pv_codigo INTEGER, pv_codigovendedor INTEGER,  pv_vendedor VARCHAR(100), pv_codcliente INTEGER, pv_cliente VARCHAR(200)," +
-          "pv_total VARCHAR(50), pv_estatus VARCHAR(50), pv_gngastos VARCHAR(100), pv_numpedido INTEGER);"*/ 
-
+      
       try{
       db.transaction((txn) => {
           txn.executeSql(
-            "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido) " +
-              " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+            "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido, pv_online) " +
+              " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
             [
               parseInt(numdoc),
               parseInt(dataUser.vn_codigo),
@@ -1795,7 +1716,8 @@ export default function NuevoPed(props) {
               total.toString(),
               "-1",
               gngastos.toString(),
-              parseInt(numdoc)
+              parseInt(numdoc),
+              (internet)?Number(1):Number(0)
             ],
             (txn, results) => {
               if (results.rowsAffected > 0) {
@@ -1823,20 +1745,20 @@ export default function NuevoPed(props) {
             ", dp_prioridad , dp_observacion" +
             ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
             ", dp_ttrans , dp_gnorden , dp_gnventas  " +
-            ", dp_gngastos, item, dp_numpedido ) " +
+            ", dp_gngastos, item, dp_numpedido, dp_cadenaxml) " +
             " VALUES (?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?" +
             ", ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
-            ", ?, ?, ?); ",
+            ", ?, ?, ?, ?); ",
           [
             parseInt(numdoc),
             parseInt(dataUser.vn_codigo),
             parseInt(cliente.ct_codigo),
             subtotal.toString(),
             descuento.toString(),
-            pickertrp.toString(),
+            transporte.toString(),
             seguro.toString(),
             iva.toString(),
             total.toString(),
@@ -1856,7 +1778,8 @@ export default function NuevoPed(props) {
             gnventas.toString(),
             gngastos.toString(),
             cadenita.toString(),
-            parseInt(0)
+            parseInt(0),
+            textofinal
           ],
           (txn, results) => {
             console.log("WWWWW"+JSON.stringify(results));
@@ -1926,13 +1849,72 @@ export default function NuevoPed(props) {
       console.log("--------*********se cayo"+e)
     }
 
-      const jsonResponse = await response.json();
-      console.log(jsonResponse.estatusped);
-      if (jsonResponse.estatusped == "REGISTRADO") {
-        console.log("Se registro con éxito");
-        navigation.navigate("productos");
-        regresarFunc();
+    if(internet){
+
+      console.log("presentar internet");
+      var response = await fetch(
+      "https://app.cotzul.com/Pedidos/grabarBorrador.php?numpedido=" +
+        numdoc +
+        "&idvendedor=" +
+        dataUser.vn_codigo +
+        "&usuvendedor=" +
+        dataUser.vn_usuario +
+        "&fecha=" +
+        fechaped +
+        "&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones=" +
+        obs +
+        "&idcliente=" +
+        cliente.ct_codigo +
+        "&tipodoc=" +
+        pickerfp +
+        "&tipodesc=" +
+        (checked == "second" ? 1 : 0) +
+        "&porcdesc=" +
+        porcent +
+        "&valordesc=" +
+        descuento +
+        "&ttrans=" +
+        pickertrp +
+        "&gnorden=" +
+        gnorden +
+        "&gnventas=" +
+        gnventas +
+        "&gngastos=" +
+        gngastos +
+        "&subtotal=" +
+        subtotal +
+        "&descuento=" +
+        descuento +
+        "&transporte=" +
+        pickertrp +
+        "&seguro=" +
+        seguro +
+        "&iva=" +
+        iva +
+        "&total=" +
+        total +
+        "&idnewvendedor=" +
+        idnewvendedor +
+        "&cadenaxml=" +
+        textofinal +
+        "&cadena=" +
+        cadenita
+    );
+
+    const jsonResponse = await response.json();
+      if(!internet){
+        console.log(jsonResponse.estatusped);
+        if (jsonResponse.estatusped == "REGISTRADO") {
+          console.log("Se registro con éxito");
+        }
       }
+    }
+
+    navigation.navigate("productos");
+    regresarFunc();
+
+      
+      
     } catch (error) {
       console.log(error);
     }
@@ -1948,14 +1930,14 @@ export default function NuevoPed(props) {
         database_size
       );
 
-      console.log("cadenaint: "+cadenaint+" numdoc: "+ numdoc+" ttrans: "+ ttrans+" cliente: "+cliente.ct_codigo+" doc: "+doc+" tplazo: "+tplazo+" itemtotal length: "+itemtotal.length );
+      console.log("cadenaint: "+cadenaint+" numped: "+ numped+" ttrans: "+ pickertrp+" cliente: "+cliente.ct_codigo+" doc: "+pickerfp+" tplazo: "+tplazo+" itemtotal length: "+itemtotal.length );
 
       if (
         cadenaint != "" &&
         numdoc != 0 &&
-        ttrans != 0 &&
+        pickertrp != 0 &&
         cliente.ct_codigo != 0 &&
-        doc != 0 &&
+        pickerfp != 0 &&
         tplazo != 0 &&
         itemtotal.length > 0
       ) {
@@ -1968,11 +1950,11 @@ export default function NuevoPed(props) {
           '" c3="' +
           dataUser.vn_codigo +
           '" c4="' +
-          ttrans +
+          pickertrp +
           '" c5="' +
           cliente.ct_codigo +
           '" c6="' +
-          doc +
+          pickerfp +
           '" c7="' +
           tplazo +
           '" c8="' +
@@ -2012,7 +1994,7 @@ export default function NuevoPed(props) {
             "&idcliente=" +
             cliente.ct_codigo +
             "&tipodoc=" +
-            doc +
+            pickerfp +
             "&tipodesc=" +
             (checked == "second" ? 1 : 0) +
             "&porcdesc=" +
@@ -2020,7 +2002,7 @@ export default function NuevoPed(props) {
             "&valordesc=" +
             descuento +
             "&ttrans=" +
-            ttrans +
+            pickertrp +
             "&gnorden=" +
             gnorden +
             "&gnventas=" +
@@ -2046,6 +2028,8 @@ export default function NuevoPed(props) {
             "&cadena=" +
             cadenita
         );
+
+        if(internet){
         const response = await fetch(
           "https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido=" +
             numped +
@@ -2060,7 +2044,7 @@ export default function NuevoPed(props) {
             "&idcliente=" +
             cliente.ct_codigo +
             "&tipodoc=" +
-            doc +
+            pickerfp +
             "&tipodesc=" +
             (checked == "second" ? 1 : 0) +
             "&porcdesc=" +
@@ -2068,7 +2052,7 @@ export default function NuevoPed(props) {
             "&valordesc=" +
             descuento +
             "&ttrans=" +
-            ttrans +
+            pickertrp +
             "&gnorden=" +
             gnorden +
             "&gnventas=" +
@@ -2095,53 +2079,161 @@ export default function NuevoPed(props) {
             cadenita
         );
 
-        
+          try{
+      db.transaction((txn) => {
+          txn.executeSql(
+            "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido, pv_online) " +
+              " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+            [
+              parseInt(numped),
+              parseInt(dataUser.vn_codigo),
+              dataUser.vn_nombre,
+              parseInt(cliente.ct_codigo),
+              cliente.ct_cliente,
+              total.toString(),
+              "1",
+              gngastos.toString(),
+              parseInt(numped),
+              (internet)?Number(1):Number(0)
+            ],
+            (txn, results) => {
+              if (results.rowsAffected > 0) {
+                console.log("Entro bien a grabar primera table");
+              }
+            }
+          );
+
+          txn.executeSql("SELECT * FROM pedidosvendedor", [], (txn, results) => {
+            var len = results.rows.length;
+            console.log("len pedidovendedor: "+len);
+            for (let i = 0; i < len; i++) {
+              let row = results.rows.item(i);
+              console.log(`PEDIDOS VENDEDOR: item: `+ i + " - " + JSON.stringify(row));
+            }
+          }); 
+
+
+        txn.executeSql(
+          "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
+            ", dp_subtotal , dp_descuento , dp_transporte  " +
+            ", dp_seguro , dp_iva , dp_total  " +
+            ", dp_estatus , dp_codpedven " +
+            ", dp_idvendedor , dp_fecha , dp_empresa  " +
+            ", dp_prioridad , dp_observacion" +
+            ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
+            ", dp_ttrans , dp_gnorden , dp_gnventas  " +
+            ", dp_gngastos, item, dp_numpedido, dp_cadenaxml ) " +
+            " VALUES (?, ?, ?, ?, ?" +
+            ", ?, ?, ?, ?, ?" +
+            ", ?, ?, ?, ?" +
+            ", ?, ?, ?, ?" +
+            ", ?, ?, ?, ?, ?" +
+            ", ?, ?, ?, ?); ",
+          [
+            parseInt(numped),
+            parseInt(dataUser.vn_codigo),
+            parseInt(cliente.ct_codigo),
+            subtotal.toString(),
+            descuento.toString(),
+            transporte.toString(),
+            seguro.toString(),
+            iva.toString(),
+            total.toString(),
+            "-1",
+            dataUser.vn_recibo.toString(),
+            parseInt(dataUser.vn_codigo),
+            fechaped.toString(),
+           'COTZUL',
+           'NORMAL',
+            obs,
+            pickerfp.toString(),
+            (checked == "second" ? "1" : "0"),
+            porcent.toString(),
+            descuento.toString(),
+            pickertrp.toString(),
+            gnorden.toString(),
+            gnventas.toString(),
+            gngastos.toString(),
+            cadenita.toString(),
+            parseInt(0),
+            textofinal
+          ],
+          (txn, results) => {
+            console.log("WWWWW"+JSON.stringify(results));
+            if (results.rowsAffected > 0) {
+              console.log("Entro bien a grabar segunda table");
+            }
+          }
+        );
+
+
+      });
+
+    }catch(e){
+      console.log("--------*********se cayo"+e)
+    }
+
+
+  
 
         db.transaction((txn) => {
-           txn.executeSql("UPDATE usuario SET us_recibo = ? WHERE us_numunico = 1 ", [parseInt(dataUser.vn_recibo)+1], (txn, results) => {
-            if (results.rowsAffected > 0) {
-              dataUser.vn_recibo = dataUser.vn_recibo + 1;
-              
-              console.log("Actualizo el nuevo numero recibo");
+          txn.executeSql("UPDATE usuario SET us_recibo = ? WHERE us_numunico = 1 ", [parseInt(dataUser.vn_recibo)+1], (txn, results) => {
+           if (results.rowsAffected > 0) {
+             dataUser.vn_recibo = dataUser.vn_recibo + 1;
+             
+             console.log("Actualizo el nuevo numero recibo");
+           }
+         });
+       });
+
+       const jsonValue = null;
+       try{
+         jsonValue = await AsyncStorage.getItem(STORAGE_KEY)
+               .then( data => {
+   
+                 // the string value read from AsyncStorage has been assigned to data
+                 console.log( data );
+   
+                 // transform it back to an object
+                 data = JSON.parse( data );
+                 console.log( data );
+   
+                 // Increment
+                 data.vn_recibo = parseInt(data.vn_recibo) + 1;
+   
+                 console.log( data );
+   
+                 //save the value to AsyncStorage again
+                 AsyncStorage.setItem(STORAGE_KEY, JSON.stringify( data ) );
+                
+               });
+              }catch(e){
+                console.log("--------*********se cayo"+e)
+              }
+
+              const jsonResponse = await response.json();
+              console.log(jsonResponse.estatusped);
+              if (jsonResponse.estatusped == "REGISTRADO") {
+                console.log("Se registro con éxito");
+                navigation.navigate("productos");
+                regresarFunc();
+              }
+            } else {
+              Alert.alert("Su dispositivo no cuenta con internet");
             }
-          });
-        });
 
-        const jsonValue = null;
-        try{
-          jsonValue = await AsyncStorage.getItem(STORAGE_KEY)
-                .then( data => {
-    
-                  // the string value read from AsyncStorage has been assigned to data
-                  console.log( data );
-    
-                  // transform it back to an object
-                  data = JSON.parse( data );
-                  console.log( data );
-    
-                  // Increment
-                  data.vn_recibo = parseInt(data.vn_recibo) + 1;
-    
-                  console.log( data );
-    
-                  //save the value to AsyncStorage again
-                  AsyncStorage.setItem(STORAGE_KEY, JSON.stringify( data ) );
-                 
-                });
-        }catch(e){
-          console.log("--------*********se cayo"+e)
+            
+        }else{
+          
+          Alert.alert("Registre todos los campos para Enviar Pedido");
         }
 
-        const jsonResponse = await response.json();
-        console.log(jsonResponse.estatusped);
-        if (jsonResponse.estatusped == "REGISTRADO") {
-          console.log("Se registro con éxito");
-          navigation.navigate("productos");
-          regresarFunc();
-        }
-      } else {
-        Alert.alert("Registre todos los campos para Enviar Pedido");
-      }
+        
+
+        
+       
+
+       
     } catch (error) {
       console.log(error);
     }
@@ -2150,6 +2242,12 @@ export default function NuevoPed(props) {
 
   return (
     <ScrollView style={styles.container}>
+      {/*(internet)?(<View style={styles.titlesWrapper}>
+        <Text style={styles.titlesSubtitle2}>ONLINE</Text>
+        </View>):(<View style={styles.titlesWrapper}>
+        <Text style={styles.titlesSubtitle3}>OFFLINE - LOCAL</Text>
+        </View>)*/}
+      
       <View style={styles.titlesWrapper}>
         <Text style={styles.titlesSubtitle}>Cotzul S.A.</Text>
        <Text style={styles.titlespick2}>Usuario: {(dataUser) ? dataUser.vn_nombre: "-----"}</Text>
@@ -2835,6 +2933,18 @@ const styles = StyleSheet.create({
   titlesWrapper: {
     marginTop: 5,
     paddingHorizontal: 20,
+  },
+  titlesSubtitle3: {
+    fontWeight: "bold",
+    fontSize: 16,
+    textAlign: "right",
+    color: "red",
+  },
+  titlesSubtitle2: {
+    fontWeight: "bold",
+    fontSize: 16,
+    textAlign: "right",
+    color: "green",
   },
   titlesSubtitle: {
     fontWeight: "bold",

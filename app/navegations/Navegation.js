@@ -35,6 +35,10 @@ export default function Navigation(props){
             setUserToken('keyrubikload');
             setChargue(1);
         },
+        signNext: () => {
+            setUserToken('keyrubiknext');
+            setChargue(2);
+        },
         signOut: () => {
             setUserToken(null);
             setChargue(0);
@@ -68,7 +72,7 @@ export default function Navigation(props){
     return(
         <AuthContext.Provider value={authContext}>
         <NavigationContainer> 
-            {(chargue == 0) ?  <LoginForm  toastRef={toastRef} />  : 
+            {(chargue == 0) ? <LoginForm  toastRef={toastRef} />  :  (chargue == 1) ?
             <Tab.Navigator
             initialRouteName="AprobarPedidos"
             tabBarOptions={{
@@ -94,10 +98,24 @@ export default function Navigation(props){
                     name="Perfil" 
                     component={PerfilStack}
                     options={{headerShown: false}}  />
+            </Tab.Navigator>  :  <Tab.Navigator
+            initialRouteName="AprobarPedidos"
+            tabBarOptions={{
+              inactiveTintColor: "#646464",
+              activeTintColor: "#00a680",
+            }}
+            screenOptions={({ route }) => ({
+                tabBarIcon: ({ color }) => screenOptions(route, color),
+              })}
+            >
+            
+                    <Tab.Screen 
+                    name="Perfil" 
+                    component={PerfilStack}
+                    options={{headerShown: false}}  />
             </Tab.Navigator>}
                 </NavigationContainer>
                 </AuthContext.Provider>
-          
     );
 }
 

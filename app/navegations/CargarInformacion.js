@@ -16,6 +16,7 @@ import Navigation from "../navegations/Navegation";
 import { AuthContext } from "../components/Context";
 import moment from "moment";
 import { Button } from "react-native-elements";
+import NetInfo from "@react-native-community/netinfo";
 
 const APIpedidosvendedor =
   "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor=";
@@ -53,6 +54,8 @@ export default function CargarInformacion() {
   const [dataUser, setdataUser] = useState(defaultValueUser());
 
   const [fechault, setFechaUlt] = useState("#####");
+  const {signUp} = React.useContext(AuthContext);
+  const [internet, setInternet] = useState(true);
 
   const getDataUser = async () => {
     try {
@@ -98,6 +101,14 @@ export default function CargarInformacion() {
     }
   };
 
+  const reviewInternet = () =>{
+    NetInfo.fetch().then(state => {
+        console.log("Connection type", state.type);
+        console.log("Is connected?", state.isConnected);
+        setInternet(state.isConnected)
+    });
+} 
+
 
 
   let db = null;
@@ -113,6 +124,7 @@ export default function CargarInformacion() {
   }
 
   useEffect(() => {
+    reviewInternet();
     if (dataUser) {
       if (!usuario) {
         console.log("Ingreso 1 vez");
@@ -137,15 +149,35 @@ export default function CargarInformacion() {
   const sincronizarDatos = async () => {
     try {
       
-      setActivo(1);
-      setDateLast(moment(new Date()).format('DD/MM/YYYY HH:mm:ss').toString());
-     // setFechaUlt(moment(new Date()).format('DD/MM/YYYY hh:mm a').toString());
+      if(internet){
+        setActivo(1);
+        setDateLast(moment(new Date()).format('DD/MM/YYYY HH:mm:ss').toString());
+        ActualizarUsuario(moment(new Date()).format('DD/MM/YYYY HH:mm:ss').toString());
+      // setFechaUlt(moment(new Date()).format('DD/MM/YYYY hh:mm a').toString());
+      } else {
+        Alert.alert("Su dispositivo no cuenta con internet");
+      }
+      
       
     } catch (error) {
       console.log("un error cachado listar pedidos");
       console.log(error);
     }
   };
+
+  const ActualizarUsuario = (fechita) => {
+
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+
+    db.transaction((txn) => {
+      txn.executeSql("UPDATE usuario SET us_loading = ?, us_fechaloading = ? WHERE us_numunico = 1",[Number(dataUser.vn_loading+1),fechita]);
+    });
+  }
 
   /** FIN PARAMETROS**/
 
@@ -188,13 +220,13 @@ export default function CargarInformacion() {
         "CREATE TABLE IF NOT EXISTS " +
           "pedidosvendedor " +
           "(pv_codigo INTEGER, pv_codigovendedor INTEGER,  pv_vendedor VARCHAR(100), pv_codcliente INTEGER, pv_cliente VARCHAR(200)," +
-          "pv_total VARCHAR(50), pv_estatus VARCHAR(50), pv_gngastos VARCHAR(100), pv_numpedido INTEGER);"
+          "pv_total VARCHAR(50), pv_estatus VARCHAR(50), pv_gngastos VARCHAR(100), pv_numpedido INTEGER, pv_online INTEGER);"
       );
 
       myResponse?.pedidovendedor.map((value, index) => {
         txn.executeSql(
-          "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido) " +
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+          "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido,pv_online) " +
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
           [
             Number(value.pv_codigo),
             Number(value.pv_codvendedor),
@@ -205,6 +237,7 @@ export default function CargarInformacion() {
             value.pv_estatus,
             value.pv_gngastos,
             Number(value.pv_numpedido),
+            Number(1),
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
@@ -226,6 +259,8 @@ export default function CargarInformacion() {
       database_displayname,
       database_size
     );
+
+
     db.transaction((tx) => {
       tx.executeSql("SELECT * FROM pedidosvendedor", [], (tx, results) => {
         var len = results.rows.length;
@@ -236,7 +271,8 @@ export default function CargarInformacion() {
         }
       });
     });
-    obtenerTransportes();
+    datospedidos();
+    
   };
   /** FIN PEDIDOS VENDEDOR **/
 
@@ -686,10 +722,177 @@ export default function CargarInformacion() {
       });
     });
     
-    datospedidos();
+    if(dataUser.vn_loading > 0){
+      
+      ActualizarPedidosOffline();
+      setActivo(2);
+      signUp();
+    }else{
+      obtenerPedidosVendedor();
+    }
     
   };
   /** FIN TARIFA **/
+
+  const ActualizarPedidosOffline = async () =>{
+    try{
+
+      db = SQLite.openDatabase(
+        database_name,
+        database_version,
+        database_displayname,
+        database_size
+      );
+
+      
+    /*(pv_codigo INTEGER, pv_codigovendedor INTEGER,  pv_vendedor VARCHAR(100), pv_codcliente INTEGER, pv_cliente VARCHAR(200)," +
+          "pv_total VARCHAR(50), pv_estatus VARCHAR(50), pv_gngastos VARCHAR(100), pv_numpedido INTEGER, pv_online INTEGER)*/ 
+
+     
+          var pvcodigo = 0;
+          var pvcodigovendedor = 0;
+          var pvcodcliente = 0;
+
+       
+          var dpfecha = "";
+          var dpobservacion = "";
+          var dptipodoc = "";
+          var dptipodesc = "";
+          var dpporcdesc = 0;
+          var dpvalordesc = 0;
+          var dptransporte = 0;
+          var dpseguro = 0;
+          var dpiva = 0;
+          var dptotal = 0;
+          var dpitem = "";
+          var dpttrans = "";
+          var dpsubtotal = "";
+
+          var dpgnorden = 0;
+          var dpgnventas = 0;
+          var dpgngastos = 0;
+
+          var textofinal = "";
+          var envioValor = "";
+
+          
+
+      db.transaction((tx) => {
+        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_online = 0", [], (tx, results) => {
+          var len = results.rows.length;
+          console.log("Entra a la cantidad:--- "+len);
+          for (let i = 0; i < len; i++) {
+            let row = results.rows.item(i);
+            pvcodigo = Number(row.pv_codigo);
+            console.log("valor de pvcodigo: "+ pvcodigo);
+            pvcodigovendedor = Number(row.pv_codigovendedor);
+            pvcodcliente = Number(row.pv_codcliente);
+
+            tx.executeSql("SELECT dp_fecha, dp_observacion, dp_tipodoc, dp_tipodesc, dp_porcdesc, dp_valordesc, dp_transporte, dp_seguro, dp_iva, dp_total, item, dp_ttrans, dp_subtotal, dp_gnorden, dp_gnventas, dp_gngastos, dp_cadenaxml  FROM datospedidos WHERE dp_codigo = ?", [pvcodigo], (tx, resulta) => {
+              var lena = resulta.rows.length;
+              console.log("Entra a la cantidad2:--- "+lena);
+              for (let j = 0; j < lena; j++) {
+                let rowa = resulta.rows.item(j);
+                console.log("valor de rowa: " + rowa.dp_gngastos);
+                dpfecha = rowa.dp_fecha;
+
+                dpobservacion = rowa.dp_observacion;
+                dptipodoc = rowa.dp_tipodoc;
+                dptipodesc = rowa.dp_tipodesc;
+                dpporcdesc = rowa.dp_porcdesc;
+                dpvalordesc = rowa.dp_valordesc;
+                dptransporte = rowa.dp_transporte;
+                dpseguro = rowa.dp_seguro;
+                dpiva = rowa.dp_iva;
+                dptotal = rowa.dp_total;
+                dpitem = rowa.item;
+                dpttrans = rowa.dp_ttrans;
+                dpsubtotal = rowa.dp_subtotal;
+
+                dpgnorden = rowa.dp_gnorden;
+                dpgnventas = rowa.dp_gnventas;
+                dpgngastos = rowa.dp_gngastos;
+                dpcadenaxml = rowa.dp_cadenaxml;
+
+               
+
+                console.log("valor de texto final: "+ dpcadenaxml);
+
+                envioValor = "https://app.cotzul.com/Pedidos/grabarBorrador.php?numpedido=" +
+                pvcodigo +
+                "&idvendedor=" +
+                pvcodigovendedor +
+                "&usuvendedor=" +
+                dataUser.vn_usuario +
+                "&fecha=" +
+                dpfecha +
+                "&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones=" +
+                dpobservacion +
+                "&idcliente=" +
+                pvcodcliente +
+                "&tipodoc=" +
+                dptipodoc +
+                "&tipodesc=" +
+                (dptipodesc == "second" ? 1 : 0) +
+                "&porcdesc=" +
+                dpporcdesc +
+                "&valordesc=" +
+                dpvalordesc +
+                "&ttrans=" +
+                dpttrans +
+                "&gnorden=" +
+                dpgnorden +
+                "&gnventas=" +
+                dpgnventas +
+                "&gngastos=" +
+                dpgngastos +
+                "&subtotal=" +
+                dpsubtotal +
+                "&descuento=" +
+                dpvalordesc +
+                "&transporte=" +
+                dptransporte +
+                "&seguro=" +
+                dpseguro +
+                "&iva=" +
+                dpiva +
+                "&total=" +
+                dptotal +
+                "&idnewvendedor=" +
+                pvcodigovendedor +
+                "&cadenaxml=" +
+                dpcadenaxml +
+                "&cadena=" +
+                dpitem;
+
+                CargarOffline(envioValor);
+
+              }
+            });
+
+            tx.executeSql("UPDATE pedidosvendedor SET pv_online = 1 WHERE pv_codigo = ?", [pvcodigo]); 
+
+          }
+        });
+      });
+
+    }catch(e){
+          console.log("ERROS AL CARGAR "+ e.toString())
+    }
+  }
+
+  const CargarOffline = async (valorenvio)=>{
+
+    var response = await fetch(valorenvio);
+
+    const jsonResponse = await response.json();
+      //console.log(jsonResponse.estatusped);
+      if (jsonResponse.estatusped == "REGISTRADO") {
+        console.log("Se registro con éxito");
+      }
+
+
+  };
 
   /** ITEM **/
   const obtenerItems = async () => {
@@ -777,7 +980,8 @@ export default function CargarInformacion() {
         }
       });
     });
-    obtenerPedidosVendedor();
+   // obtenerPedidosVendedor();
+   obtenerTransportes();
   };
   /** FIN ITEM **/
 
@@ -816,7 +1020,7 @@ export default function CargarInformacion() {
           ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50)" +
           ", dp_tipodoc VARCHAR(50), dp_tipodesc VARCHAR(50), dp_porcdesc VARCHAR(50), dp_valordesc VARCHAR(20) " +
           ", dp_ttrans VARCHAR(50), dp_gnorden VARCHAR(50), dp_gnventas VARCHAR(20) " +
-          ", dp_gngastos VARCHAR(50), item TEXT , dp_numpedido INTEGER" +
+          ", dp_gngastos VARCHAR(50), item TEXT , dp_numpedido INTEGER, dp_cadenaxml TEXT" +
           " );"
       );
 
@@ -830,13 +1034,13 @@ export default function CargarInformacion() {
             ", dp_prioridad , dp_observacion " +
             ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
             ", dp_ttrans , dp_gnorden , dp_gnventas  " +
-            ", dp_gngastos, item , dp_numpedido) " +
+            ", dp_gngastos, item , dp_numpedido, dp_cadenaxml) " +
             " VALUES (?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?" +
             ", ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
-            ", ?, ?, ?); ",
+            ", ?, ?, ?, ?); ",
           [
             value.dp_codigo,
             value.dp_codvendedor,
@@ -863,7 +1067,8 @@ export default function CargarInformacion() {
             value.dp_gnventas,
             value.dp_gngastos,
             JSON.stringify(value.item),
-            value.dp_numpedido
+            value.dp_numpedido,
+            value.dp_cadenaxml
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
@@ -895,6 +1100,7 @@ export default function CargarInformacion() {
         }
         //setTerminaDatosPedido(true);
         setActivo(2);
+        signUp();
       });
     });
   };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext, useCallback  } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   AppState,
+  RefreshControl
 } from "react-native";
 import { colors } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
@@ -86,6 +87,7 @@ export default function PedidosEnviados(props) {
   const [consta, setConsta] = useState("");
   const [cadena, setCadena] = useState("");
   const [idpedido, setIdPedido] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [responsePV, setResponsePV] = useState(null);
 
@@ -198,6 +200,7 @@ export default function PedidosEnviados(props) {
       //const jsonResponse = await JSON.stringify(responsePV);
       //setLoading(true);
       //setData(responsePV?.pedidovendedor);
+      setRefreshing(false);
     } catch (error) {
       setLoading(false);
       console.log("un error cachado listar pedidos");
@@ -320,6 +323,10 @@ export default function PedidosEnviados(props) {
     navigation.navigate("editapedido", { dataUser, idpedido, regresarFunc });
   }; 
 
+  const onRefresh = useCallback(() => {
+    listarPedidos();
+}, []);
+
   const recargarPedidos = () => {
     listarPedidos();
     setRegistro(defaultValueRegister);
@@ -333,7 +340,9 @@ export default function PedidosEnviados(props) {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} refreshControl={
+      <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+    }>
       <View style={styles.titlesWrapper}>
         <Text style={styles.titlesSubtitle}>Cotzul S.A.</Text>
         <Text style={styles.titlespick2}>Usuario: {dataUser.vn_nombre}</Text>

@@ -62,7 +62,7 @@ export default function Perfil(){
               );
 
               db.transaction((tx) => {
-                tx.executeSql("DROP TABLE IF EXISTS usuario");
+                tx.executeSql("UPDATE usuario SET us_login = 0 WHERE us_numunico = 1");
               });
                 
 

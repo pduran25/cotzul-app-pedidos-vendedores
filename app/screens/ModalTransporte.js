@@ -41,7 +41,7 @@ class ModalTransporte extends Component {
   
     componentDidMount() {
       this.setState({ modalVisible: false });
-        this.getTransporte(); 
+        this.getTransporte(""); 
     }
   
     setModalVisible = (visible) => {
@@ -66,9 +66,6 @@ class ModalTransporte extends Component {
   
         let db = null;
   
-        /*const response = await fetch(
-        "https://app.cotzul.com/Pedidos/getClientes.php?nombre="+this.state.search+"&idvendedor="+this.props.idvendedor
-      );*/
   
         const database_name = "CotzulBDS.db";
         const database_version = "1.0";
@@ -82,7 +79,7 @@ class ModalTransporte extends Component {
           database_size
         );
 
-        if(texto.length > 0){
+        //if(texto.length > 0){
           db.transaction((tx) => {
             tx.executeSql(
               "SELECT * FROM transportes WHERE upper(pl_nombre) LIKE ? ",
@@ -95,7 +92,7 @@ class ModalTransporte extends Component {
                   
   
                   if(this.props.pickertrp != 0){
-  
+                      
                       if(row.pl_codigo == this.props.pickertrp){
                           this.setState({ nombresel: row.pl_nombre });
                       }
@@ -114,9 +111,9 @@ class ModalTransporte extends Component {
               }
             );
           });
-        }else{
+        /*}else{
           this.setState({ isLoading: true });
-        }
+        }*/
         
         //this.setState({ data: responseCL?.clientes });
         //this.setState({ isLoading: false });

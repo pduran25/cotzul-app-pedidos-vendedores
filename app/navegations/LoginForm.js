@@ -29,10 +29,11 @@ export default function LoginForm(props) {
     const [dataUser, setdataUser] = useState(defaultValueUser());
     const [user, setUser] = useState(false);
     const [basedatos, setBasedatos] = useState(false);
-    const {signUp} = React.useContext(AuthContext);
+    const {signNext, signUp} = React.useContext(AuthContext);
     const [internet, setInternet] = useState(true);
     const [activochk, setActivochk] = useState(false);
     const [activoreg, setActivoreg] = useState(false);
+
 
     let db = null;
     
@@ -91,7 +92,10 @@ export default function LoginForm(props) {
         setUser(true);
         storeData(usuario);
         setDB("NO") 
-        signUp()
+        if(usuario.vn_loading > 0)
+          signUp()
+        else
+          signNext()
      }
 
     const existeUsuario = ()=>{
@@ -105,23 +109,33 @@ export default function LoginForm(props) {
         var len = 0;
          db.transaction((txn) => {
             console.log("probando el analisis...");
-            txn.executeSql("SELECT * FROM usuario", [], (tx, results) => {
+            txn.executeSql("SELECT * FROM usuario WHERE us_numunico = 1", [], (tx, results) => {
                 len = results.rows.length;
                 var temp = [];
                 if(len > 0){
+                  
                   for (let i = 0; i < len; i++) {
                     let row = results.rows.item(i);
-                    temp.push({
-                      vn_codigo: row.us_codvendedor,
-                      vn_nombre: row.us_nombre,
-                      vn_usuario: row.us_usuario,
-                      vn_clave: row.us_clave,
-                      vn_recibo: row.us_numrecibo,
-                      vn_borrador: row.us_numborrador
-                    });
-                    console.log(`USUARIO VENDEDOR: ` + JSON.stringify(temp));
+                    if(row.us_login == 0){
+                      setActivoreg(true);
+                    }else{
+                      temp.push({
+                        vn_codigo: row.us_codvendedor,
+                        vn_nombre: row.us_nombre,
+                        vn_usuario: row.us_usuario,
+                        vn_clave: row.us_clave,
+                        vn_recibo: row.us_numrecibo,
+                        vn_borrador: row.us_numborrador,
+                        vn_loading: row.us_loading,
+                        vn_fechaloading: row.us_fechaloading,
+                        vn_login: row.us_login
+                      });
+                      console.log(`USUARIO VENDEDOR: ` + JSON.stringify(temp));
+                    }
+                   
                   }
                   continuaAcceso(temp[0]);
+
                 }
                  
               });
@@ -152,6 +166,48 @@ export default function LoginForm(props) {
       existeUsuario()
     },[])
 
+    function EvaluarUsuario(usuario, clave, db){
+      var len = 0;
+      var temp = [];
+      db.transaction((txn) => {
+        txn.executeSql("SELECT * FROM usuario WHERE us_usuario = ? AND us_clave = ? AND us_login = 0", [usuario, clave], (txn, results) => {
+          len = results.rows.length;
+          
+          if(len > 0){
+            console.log("total usuarios: "+ len);
+            for (let i = 0; i < len; i++) {
+              let row = results.rows.item(i);
+              temp.push({
+                vn_codigo: row.us_codvendedor,
+                vn_nombre: row.us_nombre,
+                vn_usuario: row.us_usuario,
+                vn_clave: row.us_clave,
+                vn_recibo: row.us_numrecibo,
+                vn_borrador: row.us_numborrador,
+                vn_loading: row.us_loading,
+                vn_fechaloading: row.us_fechaloading,
+                vn_login:1 
+              });
+              console.log(`USUARIO VENDEDOR: ` + JSON.stringify(temp));
+              console.log(`USUARIO VENDEDOR: ` + JSON.stringify(row));
+            }
+            txn.executeSql("UPDATE usuario SET us_login = 1 WHERE us_numunico = 1")
+            continuaAcceso(temp[0]);
+          }else{
+            toastRef.current.show("El usuario no le pertenece este Dispositivo");
+          }
+          
+        },
+        
+        
+        );
+
+        
+
+
+      });
+    }
+
     function AlmacenaUsuario(usuario, user, pwd, nombre, codvendedor, numrecibo, numborrador, db){
             console.log("SE registrara como nuevo usuario");
           db.transaction((txn) => {
@@ -160,15 +216,15 @@ export default function LoginForm(props) {
               "CREATE TABLE IF NOT EXISTS " +
                 "usuario " +
                 "(us_numunico INTEGER, us_usuario VARCHAR(20), us_clave VARCHAR(20)" +
-                ", us_nombre VARCHAR(200), us_codvendedor  VARCHAR(50), us_numrecibo INTEGER, us_numborrador INTEGER);"
+                ", us_nombre VARCHAR(200), us_codvendedor  VARCHAR(50), us_numrecibo INTEGER, us_numborrador INTEGER, us_loading INTEGER, us_fechaloading VARCHAR(50), us_login INTEGER);"
             );
 
             console.log("CREO LA NUEVA TABLA USUARIO");
       
               txn.executeSql(
                 "INSERT INTO usuario(us_numunico,us_usuario,us_clave" +
-                  ", us_nombre, us_codvendedor , us_numrecibo, us_numborrador) " +
-                  " VALUES (?, ?, ?, ?, ?, ?, ?); ",
+                  ", us_nombre, us_codvendedor , us_numrecibo, us_numborrador, us_loading, us_fechaloading, us_login) " +
+                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
                 [
                   Number(1),
                   user,
@@ -176,7 +232,10 @@ export default function LoginForm(props) {
                   nombre,
                   codvendedor,
                   numrecibo,
-                  numborrador
+                  numborrador,
+                  Number(0),
+                  "-----",
+                  Number(1)
                 ],
                 (txn, results) => {
                   if (results.rowsAffected > 0) {
@@ -187,13 +246,27 @@ export default function LoginForm(props) {
     
               txn.executeSql("SELECT * FROM usuario", [], (tx, results) => {
                 var len = results.rows.length;
+                var temp = [];
                 console.log("total usuarios: "+ len);
                 for (let i = 0; i < len; i++) {
                   let row = results.rows.item(i);
+                  temp.push({
+                    vn_codigo: row.us_codvendedor,
+                    vn_nombre: row.us_nombre,
+                    vn_usuario: row.us_usuario,
+                    vn_clave: row.us_clave,
+                    vn_recibo: row.us_numrecibo,
+                    vn_borrador: row.us_numborrador,
+                    vn_loading: row.us_loading,
+                    vn_fechaloading: row.us_fechaloading,
+                    vn_login:row.us_login
+                  });
+                  console.log(`USUARIO VENDEDOR: ` + JSON.stringify(temp));
                   console.log(`USUARIO VENDEDOR: ` + JSON.stringify(row));
                 }
+                continuaAcceso(temp[0]);
               });
-              continuaAcceso(usuario);
+              
           });
     
     }
@@ -211,12 +284,14 @@ export default function LoginForm(props) {
 
         
           reviewInternet()
-            if(internet){
+           
                 if(isEmpty(formData.usuario) || isEmpty(formData.password)){
                     toastRef.current.show("Todos los campos son obligatorios");
                 }else{
 
-                  console.log('https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password);
+                  if(!activoreg){
+                    if(internet){
+                    console.log('https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password);
                     try {
                         const response = await fetch(
                           'https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password
@@ -226,7 +301,7 @@ export default function LoginForm(props) {
                         
                         const respuesta = await response.json();
                         if(respuesta.usuario[0].vn_codigo != 0){
-                            /*toastRef.current.show("Bienvenido " + respuesta.usuario[0].vn_nombre);*/
+                            //toastRef.current.show("Bienvenido " + respuesta.usuario[0].vn_nombre);
                             console.log("usuario: "+ respuesta.usuario[0].vn_usuario);
                             AlmacenaUsuario(respuesta.usuario[0],respuesta.usuario[0].vn_usuario,respuesta.usuario[0].vn_clave, respuesta.usuario[0].vn_nombre, respuesta.usuario[0].vn_codigo, respuesta.usuario[0].vn_recibo, respuesta.usuario[0].vn_borrador,db);
                         }else{
@@ -236,10 +311,16 @@ export default function LoginForm(props) {
                     }catch(error){
                         console.log("Ocurrio un error: "+ error);
                     }
+                  }else{
+                       Alert.alert("Su dispositivo no cuenta con internet");
+                  }
+                  }else{
+                      EvaluarUsuario(formData.usuario,formData.password, db);
+                  }
+
+                  
                 }
-              }else{
-                    Alert.alert("Su dispositivo no cuenta con internet");
-              }
+              
         
         
         

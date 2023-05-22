@@ -157,7 +157,7 @@ useEffect(()=> {
       );
       db.transaction((tx) => {
         
-        tx.executeSql("SELECT * FROM pedidosvendedor ", [], (tx, results) => {
+        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus = -1", [], (tx, results) => {
           var len = results.rows.length;
           console.log("Cantidad de lineas: "+len);
           for (let i = 0; i < len; i++) {

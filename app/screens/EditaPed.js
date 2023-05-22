@@ -26,6 +26,7 @@ import * as SQLite from "expo-sqlite";
 import { LogBox } from 'react-native';
 import Picker from '@ouroboros/react-native-picker';
 import ModalTransporte from "./ModalTransporte";
+import NetInfo from "@react-native-community/netinfo";
 
 /**
  * @author Pedro Durán A.
@@ -189,6 +190,7 @@ export default function EditaPed(props) {
   const [numitem, setNumItem] = useState(0);
   const [idcliente, setIdCliente] = useState(0);
   const [datositems, setDatosItems] = useState([]);
+  const [internet, setInternet] = useState(true);
 
   let [picker, setPicker] = useState(1);
   let [pickerpri, setPickerpri] = useState(1);
@@ -205,6 +207,14 @@ export default function EditaPed(props) {
 
   var resindex = 0;
   var itemtext = "";
+
+  const reviewInternet = () =>{
+    NetInfo.fetch().then(state => {
+        console.log("Connection type", state.type);
+        console.log("Is connected?", state.isConnected);
+        setInternet(state.isConnected)
+    });
+} 
 
   const [valrecibo, setRecibo] = useState(
     "000" + (Number(dataUser.vn_recibo) + 1)
@@ -223,6 +233,7 @@ export default function EditaPed(props) {
   };
 
   const actualizaTransporte = (item) => {
+    cargarTarifas(tcodigo, item);
     setPickertrp(item);
     setTtrans(item);
   };
@@ -575,10 +586,10 @@ export default function EditaPed(props) {
   const actualizaCliente = (item) => {
     setCliente(item);
     setTcodigo(item.ct_tcodigo);
-    cargarTarifas(item.ct_tcodigo, ttrans);
+    
     setUbicacion(item.ct_ubicacion);
     setNotIdplazo(Number(item.ct_idplazo));
-
+    cargarTarifas(item.ct_tcodigo, ttrans);
     console.log(item.ct_plazo);
     setNotnomplazo(item.ct_plazo);
     cargarPlazo(Number(item.ct_idplazo));
@@ -717,6 +728,10 @@ export default function EditaPed(props) {
     }
 },[plazo])
 
+useEffect(()=>{
+  reviewInternet();
+},[]);
+
 
   const registrarItems = () =>{
    /* for (let i = 0; i < itemtotal.length; ++i) {
@@ -805,6 +820,171 @@ export default function EditaPed(props) {
     
     
     console.log("valor del itemtotal: " + JSON.stringify(temp[0]));
+  };
+
+
+  const CargarResultadosTemp = () => {
+    var temp = [];
+    var varsubtotal = 0;
+    var varseguro = 0;
+    var vartransp = 0;
+    var variva = 0;
+    var vartotal = 0;
+    var vardesc = 0;
+    var varorden = 0,
+      varventas = 0,
+      vargastos = 0;
+    var resdes = 0;
+    var valpeso = 0;
+    var totpeso = 0;
+    var numcod = 0;
+    var porcpor = 0;
+    itemtext = "";
+    var cadenita1 = "";
+    var gngastosv = 0;
+    var estrella = "*";
+
+    for (let i = 0; i < itemtotal.length; i++) {
+      numcod++;
+
+      varsubtotal = varsubtotal + itemtotal[i].subtotal;
+
+      gngastosv = (Number(itemtotal[i].subtotal)-Number((itemtotal[i].subtotal * itemtotal[i].descuento)/100)) / (Number(itemtotal[i].costo)*Number(itemtotal[i].cantidad));
+      temp.push({
+        codprod: itemtotal[i].codprod,
+        descripcion: itemtotal[i].descripcion,
+        cantidad: itemtotal[i].cantidad,
+        precio: itemtotal[i].precio,
+        pvp: itemtotal[i].pvp,
+        subdist: itemtotal[i].subdist,
+        contado: itemtotal[i].contado,
+        codprecio: itemtotal[i].codprecio,
+        preciosel: itemtotal[i].preciosel,
+        editable: itemtotal[i].editable,
+        costo: itemtotal[i].costo,
+        descuento: itemtotal[i].descuento,
+        subtotal: itemtotal[i].subtotal,
+        total: itemtotal[i].total,
+        peso: itemtotal[i].peso,
+        gngastos: gngastosv,
+      });
+      valpeso = Number(itemtotal[i].cantidad) * Number(itemtotal[i].peso);
+      totpeso = totpeso + valpeso;
+      porcpor = Number(porcpor) + Number(itemtotal[i].descuento);
+      resdes =
+        resdes + Number(itemtotal[i].subtotal * itemtotal[i].descuento) / 100;
+      itemtext =
+        itemtext +
+        '<detalle d0="' +
+        numcod +
+        '" d1="' +
+        itemtotal[i].codprod +
+        '" d2="' +
+        itemtotal[i].cantidad +
+        '" d3="' +
+        itemtotal[i].preciosel +
+        '" d4="' +
+        itemtotal[i].descripcion +
+        '" d5="' +
+        itemtotal[i].peso +
+        '" d6="' +
+        itemtotal[i].descuento +
+        '" d7="' +
+        0 +
+        '"></detalle>';
+
+        if(i+1 == itemtotal.length)
+        estrella = "";
+
+      cadenita1 =
+        cadenita1 +
+        numcod +
+        ";" +
+        itemtotal[i].codprod +
+        ";" +
+        itemtotal[i].descripcion +
+        ";" +
+        itemtotal[i].cantidad +
+        ";" +
+        itemtotal[i].codprecio +
+        ";" +
+        itemtotal[i].preciosel +
+        ";" +
+        itemtotal[i].descuento +
+        ";" +
+        itemtotal[i].total+
+        estrella
+    }
+
+    setCadenaint(itemtext);
+    setCadenita(cadenita1);
+
+    cargarTarifas(tcodigo, ttrans);
+
+    setSubtotal(varsubtotal);
+    console.log("entro con el valor de transporte: " + ttrans);
+    setKilos(totpeso);
+
+    if (ttrans != 12 && ttrans != 90 && ttrans != 215) {
+      setTransporte(Number(vtrans));
+      vartransp = Number(vtrans);
+    } else {
+      console.log(
+        "entro con el valor TARIFAS2:" +
+          vpeso.pl_peso +
+          " EL TOTAL PESO: " +
+          totpeso
+      );
+      if (vpeso.pl_peso != null || totpeso != null) {
+        if (vpeso.pl_peso != 0) {
+          if (totpeso < vpeso.pl_peso) {
+            vartransp = Number(vpeso.pl_tarifa1);
+            setTarifa(vpeso.pl_tarifa1);
+            setTransporte(vartransp);
+          } else {
+            vartransp = totpeso * vpeso.pl_tarifa2;
+            setTarifa(vpeso.pl_tarifa2);
+            setTransporte(vartransp);
+          }
+        }
+      }
+    }
+
+    if (checked == "second") {
+      vardesc = (varsubtotal * porcent) / 100;
+    } else {
+      vardesc = resdes;
+      porcpor = (vardesc / varsubtotal) * 100;
+      setPorcent(porcpor);
+    }
+    setDescuento(vardesc);
+
+ 
+
+    varseguro = ((varsubtotal - vardesc) * vseguro) / 100;
+    setSeguro(varseguro);
+
+    variva = (varsubtotal - vardesc + varseguro) * 0.12;
+    setIva(variva);
+
+    vartotal = varsubtotal - vardesc + varseguro + vartransp + variva;
+    setTotal(vartotal);
+
+    console.log("valor del total: " + vartotal);
+    setTotal(vartotal);
+
+    console.log("res. subtotal: " + Number(varsubtotal));
+    console.log(
+      "resultado var orden: " +
+        (Number(vartotal) - Number(vardesc) - Number(varsubtotal)).toFixed(2)
+    );
+    varorden = Number(vartotal) - Number(vardesc) - Number(varsubtotal);
+    varventas = (gnorden / (Number(vartotal) - Number(vardesc))) * 100;
+    vargastos = (Number(vartotal) - Number(vardesc)) / Number(varsubtotal);
+
+    setGnOrden(varorden);
+    setGnVentas(varventas);
+    setGnGastos(vargastos);
   };
 
   const CargarResultados = () => {
@@ -1845,7 +2025,7 @@ export default function EditaPed(props) {
 
   const cargarTarifas = async (ttcodigo, idtransporte) => {
     try {
-      console.log("Entro en tarifas: " + ttcodigo + "- " + ttrans);
+      console.log("Entro en tarifas: " + ttcodigo + "- " + idtransporte+" - "+ ubicacion+ "- "+ idtransporte);
       if (
         (ubicacion == 1 || ubicacion == 4 || ubicacion == 24) &&
         idtransporte == 6
@@ -1863,28 +2043,30 @@ export default function EditaPed(props) {
         setVseguro(1.2);
       }
 
-      if (ttcodigo != 0 && ttrans != 0) {
-        const response = await fetch(
-          "https://app.cotzul.com/Pedidos/pd_getTarifa.php?ttcodigo=" +
-            ttcodigo +
-            "&tarifa=" +
-            idtransporte
-        );
 
-        console.log(
-          "https://app.cotzul.com/Pedidos/pd_getTarifa.php?ttcodigo=" +
-            ttcodigo +
-            "&tarifa=" +
-            idtransporte
-        );
-        const jsonResponse = await response.json();
-        console.log("REGISTRANDO TARIFAS TRANSPORTE");
-        console.log("Valor del peso: " + jsonResponse?.tarifa[0].pl_peso);
-        setVpeso(jsonResponse?.tarifa[0]);
-        setCobertura(jsonResponse?.tarifa[0].pl_descrip);
-        console.log(
-          "valor de ubicacion: " + jsonResponse?.tarifa[0].pl_descrip
-        );
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+
+      if (ttcodigo != 0 && ttrans != 0) {
+
+        db.transaction((tx) => {
+          tx.executeSql("SELECT a.tt_idtarifa as pl_idtarifa, a.tt_peso as pl_peso, a.tt_tarifa1 as pl_tarifa1, a.tt_tarifa2 as pl_tarifa2, b.tu_descripcion as pl_descrip FROM transtarifas a, transubicacion b WHERE a.tt_idtarifa = ? AND a.tt_idtransporte = ? AND a.tt_idtarifa = b.tu_codigo", [ttcodigo, idtransporte], (tx, results) => {
+            var len = results.rows.length;
+            console.log("cantidad de len: "+len);
+            for (let i = 0; i < len; i++) {
+              let row = results.rows.item(i);
+              console.log("Resultado de valores peso: "+  row.pl_peso);
+             
+              setVpeso(row);
+              setCobertura(row.pl_descrip);
+            }
+            
+          });
+        });
       }
     } catch (error) {
       console.log("un error cachado listar transporte");
@@ -1931,7 +2113,7 @@ export default function EditaPed(props) {
 
      if(itemtotal.length == datositems.length){
         setLoading(true);
-       
+        CargarResultadosTemp();
        console.log("valor de datositems: "+(datositems.length-1)+ " los valores de numitem son: "+numitem);
       }
      
@@ -1949,6 +2131,7 @@ export default function EditaPed(props) {
         setChecked(datopedido.dp_tipodesc == 0 ? "first" : "second");
         setPorcent(datopedido.dp_pordesc);
         console.log("Datos trans: "+ datopedido.dp_ttrans);
+        setIdTrans(Number(datopedido.dp_ttrans)); 
         setPickertrp(Number(datopedido.dp_ttrans));
         setTtrans(Number(datopedido.dp_ttrans));
         setSubtotal(Number(datopedido.dp_subtotal));
@@ -1995,7 +2178,7 @@ export default function EditaPed(props) {
         '" c5="' +
         cliente.ct_codigo +
         '" c6="' +
-        doc +
+        pickerfp +
         '" c7="' +
         tplazo +
         '" c8="' +
@@ -2035,7 +2218,7 @@ export default function EditaPed(props) {
           "&idcliente=" +
           cliente.ct_codigo +
           "&tipodoc=" +
-          doc +
+          pickerfp +
           "&tipodesc=" +
           (checked == "second" ? 1 : 0) +
           "&porcdesc=" +
@@ -2043,7 +2226,7 @@ export default function EditaPed(props) {
           "&valordesc=" +
           descuento +
           "&ttrans=" +
-          ttrans +
+          pickertrp +
           "&gnorden=" +
           gnorden +
           "&gnventas=" +
@@ -2069,54 +2252,8 @@ export default function EditaPed(props) {
           "&cadena=" +
           cadenita
       );
-      const response = await fetch(
-        "https://app.cotzul.com/Pedidos/grabarBorrador.php?numpedido=" +
-          numdoc +
-          "&idvendedor=" +
-          dataUser.vn_codigo +
-          "&usuvendedor=" +
-          dataUser.vn_usuario +
-          "&fecha=" +
-          fechaped +
-          "&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones=" +
-          obs +
-          "&idcliente=" +
-          cliente.ct_codigo +
-          "&tipodoc=" +
-          doc +
-          "&tipodesc=" +
-          (checked == "second" ? 1 : 0) +
-          "&porcdesc=" +
-          porcent +
-          "&valordesc=" +
-          descuento +
-          "&ttrans=" +
-          ttrans +
-          "&gnorden=" +
-          gnorden +
-          "&gnventas=" +
-          gnventas +
-          "&gngastos=" +
-          gngastos +
-          "&subtotal=" +
-          subtotal +
-          "&descuento=" +
-          descuento +
-          "&transporte=" +
-          transporte +
-          "&seguro=" +
-          seguro +
-          "&iva=" +
-          iva +
-          "&total=" +
-          total +
-          "&idnewvendedor=" +
-          idnewvendedor +
-          "&cadenaxml=" +
-          textofinal +
-          "&cadena=" +
-          cadenita
-      );
+
+     
 
 
       db.transaction((txn) => {
@@ -2130,8 +2267,8 @@ export default function EditaPed(props) {
         );
 
         txn.executeSql(
-          "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido) " +
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+          "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido, pv_online) " +
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
           [
             parseInt(numdoc),
             parseInt(dataUser.vn_codigo),
@@ -2141,7 +2278,8 @@ export default function EditaPed(props) {
             total.toString(),
             "-1",
             gngastos.toString(),
-            parseInt(numdoc)
+            parseInt(numdoc),
+            (internet)?Number(1):Number(0)
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
@@ -2169,20 +2307,20 @@ export default function EditaPed(props) {
           ", dp_prioridad , dp_observacion" +
           ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
           ", dp_ttrans , dp_gnorden , dp_gnventas  " +
-          ", dp_gngastos, item, dp_numpedido ) " +
+          ", dp_gngastos, item, dp_numpedido, dp_cadenaxml ) " +
           " VALUES (?, ?, ?, ?, ?" +
           ", ?, ?, ?, ?, ?" +
           ", ?, ?, ?, ?" +
           ", ?, ?, ?, ?" +
           ", ?, ?, ?, ?, ?" +
-          ", ?, ?, ?); ",
+          ", ?, ?, ?, ?); ",
         [
           parseInt(numdoc),
           parseInt(dataUser.vn_codigo),
           parseInt(cliente.ct_codigo),
           subtotal.toString(),
           descuento.toString(),
-          pickertrp.toString(),
+          transporte.toString(),
           seguro.toString(),
           iva.toString(),
           total.toString(),
@@ -2202,7 +2340,8 @@ export default function EditaPed(props) {
           gnventas.toString(),
           gngastos.toString(),
           cadenita.toString(),
-          parseInt(0)
+          parseInt(0),
+          textofinal
         ],
         (txn, results) => {
           console.log("WWWWW"+JSON.stringify(results));
@@ -2222,14 +2361,69 @@ export default function EditaPed(props) {
 
     });
 
-      /****************** */
+    if(internet){
+      const response = await fetch(
+        "https://app.cotzul.com/Pedidos/grabarBorrador.php?numpedido=" +
+          numdoc +
+          "&idvendedor=" +
+          dataUser.vn_codigo +
+          "&usuvendedor=" +
+          dataUser.vn_usuario +
+          "&fecha=" +
+          fechaped +
+          "&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones=" +
+          obs +
+          "&idcliente=" +
+          cliente.ct_codigo +
+          "&tipodoc=" +
+          doc +
+          "&tipodesc=" +
+          (checked == "second" ? 1 : 0) +
+          "&porcdesc=" +
+          porcent +
+          "&valordesc=" +
+          descuento +
+          "&ttrans=" +
+          pickertrp +
+          "&gnorden=" +
+          gnorden +
+          "&gnventas=" +
+          gnventas +
+          "&gngastos=" +
+          gngastos +
+          "&subtotal=" +
+          subtotal +
+          "&descuento=" +
+          descuento +
+          "&transporte=" +
+          transporte +
+          "&seguro=" +
+          seguro +
+          "&iva=" +
+          iva +
+          "&total=" +
+          total +
+          "&idnewvendedor=" +
+          idnewvendedor +
+          "&cadenaxml=" +
+          textofinal +
+          "&cadena=" +
+          cadenita
+      );
 
       const jsonResponse = await response.json();
       //console.log(jsonResponse.estatusped);
       if (jsonResponse.estatusped == "REGISTRADO") {
         console.log("Se registro con éxito");
+        navigation.navigate("productos");
         regresarFunc();
       }
+    }
+
+    navigation.navigate("productos");
+    regresarFunc();
+
+      
     } catch (error) {
       console.log(error);
     }
@@ -2238,13 +2432,13 @@ export default function EditaPed(props) {
   const GrabarPedido = async () => {
     try {
 
-      console.log("cadenaint: "+cadenaint+" numdoc: "+ numdoc+" ttrans: "+ ttrans+" cliente: "+cliente.ct_codigo+" doc: "+doc+" tplazo: "+tplazo+" itemtotal length: "+itemtotal.length );
+      console.log("cadenaint: "+cadenaint+" numdoc: "+ numdoc+" ttrans: "+ ttrans+" cliente: "+cliente.ct_codigo+" doc: "+pickerfp+" tplazo: "+tplazo+" itemtotal length: "+itemtotal.length );
       if (
         cadenaint != "" &&
         numdoc != 0 &&
-        ttrans != 0 &&
+        pickertrp != 0 &&
         cliente.ct_codigo != 0 &&
-        doc != 0 &&
+        pickerfp != 0 &&
         tplazo != 0 &&
         itemtotal.length > 0
       ) {
@@ -2253,15 +2447,15 @@ export default function EditaPed(props) {
         //var textofinal = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><c c0=\"2\" c1=\"1\" c2=\""+numdoc+"\" c3=\""+dataUser.vn_codigo+"\" c4=\""+ttrans+"\" c5=\""+cliente.ct_codigo+"\" c6=\""+doc+"\" c7=\""+tplazo+"\" c8=\""+obs+"\" c9=\""+subtotal+"\" c10=\""+porcent+"\" c11=\""+descuento+"\" c12=\""+seguro+"\" c13=\""+transporte+"\" c14=\""+iva+"\" c15=\""+total+"\" c16=\""+0+"\" c17=\""+0+"\" c18=\""+dataUser.vn_usuario+"\" >"+cadenaint+"</c>";
         var textofinal =
           '<?xml version="1.0" encoding="iso-8859-1"?><c c0="2" c1="1" c2="' +
-          numdoc +
+          numped +
           '" c3="' +
           dataUser.vn_codigo +
           '" c4="' +
-          ttrans +
+          pickertrp +
           '" c5="' +
           cliente.ct_codigo +
           '" c6="' +
-          doc +
+          pickerfp +
           '" c7="' +
           tplazo +
           '" c8="' +
@@ -2289,7 +2483,7 @@ export default function EditaPed(props) {
           "</c>";
         console.log(
           "https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido=" +
-            numdoc +
+            numped +
             "&idvendedor=" +
             dataUser.vn_codigo +
             "&usuvendedor=" +
@@ -2301,7 +2495,7 @@ export default function EditaPed(props) {
             "&idcliente=" +
             cliente.ct_codigo +
             "&tipodoc=" +
-            doc +
+            pickerfp +
             "&tipodesc=" +
             (checked == "second" ? 1 : 0) +
             "&porcdesc=" +
@@ -2309,55 +2503,7 @@ export default function EditaPed(props) {
             "&valordesc=" +
             descuento +
             "&ttrans=" +
-            ttrans +
-            "&gnorden=" +
-            gnorden +
-            "&gnventas=" +
-            gnventas +
-            "&gngastos=" +
-            gngastos +
-            "&subtotal=" +
-            subtotal +
-            "&descuento=" +
-            descuento +
-            "&transporte=" +
-            transporte +
-            "&seguro=" +
-            seguro +
-            "&iva=" +
-            iva +
-            "&total=" +
-            total +
-            "&idnewvendedor=" +
-            idnewvendedor +
-            "&cadenaxml=" +
-            textofinal +
-            "&cadena=" +
-            cadenita
-        );
-        const response = await fetch(
-          "https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido=" +
-            numdoc +
-            "&idvendedor=" +
-            dataUser.vn_codigo +
-            "&usuvendedor=" +
-            dataUser.vn_usuario +
-            "&fecha=" +
-            fechaped +
-            "&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones=" +
-            obs +
-            "&idcliente=" +
-            cliente.ct_codigo +
-            "&tipodoc=" +
-            doc +
-            "&tipodesc=" +
-            (checked == "second" ? 1 : 0) +
-            "&porcdesc=" +
-            porcent +
-            "&valordesc=" +
-            descuento +
-            "&ttrans=" +
-            ttrans +
+            pickertrp +
             "&gnorden=" +
             gnorden +
             "&gnventas=" +
@@ -2384,6 +2530,145 @@ export default function EditaPed(props) {
             cadenita
         );
 
+        if(internet){
+        const response = await fetch(
+          "https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido=" +
+            numped +
+            "&idvendedor=" +
+            dataUser.vn_codigo +
+            "&usuvendedor=" +
+            dataUser.vn_usuario +
+            "&fecha=" +
+            fechaped +
+            "&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones=" +
+            obs +
+            "&idcliente=" +
+            cliente.ct_codigo +
+            "&tipodoc=" +
+            pickerfp +
+            "&tipodesc=" +
+            (checked == "second" ? 1 : 0) +
+            "&porcdesc=" +
+            porcent +
+            "&valordesc=" +
+            descuento +
+            "&ttrans=" +
+            pickertrp +
+            "&gnorden=" +
+            gnorden +
+            "&gnventas=" +
+            gnventas +
+            "&gngastos=" +
+            gngastos +
+            "&subtotal=" +
+            subtotal +
+            "&descuento=" +
+            descuento +
+            "&transporte=" +
+            transporte +
+            "&seguro=" +
+            seguro +
+            "&iva=" +
+            iva +
+            "&total=" +
+            total +
+            "&idnewvendedor=" +
+            idnewvendedor +
+            "&cadenaxml=" +
+            textofinal +
+            "&cadena=" +
+            cadenita
+        );
+
+        try{
+          db.transaction((txn) => {
+              txn.executeSql(
+                "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido, pv_online) " +
+                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+                [
+                  parseInt(numped),
+                  parseInt(dataUser.vn_codigo),
+                  dataUser.vn_nombre,
+                  parseInt(cliente.ct_codigo),
+                  cliente.ct_cliente,
+                  total.toString(),
+                  "1",
+                  gngastos.toString(),
+                  parseInt(numped),
+                  (internet)?Number(1):Number(0)
+                ],
+                (txn, results) => {
+                  if (results.rowsAffected > 0) {
+                    console.log("Entro bien a grabar primera table");
+                  }
+                }
+              );
+    
+              txn.executeSql("DELETE FROM pedidosvendedor WHERE pv_codigo = ?", [numdoc]); 
+    
+    
+            txn.executeSql(
+              "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
+                ", dp_subtotal , dp_descuento , dp_transporte  " +
+                ", dp_seguro , dp_iva , dp_total  " +
+                ", dp_estatus , dp_codpedven " +
+                ", dp_idvendedor , dp_fecha , dp_empresa  " +
+                ", dp_prioridad , dp_observacion" +
+                ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
+                ", dp_ttrans , dp_gnorden , dp_gnventas  " +
+                ", dp_gngastos, item, dp_numpedido, dp_cadenaxml ) " +
+                " VALUES (?, ?, ?, ?, ?" +
+                ", ?, ?, ?, ?, ?" +
+                ", ?, ?, ?, ?" +
+                ", ?, ?, ?, ?" +
+                ", ?, ?, ?, ?, ?" +
+                ", ?, ?, ?, ?); ",
+              [
+                parseInt(numped),
+                parseInt(dataUser.vn_codigo),
+                parseInt(cliente.ct_codigo),
+                subtotal.toString(),
+                descuento.toString(),
+                pickertrp.toString(),
+                seguro.toString(),
+                iva.toString(),
+                total.toString(),
+                "-1",
+                dataUser.vn_recibo.toString(),
+                parseInt(dataUser.vn_codigo),
+                fechaped.toString(),
+               'COTZUL',
+               'NORMAL',
+                obs,
+                pickerfp.toString(),
+                (checked == "second" ? "1" : "0"),
+                porcent.toString(),
+                descuento.toString(),
+                pickertrp.toString(),
+                gnorden.toString(),
+                gnventas.toString(),
+                gngastos.toString(),
+                cadenita.toString(),
+                parseInt(0),
+                textofinal
+              ],
+              (txn, results) => {
+                console.log("WWWWW"+JSON.stringify(results));
+                if (results.rowsAffected > 0) {
+                  console.log("Entro bien a grabar segunda table");
+                }
+              }
+            );
+
+            txn.executeSql("DELETE FROM datospedidos WHERE dp_codigo = ?", [numdoc]); 
+    
+    
+          });
+    
+        }catch(e){
+          console.log("--------*********se cayo"+e)
+        }
+
         const jsonResponse = await response.json();
         //console.log(jsonResponse.estatusped);
         if (jsonResponse.estatusped == "REGISTRADO") {
@@ -2391,6 +2676,11 @@ export default function EditaPed(props) {
           //navigation.navigate("productos");
           regresarFunc();
         }
+      }else{
+        Alert.alert("Su dispositivo no cuenta con internet");
+      }
+
+        
       } else {
         Alert.alert("Registre todos los campos para Enviar Pedido");
       }
@@ -2401,6 +2691,11 @@ export default function EditaPed(props) {
 
   return (
     <ScrollView style={styles.container}>
+      {/*(internet)?(<View style={styles.titlesWrapper}>
+        <Text style={styles.titlesSubtitle2}>ONLINE</Text>
+        </View>):(<View style={styles.titlesWrapper}>
+        <Text style={styles.titlesSubtitle3}>OFFLINE - LOCAL</Text>
+        </View>)*/}
       <View style={styles.titlesWrapper}>
         <Text style={styles.titlesSubtitle}>Cotzul S.A.</Text>
         <Text style={styles.titlespick2}>Usuario: {dataUser.vn_nombre}</Text>
@@ -3065,6 +3360,18 @@ const styles = StyleSheet.create({
   titlesWrapper: {
     marginTop: 5,
     paddingHorizontal: 20,
+  },
+  titlesSubtitle3: {
+    fontWeight: "bold",
+    fontSize: 16,
+    textAlign: "right",
+    color: "red",
+  },
+  titlesSubtitle2: {
+    fontWeight: "bold",
+    fontSize: 16,
+    textAlign: "right",
+    color: "green",
   },
   titlesSubtitle: {
     fontWeight: "bold",
