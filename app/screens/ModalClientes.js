@@ -81,7 +81,7 @@ class ModalClientes extends Component {
       db.transaction((tx) => {
         tx.executeSql(
           "SELECT * FROM clientes WHERE ct_idvendedor=? AND upper(ct_cliente) LIKE ? ",
-          [this.props.idvendedor, texto.toUpperCase()+"%"],
+          [this.props.idvendedor, "%"+texto.toUpperCase()+"%"],
           (tx, results) => {
             var len = results.rows.length;
             for (let i = 0; i < len; i++) {

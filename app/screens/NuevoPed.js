@@ -28,6 +28,7 @@ import Picker from '@ouroboros/react-native-picker';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import NetInfo from "@react-native-community/netinfo";
+import { onEndEditing } from "deprecated-react-native-prop-types/DeprecatedTextInputPropTypes";
 
 
 /**
@@ -147,7 +148,7 @@ export default function NuevoPed(props) {
   var itemtext = "";
   let [picker, setPicker] = useState(1);
   let [pickerpri, setPickerpri] = useState(1);
-  let [pickerfp, setPickerfp] = useState(1);
+  let [pickerfp, setPickerfp] = useState(12);
   let [pickerplz,setPickerplz] = useState(0);
   let [pickertrp, setPickertrp] = useState(0);
   let [pickerven, setPickerven] = useState(0);
@@ -301,8 +302,7 @@ export default function NuevoPed(props) {
                 keyboardType="numeric"
                 placeholder="0,0"
                 style={styles.tabletext}
-                onChangeText={(val) => setPrecioVal(val, index)}
-                onEndEditing={() => ActualizaResultados(item.it_codprod)}
+                onChangeText={(val) => setPrecioVal(val, index, item.it_codprod)}
               />
             ) : (
               <Text style={styles.tabletext}>
@@ -400,6 +400,13 @@ export default function NuevoPed(props) {
     );
   };
 
+
+  const setVTrans2 = (val) =>{
+    setVTrans(val);
+    CargarResultados();
+
+  };
+
   const setCanti = (valor, index, codprod,
     cant,
     desc,
@@ -419,6 +426,8 @@ export default function NuevoPed(props) {
       setCant(valor);
       itemtotal[index].cantidad = valor;
     }
+
+    console.log("valor de precio seleccionado: "+ preciosel);
 
     EditarResultados(
       codprod,
@@ -443,6 +452,11 @@ export default function NuevoPed(props) {
     if(plazo.length > 0)
       setPickerplz(notidplazo);
   }, [plazo]);
+
+  useEffect(() =>{
+    if(cliente.ct_codigo != 0)
+        GrabadaTemporal();
+  },[cliente])
 
 
   useEffect(() => {
@@ -503,9 +517,11 @@ export default function NuevoPed(props) {
                 { text: "CREDITO", value: 3 },
                 { text: "EDITABLE", value: 4 },*/ 
 
+           
+
   const setNumprecio = (valor, index) => {
     setTprecio(valor);
-    itemtotal[index].codprecio = valor;
+     itemtotal[index].codprecio = valor;
 
     if (valor == 1) {
       itemtotal[index].preciosel = itemtotal[index].subdist;
@@ -521,13 +537,16 @@ export default function NuevoPed(props) {
       itemtotal[index].editable = 1;
     }
 
+   
+
     ActualizaResultados(itemtotal[index].codprod);
   };
 
-  const setPrecioVal = (valor, index) => {
+  const setPrecioVal = (valor, index, codprod) => {
     if (itemtotal[index].editable == 1) {
       itemtotal[index].preciosel = valor;
     }
+    ActualizaResultados(codprod);
   };
 
 
@@ -551,6 +570,7 @@ export default function NuevoPed(props) {
     setUbicacion(item.ct_ubicacion);
     cargarTarifas(item.ct_tcodigo, ttrans, "actualizacliente");
     cargarPlazo();
+    GrabadaTemporal();
   };
 
   const inicializaTransporte = () => {
@@ -570,6 +590,7 @@ export default function NuevoPed(props) {
     cargarTarifas(tcodigo, item, "actualiza transporte");
     setPickertrp(item);
     setTtrans(item);
+    GrabadaTemporal();
   };
 
   const actualizaVendedor = (item) => {
@@ -591,7 +612,7 @@ export default function NuevoPed(props) {
         newitem.it_codprod,
         0,
         0,
-        newitem.it_precio,
+        newitem.it_preciosub,
         1,
         newitem.it_pvp,
         newitem.it_preciosub,
@@ -758,7 +779,7 @@ export default function NuevoPed(props) {
     }
 
    
-    
+    console.log("Valor agregado de precio inicial: "+ precio);
 
     temp.push({
       codprod: codprod,
@@ -779,8 +800,11 @@ export default function NuevoPed(props) {
       gngastos: gngastosv,
     });
 
+    console.log("valor precio subdist: "+ subdist);
+
 
     setItemTotal(temp);
+    GrabadaTemporal();
   };
 
   const CargarResultados = () => {
@@ -900,6 +924,10 @@ export default function NuevoPed(props) {
         estrella
     }
 
+    console.log("presenta cadenita cr: "+ cadenita1);
+
+
+
     setCadenaint(itemtext);
     setCadenita(cadenita1);
 
@@ -976,6 +1004,7 @@ export default function NuevoPed(props) {
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
+    GrabadaTemporal();
   };
 
   const ActualizaResultados = (codprod) => {
@@ -1146,6 +1175,8 @@ export default function NuevoPed(props) {
       }
     }
 
+    console.log("presenta cadenita ar: "+ cadenita1);
+
     setItemTotal(temp);
     setCadenaint(itemtext);
     setCadenita(cadenita1);
@@ -1217,6 +1248,7 @@ export default function NuevoPed(props) {
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
+    GrabadaTemporal();
   };
 
   const EditarResultados = (
@@ -1288,6 +1320,8 @@ export default function NuevoPed(props) {
           gngastos: gngastosv,
         });
 
+        console.log("valor del preciosel er1: "+ preciosel);
+
         varsubtotal = varsubtotal + ressub;
         
         varsubtotalcosto = varsubtotalcosto + rescosto;
@@ -1306,7 +1340,7 @@ export default function NuevoPed(props) {
           '" d2="' +
           cant +
           '" d3="' +
-          precio +
+          preciosel +
           '" d4="' +
           descripcion +
           '" d5="' +
@@ -1332,7 +1366,7 @@ export default function NuevoPed(props) {
           ";" +
           codprecio +
           ";" +
-          precio +
+          preciosel +
           ";" +
           desc +
           ";" +
@@ -1357,6 +1391,8 @@ export default function NuevoPed(props) {
           peso: itemtotal[i].peso,
           gngastos: itemtotal[i].gngastos,
         });
+
+        console.log("valor del preciosel er2: "+ itemtotal[i].preciosel);
 
         valpeso = Number(itemtotal[i].cantidad) * Number(itemtotal[i].peso);
         rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
@@ -1412,8 +1448,13 @@ export default function NuevoPed(props) {
           estrella;
       }
 
+      
+
+
       console.log("Val del peso: " + valpeso);
     }
+
+    console.log("presenta cadenita er: "+ cadenita1);
 
     setCadenaint(itemtext);
     setCadenita(cadenita1);
@@ -1497,6 +1538,7 @@ export default function NuevoPed(props) {
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
+    GrabadaTemporal();
   };
 
   const cargarPlazo = async () => {
@@ -1614,6 +1656,230 @@ export default function NuevoPed(props) {
     }
   };
 
+
+  const GrabadaTemporal = async () => {
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+
+    try{
+
+      db.transaction((txn) => {
+
+        var leni = 0;
+
+        txn.executeSql("SELECT * FROM pedidosvendedor WHERE pv_codigo = ?", [parseInt(numdoc)], (tx, results) => {
+          leni = results.rows.length;
+          console.log("cambio el idpedido:  SELECT * FROM pedidosvendedor WHERE pv_codigo ="+ parseInt(numdoc));
+
+          if(leni>0){
+            txn.executeSql(
+              "UPDATE pedidosvendedor SET pv_codigovendedor = ?, pv_vendedor = ?, pv_codcliente = ?, pv_cliente = ?, pv_total = ?, pv_estatus = ?, pv_gngastos = ?, pv_numpedido = ?, pv_online = ? WHERE  pv_codigo = ?",
+              [
+                parseInt(dataUser.vn_codigo),
+                dataUser.vn_nombre,
+                parseInt(cliente.ct_codigo),
+                cliente.ct_cliente,
+                total.toString(),
+                -1,
+                gngastos.toString(),
+                parseInt(numdoc),
+                Number(0),
+                parseInt(numdoc)
+              ],
+              (txn, results) => {
+                if (results.rowsAffected > 0) {
+                  console.log("Se actualizó bien la cabecera");
+                }
+              }
+            );
+  
+            
+          txn.executeSql(
+              "UPDATE datospedidos SET dp_codvendedor = ?, dp_codcliente = ?, dp_subtotal = ?, dp_descuento = ?"+
+              ", dp_transporte = ?, dp_seguro = ?, dp_iva = ?, dp_total = ?"+
+              ", dp_estatus = ?, dp_codpedven = ?, dp_idvendedor = ?, dp_fecha = ?, dp_empresa = ?"+
+              ", dp_prioridad = ?, dp_observacion = ?, dp_tipodoc = ?, dp_tipodesc = ?, dp_porcdesc = ?, dp_valordesc = ?"+
+              ", dp_ttrans = ?, dp_gnorden = ?, dp_gnventas = ?, dp_gngastos = ?, item = ?, dp_numpedido = ?, dp_cadenaxml = ? WHERE"+
+              " dp_codigo = ?",
+              [
+                
+                parseInt(dataUser.vn_codigo),
+                parseInt(cliente.ct_codigo),
+                subtotal.toString(),
+                descuento.toString(),
+                transporte.toString(),
+                seguro.toString(),
+                iva.toString(),
+                total.toString(),
+                "-1",
+                dataUser.vn_recibo.toString(),
+                parseInt(dataUser.vn_codigo),
+                fechaped.toString(),
+               'COTZUL',
+               'NORMAL',
+                obs,
+                pickerfp.toString(),
+                (checked == "second" ? "1" : "0"),
+                porcent.toString(),
+                descuento.toString(),
+                pickertrp.toString(),
+                gnorden.toString(),
+                gnventas.toString(),
+                gngastos.toString(),
+                cadenita.toString(),
+                parseInt(0),
+                "textofinal",
+                parseInt(numdoc)
+              ],
+              (txn, results) => {
+                console.log("WWWWW"+JSON.stringify(results));
+                if (results.rowsAffected > 0) {
+                  console.log("Se actualizó bien el detalle");
+                }
+              }
+            );
+  
+  
+          }else{
+
+            txn.executeSql(
+              "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido, pv_online) " +
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+              [
+                parseInt(numdoc),
+                parseInt(dataUser.vn_codigo),
+                dataUser.vn_nombre,
+                parseInt(cliente.ct_codigo),
+                cliente.ct_cliente,
+                total.toString(),
+                -1,
+                gngastos.toString(),
+                parseInt(numdoc),
+                Number(0)
+              ],
+              (txn, results) => {
+                if (results.rowsAffected > 0) {
+                  console.log("Entro bien a grabar primera table");
+                }
+              }
+            );
+  
+  
+          txn.executeSql(
+            "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
+              ", dp_subtotal , dp_descuento , dp_transporte  " +
+              ", dp_seguro , dp_iva , dp_total  " +
+              ", dp_estatus , dp_codpedven " +
+              ", dp_idvendedor , dp_fecha , dp_empresa  " +
+              ", dp_prioridad , dp_observacion" +
+              ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
+              ", dp_ttrans , dp_gnorden , dp_gnventas  " +
+              ", dp_gngastos, item, dp_numpedido, dp_cadenaxml) " +
+              " VALUES (?, ?, ?, ?, ?" +
+              ", ?, ?, ?, ?, ?" +
+              ", ?, ?, ?, ?" +
+              ", ?, ?, ?, ?" +
+              ", ?, ?, ?, ?, ?" +
+              ", ?, ?, ?, ?); ",
+            [
+              parseInt(numdoc),
+              parseInt(dataUser.vn_codigo),
+              parseInt(cliente.ct_codigo),
+              subtotal.toString(),
+              descuento.toString(),
+              transporte.toString(),
+              seguro.toString(),
+              iva.toString(),
+              total.toString(),
+              "-1",
+              dataUser.vn_recibo.toString(),
+              parseInt(dataUser.vn_codigo),
+              fechaped.toString(),
+             'COTZUL',
+             'NORMAL',
+              obs,
+              pickerfp.toString(),
+              (checked == "second" ? "1" : "0"),
+              porcent.toString(),
+              descuento.toString(),
+              pickertrp.toString(),
+              gnorden.toString(),
+              gnventas.toString(),
+              gngastos.toString(),
+              cadenita.toString(),
+              parseInt(0),
+              "textofinal"
+            ],
+            (txn, results) => {
+              console.log("WWWWW"+JSON.stringify(results));
+              if (results.rowsAffected > 0) {
+                console.log("Entro bien a grabar segunda table");
+              }
+            }
+          );
+  
+          txn.executeSql("UPDATE usuario SET us_numborrador = ? WHERE us_numunico = 1 ", [parseInt(numdoc)], (txn, results) => {
+            if (results.rowsAffected > 0) {
+              dataUser.vn_borrador = dataUser.vn_borrador + 1;
+              
+              
+              console.log("Actualizo el nuevo numero recibo");
+            }
+          });
+  
+  
+          GrabaKEYADD();
+          
+
+    
+          
+  
+          }
+        });
+
+       
+
+       
+      });
+
+    }catch(e){
+      console.log("--------*********se cayo"+e)
+    }
+
+  }
+
+  const GrabaKEYADD = async () =>{
+    const jsonValue = null;
+
+    try{
+      jsonValue = await AsyncStorage.getItem(STORAGE_KEY)
+            .then( data => {
+
+              // the string value read from AsyncStorage has been assigned to data
+              console.log( data );
+
+              // transform it back to an object
+              data = JSON.parse( data );
+              console.log( data );
+
+              // Increment
+              data.vn_borrador = parseInt(data.vn_borrador) + 1;
+
+              console.log( data );
+
+              //save the value to AsyncStorage again
+              AsyncStorage.setItem(STORAGE_KEY, JSON.stringify( data ) );
+             
+            });
+    }catch(e){
+      console.log("--------*********se cayo"+e)
+    }
+  }
+
   const GrabarBorrador = async () => {
 
     db = SQLite.openDatabase(
@@ -1712,30 +1978,36 @@ export default function NuevoPed(props) {
           cadenita
       );
 
+
+      console.log("Lo que envia cadenita: "+ cadenita);
+
       
       try{
+
+
+      
+
       db.transaction((txn) => {
-          txn.executeSql(
-            "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido, pv_online) " +
-              " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
-            [
-              parseInt(numdoc),
-              parseInt(dataUser.vn_codigo),
-              dataUser.vn_nombre,
-              parseInt(cliente.ct_codigo),
-              cliente.ct_cliente,
-              total.toString(),
-              "-1",
-              gngastos.toString(),
-              parseInt(numdoc),
-              (internet)?Number(1):Number(0)
-            ],
-            (txn, results) => {
-              if (results.rowsAffected > 0) {
-                console.log("Entro bien a grabar primera table");
-              }
+        txn.executeSql(
+          "UPDATE pedidosvendedor SET pv_codigovendedor = ?, pv_vendedor = ?, pv_codcliente = ?, pv_cliente = ?, pv_total = ?, pv_estatus = ?, pv_gngastos = ?, pv_numpedido = ?, pv_online = ? WHERE  pv_codigo = ?",
+          [
+            parseInt(dataUser.vn_codigo),
+            dataUser.vn_nombre,
+            parseInt(cliente.ct_codigo),
+            cliente.ct_cliente,
+            total.toString(),
+            -1,
+            gngastos.toString(),
+            parseInt(numdoc),
+            (internet)?Number(1):Number(0),
+            parseInt(numdoc)
+          ],
+          (txn, results) => {
+            if (results.rowsAffected > 0) {
+              console.log("Se actualizó bien la cabecera");
             }
-          );
+          }
+        );
 
           txn.executeSql("SELECT * FROM pedidosvendedor", [], (txn, results) => {
             var len = results.rows.length;
@@ -1747,81 +2019,56 @@ export default function NuevoPed(props) {
           }); 
 
 
-        txn.executeSql(
-          "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
-            ", dp_subtotal , dp_descuento , dp_transporte  " +
-            ", dp_seguro , dp_iva , dp_total  " +
-            ", dp_estatus , dp_codpedven " +
-            ", dp_idvendedor , dp_fecha , dp_empresa  " +
-            ", dp_prioridad , dp_observacion" +
-            ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
-            ", dp_ttrans , dp_gnorden , dp_gnventas  " +
-            ", dp_gngastos, item, dp_numpedido, dp_cadenaxml) " +
-            " VALUES (?, ?, ?, ?, ?" +
-            ", ?, ?, ?, ?, ?" +
-            ", ?, ?, ?, ?" +
-            ", ?, ?, ?, ?" +
-            ", ?, ?, ?, ?, ?" +
-            ", ?, ?, ?, ?); ",
-          [
-            parseInt(numdoc),
-            parseInt(dataUser.vn_codigo),
-            parseInt(cliente.ct_codigo),
-            subtotal.toString(),
-            descuento.toString(),
-            transporte.toString(),
-            seguro.toString(),
-            iva.toString(),
-            total.toString(),
-            "-1",
-            dataUser.vn_recibo.toString(),
-            parseInt(dataUser.vn_codigo),
-            fechaped.toString(),
-           'COTZUL',
-           'NORMAL',
-            obs,
-            pickerfp.toString(),
-            (checked == "second" ? "1" : "0"),
-            porcent.toString(),
-            descuento.toString(),
-            pickertrp.toString(),
-            gnorden.toString(),
-            gnventas.toString(),
-            gngastos.toString(),
-            cadenita.toString(),
-            parseInt(0),
-            textofinal
-          ],
-          (txn, results) => {
-            console.log("WWWWW"+JSON.stringify(results));
-            if (results.rowsAffected > 0) {
-              console.log("Entro bien a grabar segunda table");
+          txn.executeSql(
+            "UPDATE datospedidos SET dp_codvendedor = ?, dp_codcliente = ?, dp_subtotal = ?, dp_descuento = ?"+
+            ", dp_transporte = ?, dp_seguro = ?, dp_iva = ?, dp_total = ?"+
+            ", dp_estatus = ?, dp_codpedven = ?, dp_idvendedor = ?, dp_fecha = ?, dp_empresa = ?"+
+            ", dp_prioridad = ?, dp_observacion = ?, dp_tipodoc = ?, dp_tipodesc = ?, dp_porcdesc = ?, dp_valordesc = ?"+
+            ", dp_ttrans = ?, dp_gnorden = ?, dp_gnventas = ?, dp_gngastos = ?, item = ?, dp_numpedido = ?, dp_cadenaxml = ? WHERE"+
+            " dp_codigo = ?",
+            [
+              
+              parseInt(dataUser.vn_codigo),
+              parseInt(cliente.ct_codigo),
+              subtotal.toString(),
+              descuento.toString(),
+              transporte.toString(),
+              seguro.toString(),
+              iva.toString(),
+              total.toString(),
+              "-1",
+              dataUser.vn_recibo.toString(),
+              parseInt(dataUser.vn_codigo),
+              fechaped.toString(),
+             'COTZUL',
+             'NORMAL',
+              obs,
+              pickerfp.toString(),
+              (checked == "second" ? "1" : "0"),
+              porcent.toString(),
+              descuento.toString(),
+              pickertrp.toString(),
+              gnorden.toString(),
+              gnventas.toString(),
+              gngastos.toString(),
+              cadenita.toString(),
+              parseInt(0),
+              textofinal,
+              parseInt(numdoc)
+            ],
+            (txn, results) => {
+              console.log("WWWWW"+JSON.stringify(results));
+              if (results.rowsAffected > 0) {
+                console.log("Se actualizó bien el detalle");
+              }
             }
-          }
-        );
+          );
 
         txn.executeSql("SELECT * FROM datospedidos", [], (txn, results) => {
           var len = results.rows.length;
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);
             console.log(`DATOS PEDIDOS: ` + JSON.stringify(row));
-          }
-        });
-        var tempu = [];
-        txn.executeSql("UPDATE usuario SET us_numborrador = ? WHERE us_numunico = 1 ", [parseInt(numdoc)], (txn, results) => {
-          if (results.rowsAffected > 0) {
-            dataUser.vn_borrador = dataUser.vn_borrador + 1;
-            /*tempu.push({
-              vn_codigo: dataUser.vn_codigo,
-              vn_nombre: dataUser.vn_nombre,
-              vn_usuario: dataUser.vn_usuario,
-              vn_clave: dataUser.vn_clave,
-              vn_recibo: dataUser.vn_recibo,
-              vn_borrador: parseInt(numdoc)
-            });*/
-            
-            
-            console.log("Actualizo el nuevo numero recibo");
           }
         });
 
@@ -2371,6 +2618,7 @@ export default function NuevoPed(props) {
             placeholder="Registre una observación"
             style={styles.input1}
             onChangeText={(value) => setObs(value)}
+            onEndEditing={() =>GrabadaTemporal()}
         />
         </View>
       </View>
@@ -2445,11 +2693,18 @@ export default function NuevoPed(props) {
               onChanged={setPickerfp}
               options={[
                   {value: 0, text: 'SELECCIONAR'},
-                  {value: 1, text: 'CHEQUE A FECHA'},
-                  {value: 2, text: 'FACT. A CRÉDITO'},
+                  {value: 15, text: 'ABONO'},
+                  {value: 2, text: 'CHEQUE'},
+                  {value: 12, text: 'CHEQUE A FECHA'},
+                  {value: 14, text: 'CHEQUE AL DÍA'},
+                  {value: 8, text: 'CONSIGNACIÓN'},
+                  {value: 31, text: 'CRÉDITO DIRECTO'},
+                  {value: 5, text: 'DEPÓSIT0S'},
+                  {value: 1, text: 'EFÉCTIVO'},
               ]}
               style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
               value={pickerfp}
+              onEndEditing={() =>GrabadaTemporal()}
           />    
           </View>
         </View>
@@ -2476,6 +2731,7 @@ export default function NuevoPed(props) {
               options={plazo}
               style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
               value={pickerplz}
+              onEndEditing={() =>GrabadaTemporal()}
           />  )}
           </View>
         </View>
@@ -2780,8 +3036,7 @@ export default function NuevoPed(props) {
                     placeholder="0,0"
                     onFocus={""}
                     style={styles.itemtext}
-                    onChangeText={(val) => setVTrans(val)}
-                    onEndEditing={() => CargarResultados()}
+                    onChangeText={(val) => setVTrans2(val)}
                   />
                 </>
               ) : (

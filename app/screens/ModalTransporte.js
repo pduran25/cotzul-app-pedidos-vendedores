@@ -83,7 +83,7 @@ class ModalTransporte extends Component {
           db.transaction((tx) => {
             tx.executeSql(
               "SELECT * FROM transportes WHERE upper(pl_nombre) LIKE ? ",
-              [texto+"%"],
+              ["%"+texto+"%"],
               (tx, results) => {
                 var len = results.rows.length;
                 console.log("numero de transporte:"+ this.props.pickertrp);

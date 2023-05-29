@@ -11,7 +11,7 @@ import {
   AppState,
   RefreshControl
 } from "react-native";
-import { colors } from "react-native-elements";
+import { colors, Icon } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
 import { Button } from "react-native-elements";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -120,6 +120,11 @@ useEffect(() => {
   }, [usuario]);
 
 
+  useEffect(() =>{
+    console.log("cambio el idpedido: "+idpedido);
+
+  }, [idpedido]);
+
 
 useEffect(()=> {
   console.log("Veces que ingresa a datauser ****");
@@ -140,6 +145,60 @@ useEffect(()=> {
    
   };
 
+  const PreguntarEliminar = (idpedido) =>{
+    Alert.alert(
+      '¿Desea Continuar?',
+      '¿Desea Eliminar el pedido con su respectiva información?',
+      [
+        { text: "Cancelar", style: 'cancel', onPress: () => {} },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => EliminaPedido(idpedido),
+        },
+      ]
+    );
+  }
+
+ 
+
+
+  const EliminaPedido = async (idpedido) => {
+    try {
+      const database_name = "CotzulBDS.db";
+      const database_version = "1.0";
+      const database_displayname = "CotzulBDS";
+      const database_size = 200000;
+
+
+      let db = null;
+
+      db = SQLite.openDatabase(
+        database_name,
+        database_version,
+        database_displayname,
+        database_size
+      );
+
+      db.transaction((tx) => {
+
+        tx.executeSql("DELETE FROM pedidosvendedor WHERE pv_codigo = ?",[parseInt(idpedido)]);
+
+       tx.executeSql("DELETE FROM datospedidos WHERE dp_codigo = ?",[parseInt(idpedido)]);
+        
+      });
+
+      
+
+      listarPedidos();
+
+    } catch (error) {
+      setLoading(false);
+      console.log("un error cachado eliminar pedidos");
+      console.log(error);
+    }
+  };
+
   const listarPedidos = async (numvendedor) => {
     try {
       const database_name = "CotzulBDS.db";
@@ -156,20 +215,34 @@ useEffect(()=> {
         database_size
       );
       db.transaction((tx) => {
+
+        console.log("entra a la siguiente...");
+
+        tx.executeSql("SELECT * FROM datospedidos", [], (tx, results) => {
+          var lena = results.rows.length;
+          console.log("Cantidad de lineas: "+lena);
+          for (let i = 0; i < lena; i++) {
+            let row = results.rows.item(i);
+            console.log("rows datospedidos: "+JSON.stringify(row));
+          }
+        });
         
         tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus = -1", [], (tx, results) => {
           var len = results.rows.length;
           console.log("Cantidad de lineas: "+len);
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);
-            console.log("rows: "+JSON.stringify(row));
+            console.log("rowsa: "+JSON.stringify(row));
           }
           setLoading(true);
           setData(results.rows._array);
         });
+
+        
       });
 
       setRefreshing(false);
+      setRegistro(defaultValueRegister);
 
     } catch (error) {
       setLoading(false);
@@ -203,6 +276,8 @@ useEffect(()=> {
         }
       };
 
+
+
       return (
         <TouchableOpacity onPress={viewDetails}>
           <View
@@ -225,7 +300,7 @@ useEffect(()=> {
 
             <View
               style={{
-                width: 220,
+                width: 150,
                 height: 30,
                 borderColor: "black",
                 borderWidth: 1,
@@ -244,6 +319,24 @@ useEffect(()=> {
               <Text style={styles.tableval}>
                 {(item.pv_gngastos != NaN) ? Number(item.pv_gngastos).toFixed(2) : 0} 
               </Text>
+
+            </View>
+            <View
+              style={{
+                width: 70,
+                height: 30,
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+            <Text style={styles.tabletext}>
+              <Icon
+                onPress={() => PreguntarEliminar(item.pv_codigo)}
+                type="material-community"
+                name="delete"
+                iconStyle={styles.iconRight}
+              />
+            </Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -263,6 +356,8 @@ useEffect(()=> {
     listarPedidos();
     setRegistro(defaultValueRegister);
   };
+
+
 
 
   return (
@@ -300,7 +395,7 @@ useEffect(()=> {
             
             <View
               style={{
-                width: 220,
+                width: 150,
                 backgroundColor: "#9c9c9c",
                 borderColor: "black",
                 borderWidth: 1,
@@ -318,6 +413,17 @@ useEffect(()=> {
               }}
             >
               <Text style={styles.tabletitle}>Lote</Text>
+            </View>
+
+            <View
+              style={{
+                width: 70,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Elimina</Text>
             </View>
             
           </View>
@@ -404,9 +510,6 @@ const styles = StyleSheet.create({
   },
   btnLogin: {
     backgroundColor: "#6f4993",
-  },
-  iconRight: {
-    color: "#c1c1c1",
   },
   detallebody: {
     height: 75,

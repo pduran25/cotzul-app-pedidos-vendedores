@@ -204,7 +204,7 @@ export default function CargarInformacion() {
         if (results.rowsAffected > 0) {
           
           console.log("Valor afectado us_loading: "+ (dataUser.vn_loading+1) + "fecha loading: "+ (dataUser.vn_fechaloading));
-          Alert.alert("Valor afectado us_loading: "+ (dataUser.vn_loading+1) + "fecha loading: "+ (dataUser.vn_fechaloading));
+          //Alert.alert("Valor afectado us_loading: "+ (dataUser.vn_loading+1) + "fecha loading: "+ (dataUser.vn_fechaloading));
         }
       });
     });
@@ -253,7 +253,7 @@ export default function CargarInformacion() {
         "CREATE TABLE IF NOT EXISTS " +
           "pedidosvendedor " +
           "(pv_codigo INTEGER, pv_codigovendedor INTEGER,  pv_vendedor VARCHAR(100), pv_codcliente INTEGER, pv_cliente VARCHAR(200)," +
-          "pv_total VARCHAR(50), pv_estatus VARCHAR(50), pv_gngastos VARCHAR(100), pv_numpedido INTEGER, pv_online INTEGER);"
+          "pv_total VARCHAR(50), pv_estatus INTEGER, pv_gngastos VARCHAR(100), pv_numpedido INTEGER, pv_online INTEGER);"
       );
 
       myResponse?.pedidovendedor.map((value, index) => {
@@ -755,13 +755,15 @@ export default function CargarInformacion() {
       });
     });
     
-    if(dataUser.vn_loading > 0){
+   /* if(dataUser.vn_loading > 0){
       
       ActualizarPedidosOffline();
       
     }else{
       obtenerPedidosVendedor();
-    }
+    }*/
+
+    obtenerPedidosVendedor();
 
     
   };
@@ -776,10 +778,6 @@ export default function CargarInformacion() {
         database_displayname,
         database_size
       );
-
-      
-    /*(pv_codigo INTEGER, pv_codigovendedor INTEGER,  pv_vendedor VARCHAR(100), pv_codcliente INTEGER, pv_cliente VARCHAR(200)," +
-          "pv_total VARCHAR(50), pv_estatus VARCHAR(50), pv_gngastos VARCHAR(100), pv_numpedido INTEGER, pv_online INTEGER)*/ 
 
      
           var pvcodigo = 0;
@@ -908,11 +906,11 @@ export default function CargarInformacion() {
 
           }
           }
-          setActivo(2);
-          signUp();
+          
         });
       });
-
+      setActivo(2);
+      signUp();
     }catch(e){
           console.log("ERROS AL CARGAR "+ e.toString())
     }
@@ -961,8 +959,10 @@ export default function CargarInformacion() {
           ", it_descripcion VARCHAR(200), it_precio VARCHAR(20), it_pvp VARCHAR(20) " +
           ", it_preciosub VARCHAR(20), it_contado VARCHAR(20), it_stock VARCHAR(20) " +
           ", it_marca VARCHAR(50), it_familia VARCHAR(50), it_costoprom VARCHAR(20) " +
-          ", it_peso VARCHAR(50), it_sku VARCHAR(10) " +
+          ", it_peso VARCHAR(50), it_sku VARCHAR(10), it_bod INTEGER, it_alm INTEGER, it_chi INTEGER, it_rep INTEGER, it_lote VARCHAR(20)" +
           " );"
+
+
       );
 
       myResponse?.items.map((value, index) => {
@@ -971,8 +971,8 @@ export default function CargarInformacion() {
             ", it_descripcion , it_precio , it_pvp " +
             ", it_preciosub , it_contado , it_stock  " +
             ", it_marca , it_familia , it_costoprom  " +
-            ", it_peso,it_sku) " +
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+            ", it_peso,it_sku, it_bod, it_alm, it_chi, it_rep, it_lote) " +
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
           [
             Number(value.it_codigo),
             value.it_codprod,
@@ -988,6 +988,11 @@ export default function CargarInformacion() {
             value.it_costoprom,
             value.it_peso,
             value.it_sku,
+            value.it_bod,
+            value.it_alm,
+            value.it_chi,
+            value.it_rep,
+            value.it_lote
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {

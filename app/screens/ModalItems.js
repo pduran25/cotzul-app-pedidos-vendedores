@@ -7,6 +7,7 @@ import {
   Pressable,
   TextInput,
   TouchableOpacity,
+  ScrollView,
   View,
   ActivityIndicator,
 } from "react-native";
@@ -72,7 +73,7 @@ class ModalItems extends Component {
       db.transaction((tx) => {
         tx.executeSql(
           "SELECT * FROM items WHERE it_referencia like ?",
-          [this.state.search + "%"],
+          ["%"+this.state.search + "%"],
           (tx, results) => {
             var len = results.rows.length;
             for (let i = 0; i < len; i++) {
@@ -103,7 +104,7 @@ class ModalItems extends Component {
         >
           <View
             style={{
-              width: 100,
+              width: 150,
               height: 30,
               borderColor: "black",
               borderWidth: 1,
@@ -114,33 +115,63 @@ class ModalItems extends Component {
 
           <View
             style={{
-              width: 85,
-              height: 30,
-              borderColor: "black",
-              borderWidth: 1,
-            }}
-          >
-            <Text style={styles.tabletext}>{item.it_familia}</Text>
-          </View>
-          <View
-            style={{
-              width: 85,
-              height: 30,
-              borderColor: "black",
-              borderWidth: 1,
-            }}
-          >
-            <Text style={styles.tabletext}>{item.it_marca}</Text>
-          </View>
-          <View
-            style={{
-              width: 85,
+              width: 50,
               height: 30,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
             <Text style={styles.tabletext}>{item.it_stock}</Text>
+          </View>
+          <View
+            style={{
+              width: 50,
+              height: 30,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext}>{item.it_bod}</Text>
+          </View>
+          <View
+            style={{
+              width: 50,
+              height: 30,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext}>{item.it_alm}</Text>
+          </View>
+          <View
+            style={{
+              width: 50,
+              height: 30,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext}>{item.it_chi}</Text>
+          </View>
+          <View
+            style={{
+              width: 50,
+              height: 30,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext}>{item.it_rep}</Text>
+          </View>
+          <View
+            style={{
+              width: 50,
+              height: 30,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext}>{item.it_lote}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -175,14 +206,16 @@ class ModalItems extends Component {
                   />
                 </View>
               </View>
-
+           
+              <ScrollView horizontal >
               <View
-                style={{ marginHorizontal: 20, marginTop: 10, height: 120 }}
+                style={{ marginHorizontal: 0, marginTop: 10, paddingBottom: 10 }}
               >
-                <View style={{ flexDirection: "row" }}>
+                
+                <View style={{ flexDirection: "row"}}>
                   <View
                     style={{
-                      width: 100,
+                      width: 150,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
@@ -192,28 +225,7 @@ class ModalItems extends Component {
                   </View>
                   <View
                     style={{
-                      width: 85,
-                      backgroundColor: "#9c9c9c",
-                      borderColor: "black",
-                      borderWidth: 1,
-                    }}
-                  >
-                    <Text style={styles.tabletitle}>Familia:</Text>
-                  </View>
-
-                  <View
-                    style={{
-                      width: 85,
-                      backgroundColor: "#9c9c9c",
-                      borderColor: "black",
-                      borderWidth: 1,
-                    }}
-                  >
-                    <Text style={styles.tabletitle}>Marca:</Text>
-                  </View>
-                  <View
-                    style={{
-                      width: 85,
+                      width: 50,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
@@ -221,7 +233,60 @@ class ModalItems extends Component {
                   >
                     <Text style={styles.tabletitle}>Stock:</Text>
                   </View>
+
+                  <View
+                    style={{
+                      width: 50,
+                      backgroundColor: "#9c9c9c",
+                      borderColor: "black",
+                      borderWidth: 1,
+                    }}
+                  >
+                    <Text style={styles.tabletitle}>Bod:</Text>
+                  </View>
+                  <View
+                    style={{
+                      width:  50,
+                      backgroundColor: "#9c9c9c",
+                      borderColor: "black",
+                      borderWidth: 1,
+                    }}
+                  >
+                    <Text style={styles.tabletitle}>Tel:</Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 50,
+                      backgroundColor: "#9c9c9c",
+                      borderColor: "black",
+                      borderWidth: 1,
+                    }}
+                  >
+                    <Text style={styles.tabletitle}>Pro:</Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 50,
+                      backgroundColor: "#9c9c9c",
+                      borderColor: "black",
+                      borderWidth: 1,
+                    }}
+                  >
+                    <Text style={styles.tabletitle}>Rep:</Text>
+                  </View>
+                  
+                  <View
+                    style={{
+                      width: 50,
+                      backgroundColor: "#9c9c9c",
+                      borderColor: "black",
+                      borderWidth: 1,
+                    }}
+                  >
+                    <Text style={styles.tabletitle}>Lote:</Text>
+                  </View>
                 </View>
+                
                 {isLoading ? (
                   <ActivityIndicator size="large" loading={isLoading} />
                 ) : (
@@ -232,7 +297,7 @@ class ModalItems extends Component {
                   />
                 )}
               </View>
-
+              </ScrollView>
               <View style={styles.styleItems}>
                 <View style={{ width: 120, marginHorizontal: 5 }}>
                   <Pressable
@@ -327,16 +392,17 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   modalView: {
-    margin: 20,
+    margin: 10,
     backgroundColor: "white",
     borderRadius: 20,
-    padding: 35,
+    padding: 20,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
     },
+    height: 350,
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,

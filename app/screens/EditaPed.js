@@ -134,7 +134,7 @@ export default function EditaPed(props) {
   const [bodega, setBodega] = useState(0);
   const [doc, setDoc] = useState(-1);
   const [prioridad, setPrioridad] = useState(0);
-  const [tprecio, setTprecio] = useState(1);
+  const [tprecio, setTprecio] = useState(12);
   const [cliente, setCliente] = useState(defaultCliente);
   const [dataitem, setDataItem] = useState([]);
   const [checked, setChecked] = React.useState("first");
@@ -191,15 +191,18 @@ export default function EditaPed(props) {
   const [idcliente, setIdCliente] = useState(0);
   const [datositems, setDatosItems] = useState([]);
   const [internet, setInternet] = useState(true);
+  const [chargue, setChargue] = useState(0);
 
   let [picker, setPicker] = useState(1);
   let [pickerpri, setPickerpri] = useState(1);
-  let [pickerfp, setPickerfp] = useState(0);
+  let [pickerfp, setPickerfp] = useState(12);
   let [pickerplz,setPickerplz] = useState(0);
   let [pickertrp, setPickertrp] = useState(-1);
   let [pickerven, setPickerven] = useState(0);
 
   var valitem = "";
+
+  console.log("Entro a Edita pedido con: "+idpedido);
 
   LogBox.ignoreLogs([
     'Non-serializable values were found in the navigation state',
@@ -236,6 +239,7 @@ export default function EditaPed(props) {
     cargarTarifas(tcodigo, item, "actualiza transporte");
     setPickertrp(item);
     setTtrans(item);
+    GrabadaTemporal()
   };
 
   async function openUrl(url){
@@ -358,8 +362,7 @@ export default function EditaPed(props) {
                 keyboardType="numeric"
                 placeholder="0,0"
                 style={styles.tabletext}
-                onChangeText={(val) => setPrecioVal(val, index)}
-                onEndEditing={() => ActualizaResultados(item.it_codprod)}
+                onChangeText={(val) => setPrecioVal(val, index, item.it_codprod)}
               />
             ) : (
               <Text style={styles.tabletext}>
@@ -566,10 +569,11 @@ export default function EditaPed(props) {
     ActualizaResultados(itemtotal[index].codprod);
   };
 
-  const setPrecioVal = (valor, index) => {
+  const setPrecioVal = (valor, index, codprod) => {
     if (itemtotal[index].editable == 1) {
       itemtotal[index].preciosel = valor;
     }
+    ActualizaResultados(codprod);
   };
 
 
@@ -594,7 +598,9 @@ export default function EditaPed(props) {
     console.log(item.ct_plazo);
     setNotnomplazo(item.ct_plazo);
     cargarPlazo(Number(item.ct_idplazo));
+    
   };
+
 
   useEffect(()=>{
     console.log("se actualizo ubicacion en: " + ubicacion);
@@ -632,7 +638,7 @@ export default function EditaPed(props) {
         newitem.it_codprod,
         0,
         0,
-        newitem.it_precio,
+        newitem.it_preciosub,
         newitem.it_pvp,
         newitem.it_preciosub,
         newitem.it_contado,
@@ -778,7 +784,7 @@ useEffect(()=>{
         codprod: itemtotal[i].codprod,
           descripcion: itemtotal[i].descripcion,
           cantidad: itemtotal[i].cantidad,
-          precio: itemtotal[i].precio,
+          precio: itemtotal[i].subdist,
           pvp: itemtotal[i].pvp,
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
@@ -833,6 +839,7 @@ useEffect(()=>{
     
     
     console.log("valor del itemtotal: " + JSON.stringify(temp[0]));
+    GrabadaTemporal();
   };
 
 
@@ -1008,6 +1015,7 @@ useEffect(()=>{
     setGnGastos(vargastos);
 
     console.log("valor de vargastos: "+ vargastos);
+    GrabadaTemporal();
   };
 
   const CargarResultados = () => {
@@ -1189,6 +1197,7 @@ useEffect(()=>{
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
+    GrabadaTemporal();
   };
 
   const ActualizaResultados = (codprod) => {
@@ -1432,6 +1441,7 @@ useEffect(()=>{
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
+    GrabadaTemporal();
   };
 
   const EditarResultados = (
@@ -1520,7 +1530,7 @@ useEffect(()=>{
           '" d2="' +
           cant +
           '" d3="' +
-          precio +
+          preciosel +
           '" d4="' +
           descripcion +
           '" d5="' +
@@ -1546,7 +1556,7 @@ useEffect(()=>{
           ";" +
           codprecio +
           ";" +
-          precio +
+          preciosel +
           ";" +
           desc +
           ";" +
@@ -1711,6 +1721,7 @@ useEffect(()=>{
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
+    GrabadaTemporal();
   };
 
   const cargarPlazo = async (validplazo) => {
@@ -1791,11 +1802,14 @@ useEffect(()=>{
   //  for (var x = 1; x < valitem.length; x++) {
       console.log("Cantidad de items2: "+valitem[numitem]);
       itemval = valitem[numitem].split(";");
-      console.log("Cantidad de items3: "+itemval[1]);
-      console.log("Cantidad de items4: "+itemval[3]);
+      console.log("Cantidad de items0: "+itemval[0]);
+      console.log("Cantidad de items1: "+itemval[1]);
+      console.log("Cantidad de items2: "+itemval[2]);
+      console.log("Cantidad de items3: "+itemval[3]);
+      console.log("Cantidad de items4: "+itemval[4]);
       console.log("Cantidad de items5: "+itemval[5]);
-      console.log("Cantidad de items6: "+itemval[4]);
-      console.log("Cantidad de items7: "+itemval[6]);
+      console.log("Cantidad de items6: "+itemval[6]);
+      console.log("Cantidad de items7: "+itemval[7]);
       cargarItemElegido(
         itemval[1],
         Number(itemval[3]),
@@ -1945,7 +1959,7 @@ useEffect(()=>{
               row.it_codprod,
               cantidad,
               descuento,
-              row.it_precio,
+              preciosel,
               row.it_pvp,
               row.it_preciosub,
               row.it_contado,
@@ -2047,7 +2061,6 @@ useEffect(()=>{
     var temp = [];
     temp.push({ text: "SELECCIONAR", value: 0 });
     temp.push({ text: "CHEQUE A FECHA", value: 1 });
-    temp.push({ text: "FACT. A CRÉDITO", value: 2 });
 
     if (val == 0) {
       setFormaPagoId(0);
@@ -2055,14 +2068,17 @@ useEffect(()=>{
     } else if (val == 1) {
       setFormaPagoId(1);
       setFormaPagoNom("CHEQUE A FECHA");
-    } else if (val == 2) {
-      setFormaPagoId(2);
-      setFormaPagoNom("FACT. A CRÉDITO");
     }
 
     setLFormaPago(temp);
     setDoc(val);
     setPickerfp(val);
+  };
+
+  const setVTrans2 = (val) =>{
+    setVTrans(val);
+    CargarResultados();
+
   };
 
   const cargarTarifas = async (ttcodigo, idtransporte, valorpre = "prueba") => {
@@ -2184,10 +2200,14 @@ useEffect(()=>{
         setTransporte(Number(datopedido.dp_transporte));
         setTotal(Number(datopedido.dp_total));
         setGnGastos(Number(datopedido.dp_gngastos));
+
+        console.log("valor de gngastos: "+ datopedido.dp_gngastos);
         cargarFormaPago(Number(datopedido.dp_tipodoc));
         console.log("Los datos del pedido son: "+datopedido.item);
         cargarListaItems(""+datopedido.item);
-        
+        console.log("grabando con chargue 1: "+chargue);
+        setChargue(1);
+        console.log("grabando con chargue 2: "+chargue);
       }
     
     
@@ -2207,6 +2227,113 @@ useEffect(()=>{
     }
      
   }, [idtrans])
+
+
+  const GrabadaTemporal = async () => {
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+
+    if(chargue != 0){
+
+    try{
+
+      db.transaction((txn) => {
+
+        var leni = 0;
+
+        console.log("SELECT * FROM pedidosvendedor WHERE pv_codigo = "+ idpedido);
+
+        txn.executeSql("SELECT * FROM pedidosvendedor WHERE pv_codigo = ?", [idpedido], (tx, results) => {
+          leni = results.rows.length;
+          console.log("Existe esta cantidad de pedidos con ese codigo: "+ leni);
+
+          if(leni>0){
+            txn.executeSql(
+              "UPDATE pedidosvendedor SET pv_codigovendedor = ?, pv_vendedor = ?, pv_codcliente = ?, pv_cliente = ?, pv_total = ?, pv_estatus = ?, pv_gngastos = ?, pv_numpedido = ?, pv_online = ? WHERE  pv_codigo = ?",
+              [
+                parseInt(dataUser.vn_codigo),
+                dataUser.vn_nombre,
+                parseInt(cliente.ct_codigo),
+                cliente.ct_cliente,
+                total.toString(),
+                -1,
+                gngastos.toString(),
+                parseInt(numdoc),
+                Number(0),
+                parseInt(idpedido)
+              ],
+              (txn, results) => {
+                if (results.rowsAffected > 0) {
+                  console.log("Se actualizó bien la cabecera");
+                }
+              }
+            );
+  
+            
+          txn.executeSql(
+              "UPDATE datospedidos SET dp_codvendedor = ?, dp_codcliente = ?, dp_subtotal = ?, dp_descuento = ?"+
+              ", dp_transporte = ?, dp_seguro = ?, dp_iva = ?, dp_total = ?"+
+              ", dp_estatus = ?, dp_codpedven = ?, dp_idvendedor = ?, dp_fecha = ?, dp_empresa = ?"+
+              ", dp_prioridad = ?, dp_observacion = ?, dp_tipodoc = ?, dp_tipodesc = ?, dp_porcdesc = ?, dp_valordesc = ?"+
+              ", dp_ttrans = ?, dp_gnorden = ?, dp_gnventas = ?, dp_gngastos = ?, item = ?, dp_numpedido = ?, dp_cadenaxml = ? WHERE"+
+              " dp_codigo = ?",
+              [
+                
+                parseInt(dataUser.vn_codigo),
+                parseInt(cliente.ct_codigo),
+                subtotal.toString(),
+                descuento.toString(),
+                transporte.toString(),
+                seguro.toString(),
+                iva.toString(),
+                total.toString(),
+                "-1",
+                dataUser.vn_recibo.toString(),
+                parseInt(dataUser.vn_codigo),
+                fechaped.toString(),
+               'COTZUL',
+               'NORMAL',
+                obs,
+                pickerfp.toString(),
+                (checked == "second" ? "1" : "0"),
+                porcent.toString(),
+                descuento.toString(),
+                pickertrp.toString(),
+                gnorden.toString(),
+                gnventas.toString(),
+                gngastos.toString(),
+                cadenita.toString(),
+                parseInt(0),
+                "textofinal",
+                parseInt(idpedido)
+              ],
+              (txn, results) => {
+                console.log("WWWWW"+JSON.stringify(results));
+                if (results.rowsAffected > 0) {
+                  console.log("Se actualizó bien el detalle");
+                }
+              }
+            );
+  
+  
+          }
+        });
+
+       
+
+       
+      });
+
+    }catch(e){
+      console.log("--------*********se cayo"+e)
+    }
+  }
+
+  }
 
 
   const GrabarBorrador = async () => {
@@ -2851,6 +2978,7 @@ useEffect(()=>{
             style={styles.input1}
             value={obs}
             onChangeText={(value) => setObs(value)}
+            onEndEditing = {()=>GrabadaTemporal()}
           />
         </View>
       </View>
@@ -2916,12 +3044,20 @@ useEffect(()=>{
               <Picker
               onChanged={setPickerfp}
               options={[
-                  {value: 0, text: 'SELECCIONAR'},
-                  {value: 1, text: 'CHEQUE A FECHA'},
-                  {value: 2, text: 'FACT. A CRÉDITO'},
+                {value: 0, text: 'SELECCIONAR'},
+                {value: 15, text: 'ABONO'},
+                {value: 2, text: 'CHEQUE'},
+                {value: 12, text: 'CHEQUE A FECHA'},
+                {value: 14, text: 'CHEQUE AL DÍA'},
+                {value: 8, text: 'CONSIGNACIÓN'},
+                {value: 31, text: 'CRÉDITO DIRECTO'},
+                {value: 5, text: 'DEPÓSIT0S'},
+                {value: 1, text: 'EFÉCTIVO'},
               ]}
               style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
               value={pickerfp}
+              onEndEditing = {()=>GrabadaTemporal()}
+
           />
           
           /*<RNPickerSelect
@@ -2957,6 +3093,7 @@ useEffect(()=>{
               options={plazo}
               style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
               value={pickerplz}
+              onEndEditing = {()=>GrabadaTemporal()}
           />  )}
           </View>
         </View>
@@ -3265,8 +3402,7 @@ useEffect(()=>{
                     placeholder="0,0"
                     onFocus={""}
                     style={styles.itemtext}
-                    onChangeText={(val) => setVTrans(val)}
-                    onEndEditing={() => CargarResultados()}
+                    onChangeText={(val) => setVTrans2(val)}
                   />
                 </>
               ) : (
