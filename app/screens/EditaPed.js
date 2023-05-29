@@ -192,6 +192,7 @@ export default function EditaPed(props) {
   const [datositems, setDatosItems] = useState([]);
   const [internet, setInternet] = useState(true);
   const [chargue, setChargue] = useState(0);
+  const [valdatositem, setValDatosItem] = useState(0);
 
   let [picker, setPicker] = useState(1);
   let [pickerpri, setPickerpri] = useState(1);
@@ -598,6 +599,7 @@ export default function EditaPed(props) {
     console.log(item.ct_plazo);
     setNotnomplazo(item.ct_plazo);
     cargarPlazo(Number(item.ct_idplazo));
+    GrabadaTemporal();
     
   };
 
@@ -784,7 +786,7 @@ useEffect(()=>{
         codprod: itemtotal[i].codprod,
           descripcion: itemtotal[i].descripcion,
           cantidad: itemtotal[i].cantidad,
-          precio: itemtotal[i].subdist,
+          precio: itemtotal[i].precio,
           pvp: itemtotal[i].pvp,
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
@@ -864,15 +866,14 @@ useEffect(()=>{
     var gngastosv = 0;
     var estrella = "*";
     var rescosto = 0;
-    var valrescosto = 0;
+    var varsubtotalcosto = 0;
+
+    reviewInternet();
 
     for (let i = 0; i < itemtotal.length; i++) {
       numcod++;
 
       varsubtotal = varsubtotal + itemtotal[i].subtotal;
-
-      rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
-      valrescosto = valrescosto + rescosto;
 
       gngastosv = (Number(itemtotal[i].subtotal)-Number((itemtotal[i].subtotal * itemtotal[i].descuento)/100)) / (Number(itemtotal[i].costo)*Number(itemtotal[i].cantidad));
       temp.push({
@@ -893,7 +894,12 @@ useEffect(()=>{
         peso: itemtotal[i].peso,
         gngastos: gngastosv,
       });
+
+
       valpeso = Number(itemtotal[i].cantidad) * Number(itemtotal[i].peso);
+      rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
+     
+      varsubtotalcosto = varsubtotalcosto + rescosto;
       totpeso = totpeso + valpeso;
       porcpor = Number(porcpor) + Number(itemtotal[i].descuento);
       resdes =
@@ -944,7 +950,7 @@ useEffect(()=>{
     setCadenaint(itemtext);
     setCadenita(cadenita1);
 
-    cargarTarifas(tcodigo, ttrans, "cargar resultados temp");
+    cargarTarifas(tcodigo, ttrans, "cargar resultados");
 
     setSubtotal(varsubtotal);
     console.log("entro con el valor de transporte: " + ttrans);
@@ -984,12 +990,10 @@ useEffect(()=>{
     }
     setDescuento(vardesc);
 
-    console.log("valor de varsubtotal: "+ varsubtotal);
+ 
 
     varseguro = ((varsubtotal - vardesc) * vseguro) / 100;
     setSeguro(varseguro);
-
-    console.log("valor de varseguro: "+ vseguro);
 
     variva = (varsubtotal - vardesc + varseguro) * 0.12;
     setIva(variva);
@@ -997,7 +1001,6 @@ useEffect(()=>{
     vartotal = varsubtotal - vardesc + varseguro + vartransp + variva;
     setTotal(vartotal);
 
-    console.log("valor de vartotal: "+ vartotal);
     console.log("valor del total: " + vartotal);
     setTotal(vartotal);
 
@@ -1006,15 +1009,22 @@ useEffect(()=>{
       "resultado var orden: " +
         (Number(vartotal) - Number(vardesc) - Number(varsubtotal)).toFixed(2)
     );
-    varorden = Number(vartotal) - Number(vardesc) - Number(varsubtotal);
-    varventas = (gnorden / (Number(vartotal) - Number(vardesc))) * 100;
-    vargastos = (Number(vartotal) - Number(vardesc)) / Number(valrescosto);
+
+    console.log("valores total: "+Number(vartotal)+" vardesc: "+ Number(vardesc)+" varsubtotal: "+Number(varsubtotal) );
+    varorden = Number(varsubtotal) - Number(vardesc) - Number(varsubtotalcosto);
+    varventas = (gnorden / (Number(varsubtotal) - Number(vardesc))) * 100;
+    vargastos =
+      (Number(varsubtotal) - Number(vardesc)) / Number(varsubtotalcosto);
+    
+    console.log("varsubtotal - cargarresultados: "+ varsubtotal+ "vardesc "+ vardesc+ "varsubtotalcosto: "+ varsubtotalcosto);
+
+    console.log("valor de vargastos: "+ vargastos);
 
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
 
-    console.log("valor de vargastos: "+ vargastos);
+    console.log("cargar resultados CargarResultadosTemp: "+ vargastos);
     GrabadaTemporal();
   };
 
@@ -1197,6 +1207,8 @@ useEffect(()=>{
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
+
+    console.log("cargar resultados CargarResultados: "+ vargastos);
     GrabadaTemporal();
   };
 
@@ -1441,6 +1453,8 @@ useEffect(()=>{
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
+
+    console.log("cargar resultados ActualizaResultados: "+ vargastos);
     GrabadaTemporal();
   };
 
@@ -1460,6 +1474,7 @@ useEffect(()=>{
     descripcion
   ) => {
 
+    setValDatosItem(1);
     console.log("ENTRO A EDITAR*** CANTIDAD DE ITEMS REGISTRADOS: "+itemtotal.length);
     var temp = [];
     var varsubtotal = 0;
@@ -1493,7 +1508,7 @@ useEffect(()=>{
         ressub = Number(cant) * Number(preciosel);
         rescosto = Number(cant) * Number(costo);
         valpeso = Number(cant) * Number(peso);
-        gngastosv = (ressub - desc) / rescosto;
+        gngastosv = (ressub-((ressub*desc)/100)) / rescosto;
         restot = ressub - (ressub * desc) / 100;
 
         temp.push({
@@ -1721,6 +1736,7 @@ useEffect(()=>{
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
+    console.log("cargar resultados EditarResultados: "+ vargastos);
     GrabadaTemporal();
   };
 
@@ -1810,6 +1826,27 @@ useEffect(()=>{
       console.log("Cantidad de items5: "+itemval[5]);
       console.log("Cantidad de items6: "+itemval[6]);
       console.log("Cantidad de items7: "+itemval[7]);
+
+      /*codprod,
+    cantidad,
+    descuento,
+    codprecio,
+    preciosel,
+    editable*/ 
+
+    /* itemtotal[i].codprod +
+        ";" +
+        itemtotal[i].descripcion +
+        ";" +
+        itemtotal[i].cantidad +
+        ";" +
+        itemtotal[i].codprecio +
+        ";" +
+        itemtotal[i].preciosel +
+        ";" +
+        itemtotal[i].descuento +
+        ";" +
+        itemtotal[i].total + */
       cargarItemElegido(
         itemval[1],
         Number(itemval[3]),
@@ -1819,79 +1856,11 @@ useEffect(()=>{
         0
       );
       setNumItem(numitem+1);
-   // }
 
-
- /* try{
-    if(itemes.length > 0){
-      console.log("Items----: "+ itemes);
-      setDatosItems(JSON.parse(itemes));
-      let datoIt = JSON.parse(itemes);
-      console.log("Cantidad de items: "+ datoIt.length);
-
-      cargarItemElegido(
-        datoIt[numitem].it_codprod,
-        datoIt[numitem].it_cantidad,
-        datoIt[numitem].it_descuento,
-        datoIt[numitem].it_precio,
-        0
-      );
-      setNumItem(numitem+1);
-    }
-    
-  }catch(e){
-    console.log("error: "+e);
-  }*/
-
- 
- 
-
-  
-    
-
-
-   /* var novedad = "texto incluido para presentar";
-    console.log("texto novedad: "+ novedad.substring(1,5));
-    
-    
-    let datositems =JSON.parse(itemes);
-    console.log("Total de datos: "+ datositems[0]);*/
-    //  JSON.parse(itemes);
-    //
-    /*let varitem = itemes.split("[")[0];
-    varitem = varitem.split["]"][0];
-    console.log("Valores de split: "+ varitem);*/
-    
-
-    //let datositems =  JSON.parse(itemes);
-    //console.log("cantidad de items: "+datositems.length);
-    /*for (let i = 0; i < datositems.length; i++) {
-      cargarItemElegido(
-        datositems[i].it_codprod,
-        datositems[i].it_cantidad,
-        datositems[i].it_descuento,
-        0,
-        datositems[i].it_precio
-      );
-    }*/
   };
 
   const cargarClienteElegido = async () => {
     try {
-     /* const response = await fetch(
-        "https://app.cotzul.com/Pedidos/getClienteElegido.php?idcliente=" +
-          idcliente
-      );
-
-      console.log(
-        "https://app.cotzul.com/Pedidos/getClienteElegido.php?idcliente=" +
-        idcliente
-      );
-      const jsonResponse = await response.json();
-      console.log(jsonResponse?.cliente);
-      actualizaCliente(jsonResponse?.cliente[0]);*/
-
-
       console.log("revisando cliente elegido: "+idcliente);
     try {
 
@@ -2150,7 +2119,7 @@ useEffect(()=>{
 
       var itemval;
 
-      if((datositems.length) > 0 && (datositems.length) > numitem){
+      if((datositems.length) > 0 && (datositems.length) > numitem && valdatositem == 0){
           console.log("Cantidad de items22: "+datositems[numitem]);
           itemval = datositems[numitem].split(";");
           console.log("Cantidad de items23: "+itemval[1]);
@@ -2169,7 +2138,7 @@ useEffect(()=>{
           setNumItem(numitem+1);
       }
 
-     if(itemtotal.length == datositems.length){
+     if(itemtotal.length == datositems.length && valdatositem == 0){
         setLoading(true);
         console.log("Entro en tarifas: ****");
         CargarResultadosTemp();
