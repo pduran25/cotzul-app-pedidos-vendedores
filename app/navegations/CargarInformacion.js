@@ -34,9 +34,9 @@ const APIDatosPedidos =
 const APITranstarifa = "https://app.cotzul.com/Pedidos/pd_gettranstarifa.php";
 const APITransubicacion = "https://app.cotzul.com/Pedidos/pd_gettransubicacion.php";
 
-const database_name = "CotzulBDS.db";
+const database_name = "CotzulBD1.db";
 const database_version = "1.0";
-const database_displayname = "CotzulBD";
+const database_displayname = "CotzulBDS";
 const database_size = 200000;
 
 const STORAGE_KEY = "@save_data";
@@ -755,7 +755,7 @@ export default function CargarInformacion() {
       });
     });
     
-    if(dataUser.vn_loading > 0){
+    if(dataUser.vn_loading > 1){
       
       ActualizarPedidosOffline();
       
@@ -764,6 +764,8 @@ export default function CargarInformacion() {
     }
 
     //obtenerPedidosVendedor();
+
+
 
     
   };
@@ -924,7 +926,6 @@ export default function CargarInformacion() {
       //console.log(jsonResponse.estatusped);
       if (jsonResponse.estatusped == "REGISTRADO") {
         console.log("Se registro con éxito");
-        
       }
 
 

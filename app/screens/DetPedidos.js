@@ -24,7 +24,7 @@ export default function DetPedidos(props) {
                         <Text style={{fontWeight:'bold'}}>#Docum.</Text>
                         <Text style={styles.titlespick}>{registro.pv_numpedido}</Text>
                     </View>
-                    <View style={{width:270}}>
+                    <View style={{width:280}}>
                         <Text style={{fontWeight:'bold'}}>Vendedor</Text>
                         <Text style={styles.titlespick}>{registro.pv_vendedor}</Text>
                     </View>
@@ -71,7 +71,7 @@ titlespick:{
     fontSize: 14,
     color: colors.textDark,
     paddingHorizontal:10,
-    paddingTop: 10,
+    paddingTop: 10
 },
 btnContainerLogin:{
     marginTop: 10, 
@@ -94,11 +94,12 @@ detallebody:{
 },
 dividobody:{
     flexDirection: "row",
-    paddingTop: 20,
+    paddingTop: 0,
     height: 65,
     width: '90%',
     marginHorizontal: 20,
     borderWidth: 1,
+
 },
 totalbody:{
     borderWidth: 1,

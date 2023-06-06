@@ -165,7 +165,7 @@ useEffect(()=> {
 
   const EliminaPedido = async (idpedido) => {
     try {
-      const database_name = "CotzulBDS.db";
+      const database_name = "CotzulBD1.db";
       const database_version = "1.0";
       const database_displayname = "CotzulBDS";
       const database_size = 200000;
@@ -201,7 +201,7 @@ useEffect(()=> {
 
   const listarPedidos = async (numvendedor) => {
     try {
-      const database_name = "CotzulBDS.db";
+      const database_name = "CotzulBD1.db";
       const database_version = "1.0";
       const database_displayname = "CotzulBDS";
       const database_size = 200000;
@@ -227,7 +227,7 @@ useEffect(()=> {
           }
         });
         
-        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus = -1", [], (tx, results) => {
+        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus = -1 ORDER BY pv_codigo", [], (tx, results) => {
           var len = results.rows.length;
           console.log("Cantidad de lineas: "+len);
           for (let i = 0; i < len; i++) {

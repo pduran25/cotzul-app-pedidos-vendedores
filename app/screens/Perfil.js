@@ -11,7 +11,7 @@ import CargarInformacion from "../navegations/CargarInformacion";
 
 const STORAGE_KEY = '@save_data'
 
-const database_name = 'CotzulBDS.db';
+const database_name = 'CotzulBD1.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBDS';
 const database_size = 200000;

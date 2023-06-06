@@ -15,7 +15,7 @@ import * as SQLite from "expo-sqlite";
 const STORAGE_KEY = '@save_data'
 const STORAGE_DB = '@login_data'
 
-const database_name = "CotzulBDS.db";
+const database_name = "CotzulBD1.db";
 const database_version = "1.0";
 const database_displayname = "CotzulBDS";
 const database_size = 200000;
@@ -291,13 +291,13 @@ export default function LoginForm(props) {
 
                   if(!activoreg){
                     if(internet){
-                    console.log('https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password);
+                    console.log('https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario.toLowerCase()+'&clave='+formData.password);
                     try {
                         const response = await fetch(
-                          'https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password
+                          'https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario.toLowerCase()+'&clave='+formData.password
                         );
 
-                        console.log('https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario+'&clave='+formData.password);
+                        console.log('https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario.toLowerCase()+'&clave='+formData.password);
                         
                         const respuesta = await response.json();
                         if(respuesta.usuario[0].vn_codigo != 0){
@@ -315,7 +315,7 @@ export default function LoginForm(props) {
                        Alert.alert("Su dispositivo no cuenta con internet");
                   }
                   }else{
-                      EvaluarUsuario(formData.usuario,formData.password, db);
+                      EvaluarUsuario(formData.usuario.toLowerCase(),formData.password, db);
                   }
 
                   

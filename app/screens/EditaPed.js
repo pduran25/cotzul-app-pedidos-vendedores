@@ -27,6 +27,7 @@ import { LogBox } from 'react-native';
 import Picker from '@ouroboros/react-native-picker';
 import ModalTransporte from "./ModalTransporte";
 import NetInfo from "@react-native-community/netinfo";
+import moment from 'moment';
 
 /**
  * @author Pedro Durán A.
@@ -122,7 +123,7 @@ const handleClick = (event) => {
   console.log(event.currentTarget.id);
 };
 
-const database_name = "CotzulBDS.db";
+const database_name = "CotzulBD1.db";
 const database_version = "1.0";
 const database_displayname = "CotzulBDS";
 const database_size = 200000;
@@ -139,6 +140,7 @@ export default function EditaPed(props) {
   const [dataitem, setDataItem] = useState([]);
   const [checked, setChecked] = React.useState("first");
   const [loading, setLoading] = useState(false);
+  const [loadform, setLoadform] = useState(false);
   const [tcodigo, setTcodigo] = useState(0);
   const [gnventas, setGnVentas] = useState(0);
   const [gngastos, setGnGastos] = useState(0);
@@ -253,7 +255,7 @@ export default function EditaPed(props) {
 }
 
   const Item = ({ item, index }) => {
-    console.log("Valor de ItemTotal: #"+index+" cantidad"+itemtotal[index].codprecio.toString());
+    console.log("Valor de ItemTotal: #"+index+" cantidad"+itemtotal[index].preciosel.toString());
     return (
       <View>
         <View style={{ flexDirection: "row" }}>
@@ -325,6 +327,7 @@ export default function EditaPed(props) {
                 item.it_costoprom,
                 item.it_peso,
                 item.it_referencia + "-" + item.it_descripcion)}
+                onEndEditing={()=>GrabadaTemporal()}
               
             />
           </View>
@@ -414,9 +417,22 @@ export default function EditaPed(props) {
                   item.it_costoprom,
                   item.it_peso,
                   item.it_referencia + "-" + item.it_descripcion)}
+                  onEndEditing={()=>GrabadaTemporal()}
                 
               />
             )}
+          </View>
+          <View
+            style={{
+              width: 70,
+              height: 50,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext}>
+              $ {Number((itemtotal[index].subtotal *  itemtotal[index].descuento)/100).toFixed(2)}
+            </Text>
           </View>
           <View
             style={{
@@ -493,9 +509,11 @@ export default function EditaPed(props) {
 
     console.log("entro por la cantidad: "+itemtotal[index].cantidad );
 
+    console.log("***Valor del descuento canti: "+ Number(valor)+ "valor interno desc: "+ cant);
+
     EditarResultados(
       codprod,
-      Number(itemtotal[index].cantidad),
+      Number(valor),
       desc,
       precio,
       pvp,
@@ -531,11 +549,12 @@ export default function EditaPed(props) {
       itemtotal[index].descuento = valor;
     }
     
+    console.log("***Valor del descuento descuento: "+ itemtotal[index].descuento+ "valor interno desc: "+ valor);
 
     EditarResultados(
       codprod,
       cant,
-      Number(itemtotal[index].descuento),
+      Number(valor),
       precio,
       pvp,
       subdist,
@@ -586,7 +605,7 @@ export default function EditaPed(props) {
     return date + "-" + month + "-" + year; //format: d-m-y;
   };
 
-  const [fechaped, setFechaPed] = useState(getCurrentDate());
+  const [fechaped, setFechaPed] = useState(moment(new Date()).format('DD/MM/YYYY'));
 
   const actualizaCliente = (item) => {
     setCliente(item);
@@ -640,12 +659,12 @@ export default function EditaPed(props) {
         newitem.it_codprod,
         0,
         0,
-        newitem.it_preciosub,
+        newitem.it_precio,
         newitem.it_pvp,
         newitem.it_preciosub,
         newitem.it_contado,
         1,
-        newitem.it_precio,
+        newitem.it_preciosub,
         0,
         0,
         0,
@@ -780,10 +799,9 @@ useEffect(()=>{
     var temp = [];
     var gngastosv = 0;
     for (let i = 0; i < itemtotal.length; ++i) {
-     console.log("Referencia: "+itemtotal[i].it_referencia);
      gngastosv = (Number(itemtotal[i].subtotal) - Number((itemtotal[i].subtotal * itemtotal[i].descuento)/100)) / (Number(itemtotal[i].costo*itemtotal[i].cantidad));
       temp.push({
-        codprod: itemtotal[i].codprod,
+          codprod: itemtotal[i].codprod,
           descripcion: itemtotal[i].descripcion,
           cantidad: itemtotal[i].cantidad,
           precio: itemtotal[i].precio,
@@ -834,14 +852,16 @@ useEffect(()=>{
       peso: peso,
       gngastos: gngastosv,
     });
-    console.log("valor temporal de row:"+temp[0].cantidad);
-    console.log("valor temporal de row:"+temp[0].precio);
-    console.log("valor temporal de row:"+temp[0].descuento);
+    
+    console.log("valor temporal de row1:"+temp[0].cantidad);
+    console.log("valor temporal de row2:"+temp[0].precio);
+    console.log("valor temporal de row3:"+temp[0].descuento);
     setItemTotal(temp);
+
+    //GrabadaTemporal();
     
     
     console.log("valor del itemtotal: " + JSON.stringify(temp[0]));
-    GrabadaTemporal();
   };
 
 
@@ -1023,9 +1043,9 @@ useEffect(()=>{
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
-
     console.log("cargar resultados CargarResultadosTemp: "+ vargastos);
-    GrabadaTemporal();
+    setLoadform(true);
+   // GrabadaTemporal();
   };
 
   const CargarResultados = () => {
@@ -1474,6 +1494,7 @@ useEffect(()=>{
     descripcion
   ) => {
 
+    setChargue(1);
     setValDatosItem(1);
     console.log("ENTRO A EDITAR*** CANTIDAD DE ITEMS REGISTRADOS: "+itemtotal.length);
     var temp = [];
@@ -1655,6 +1676,8 @@ useEffect(()=>{
     setCadenaint(itemtext);
     setCadenita(cadenita1);
 
+    console.log("valor de cadenita Editar: "+ cadenita1);
+
     setItemTotal(temp);
     setSubtotal(varsubtotal);
 
@@ -1737,7 +1760,6 @@ useEffect(()=>{
     setGnVentas(varventas);
     setGnGastos(vargastos);
     console.log("cargar resultados EditarResultados: "+ vargastos);
-    GrabadaTemporal();
   };
 
   const cargarPlazo = async (validplazo) => {
@@ -1816,7 +1838,7 @@ useEffect(()=>{
 
     var itemval;
   //  for (var x = 1; x < valitem.length; x++) {
-      console.log("Cantidad de items2: "+valitem[numitem]);
+      console.log("Cantidad de items2---: "+numitem+"----"+valitem[numitem]);
       itemval = valitem[numitem].split(";");
       console.log("Cantidad de items0: "+itemval[0]);
       console.log("Cantidad de items1: "+itemval[1]);
@@ -1855,7 +1877,8 @@ useEffect(()=>{
         Number(itemval[5]),
         0
       );
-      setNumItem(numitem+1);
+      
+      
 
   };
 
@@ -1924,6 +1947,7 @@ useEffect(()=>{
             console.log("newitem+ " + JSON.stringify(row));
             setDataItem(dataitem.concat(row));
             console.log("dataitem+ " + JSON.stringify(dataitem));
+            setNumItem(numitem+1);
           agregaResultados(
               row.it_codprod,
               cantidad,
@@ -2050,6 +2074,12 @@ useEffect(()=>{
 
   };
 
+  const setSeguro2 = (val) =>{
+    setSeguro(val);
+    CargarResultados();
+
+  };
+
   const cargarTarifas = async (ttcodigo, idtransporte, valorpre = "prueba") => {
     try {
       console.log("se actualizo Entro en tarifas: "+ valorpre+" ****" + ttcodigo + "- " + idtransporte+" - "+ ubicacion+ "- "+ idtransporte);
@@ -2111,15 +2141,19 @@ useEffect(()=>{
 
   useEffect(() => {
     if(dataitem.length > 0)
-      console.log("DataItem+"+JSON.stringify(dataitem));
+      console.log("DataItem+"+JSON.stringify(dataitem)+" cantidad: "+dataitem.length);
   }, [dataitem]);
 
 
   useEffect(() => {
 
+    if(numitem > 0){
+
       var itemval;
 
-      if((datositems.length) > 0 && (datositems.length) > numitem && valdatositem == 0){
+      console.log(" valor de itemtotal: Cantidad de items numitem: "+ numitem + "valdatositem: "+datositems.length);
+
+      if((datositems.length) > numitem){
           console.log("Cantidad de items22: "+datositems[numitem]);
           itemval = datositems[numitem].split(";");
           console.log("Cantidad de items23: "+itemval[1]);
@@ -2135,15 +2169,19 @@ useEffect(()=>{
             Number(itemval[5]),
             0
           );
-          setNumItem(numitem+1);
+          
       }
 
-     if(itemtotal.length == datositems.length && valdatositem == 0){
+      console.log("valor de itemtotal///: "+numitem+ "valor de datositems: "+ datositems.length+" itemtotal: "+itemtotal.length);
+
+     if(itemtotal.length == datositems.length){
+      console.log("valor de datositems---: "+(datositems.length)+ " los valores de numitem son: "+numitem);
         setLoading(true);
-        console.log("Entro en tarifas: ****");
         CargarResultadosTemp();
-       console.log("valor de datositems: "+(datositems.length-1)+ " los valores de numitem son: "+numitem);
       }
+    }
+
+     
      
 
   }, [itemtotal]);
@@ -2170,13 +2208,21 @@ useEffect(()=>{
         setTotal(Number(datopedido.dp_total));
         setGnGastos(Number(datopedido.dp_gngastos));
 
+       
+
         console.log("valor de gngastos: "+ datopedido.dp_gngastos);
         cargarFormaPago(Number(datopedido.dp_tipodoc));
-        console.log("Los datos del pedido son: "+datopedido.item);
-        cargarListaItems(""+datopedido.item);
-        console.log("grabando con chargue 1: "+chargue);
-        setChargue(1);
-        console.log("grabando con chargue 2: "+chargue);
+
+        if(datopedido.item.length > 0){
+          console.log("Los datos del pedido son: "+datopedido.item);
+          cargarListaItems(""+datopedido.item);
+          console.log("grabando con chargue 1: "+chargue);
+          console.log("grabando con chargue 2: "+chargue);
+        }else{
+          setLoadform(true);
+        }
+        
+        
       }
     
     
@@ -2206,7 +2252,7 @@ useEffect(()=>{
       database_size
     );
 
-    if(chargue != 0){
+    if(chargue > 0){
 
     try{
 
@@ -2215,6 +2261,8 @@ useEffect(()=>{
         var leni = 0;
 
         console.log("SELECT * FROM pedidosvendedor WHERE pv_codigo = "+ idpedido);
+
+        console.log("valor de cadenita Grabado Temporal: "+ cadenita);
 
         txn.executeSql("SELECT * FROM pedidosvendedor WHERE pv_codigo = ?", [idpedido], (tx, results) => {
           leni = results.rows.length;
@@ -2311,7 +2359,7 @@ useEffect(()=>{
       reviewInternet();
       var textofinal =
         '<?xml version="1.0" encoding="iso-8859-1"?><c c0="2" c1="1" c2="' +
-        numdoc +
+        idpedido +
         '" c3="' +
         dataUser.vn_codigo +
         '" c4="' +
@@ -2347,7 +2395,7 @@ useEffect(()=>{
         "</c>";
       console.log(
         "https://app.cotzul.com/Pedidos/grabarBorrador.php?numpedido=" +
-          numdoc +
+          idpedido +
           "&idvendedor=" +
           dataUser.vn_codigo +
           "&usuvendedor=" +
@@ -2400,18 +2448,18 @@ useEffect(()=>{
       db.transaction((txn) => {
 
         txn.executeSql(
-          "DELETE FROM pedidosvendedor WHERE pv_codigo = ?", [parseInt(numdoc)]
+          "DELETE FROM pedidosvendedor WHERE pv_codigo = ?", [parseInt(idpedido)]
         );
 
         txn.executeSql(
-          "DELETE FROM datospedidos WHERE dp_codigo = ?", [parseInt(numdoc)]
+          "DELETE FROM datospedidos WHERE dp_codigo = ?", [parseInt(idpedido)]
         );
 
         txn.executeSql(
           "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido, pv_online) " +
             " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
           [
-            parseInt(numdoc),
+            parseInt(idpedido),
             parseInt(dataUser.vn_codigo),
             dataUser.vn_nombre,
             parseInt(cliente.ct_codigo),
@@ -2419,12 +2467,12 @@ useEffect(()=>{
             total.toString(),
             "-1",
             gngastos.toString(),
-            parseInt(numdoc),
+            parseInt(idpedido),
             (internet)?Number(1):Number(0)
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
-              console.log("Entro bien a grabar primera table");
+              console.log("Entro bien a grabar primera table"+results.rowsAffected);
             }
           }
         );
@@ -2437,6 +2485,9 @@ useEffect(()=>{
             console.log(`PEDIDOS VENDEDOR: item: `+ i + " - " + JSON.stringify(row));
           }
         }); 
+
+
+        console.log("valor de cadenita borrador: "+ cadenita);
 
 
       txn.executeSql(
@@ -2456,7 +2507,7 @@ useEffect(()=>{
           ", ?, ?, ?, ?, ?" +
           ", ?, ?, ?, ?); ",
         [
-          parseInt(numdoc),
+          parseInt(idpedido),
           parseInt(dataUser.vn_codigo),
           parseInt(cliente.ct_codigo),
           subtotal.toString(),
@@ -2505,7 +2556,7 @@ useEffect(()=>{
     if(internet){
       const response = await fetch(
         "https://app.cotzul.com/Pedidos/grabarBorrador.php?numpedido=" +
-          numdoc +
+          idpedido +
           "&idvendedor=" +
           dataUser.vn_codigo +
           "&usuvendedor=" +
@@ -2578,7 +2629,7 @@ useEffect(()=>{
       console.log("cadenaint: "+cadenaint+" numdoc: "+ numdoc+" ttrans: "+ ttrans+" cliente: "+cliente.ct_codigo+" doc: "+pickerfp+" tplazo: "+tplazo+" itemtotal length: "+itemtotal.length );
       if (
         cadenaint != "" &&
-        numdoc != 0 &&
+        idpedido != 0 &&
         pickertrp != 0 &&
         cliente.ct_codigo != 0 &&
         pickerfp != 0 &&
@@ -2747,7 +2798,7 @@ useEffect(()=>{
                 }
               );
     
-              txn.executeSql("DELETE FROM pedidosvendedor WHERE pv_codigo = ?", [numdoc]); 
+              txn.executeSql("DELETE FROM pedidosvendedor WHERE pv_codigo = ?", [idpedido]); 
     
     
             txn.executeSql(
@@ -2803,7 +2854,7 @@ useEffect(()=>{
               }
             );
 
-            txn.executeSql("DELETE FROM datospedidos WHERE dp_codigo = ?", [numdoc]); 
+            txn.executeSql("DELETE FROM datospedidos WHERE dp_codigo = ?", [idpedido]); 
     
     
           });
@@ -2833,7 +2884,8 @@ useEffect(()=>{
   };
 
   return (
-    <ScrollView style={styles.container}>
+
+    (loadform) ? (<ScrollView style={styles.container}>
       {/*(internet)?(<View style={styles.titlesWrapper}>
         <Text style={styles.titlesSubtitle2}>ONLINE</Text>
         </View>):(<View style={styles.titlesWrapper}>
@@ -2883,7 +2935,7 @@ useEffect(()=>{
         </View>
         <View style={styles.row}>
           <View style={styles.itemrow}>
-            <Text>{"000"+numdoc}</Text>
+            <Text>{"000"+idpedido}</Text>
           </View>
           <View style={styles.itemrow}>
             <Text>{fechaped}</Text>
@@ -3238,6 +3290,16 @@ useEffect(()=>{
                   borderWidth: 1,
                 }}
               >
+                <Text style={styles.tabletitle}>Val Desc.</Text>
+              </View>
+              <View
+                style={{
+                  width: 70,
+                  backgroundColor: "#9c9c9c",
+                  borderColor: "black",
+                  borderWidth: 1,
+                }}
+              >
                 <Text style={styles.tabletitle}>Total</Text>
               </View>
               <View
@@ -3404,7 +3466,13 @@ useEffect(()=>{
           onPress={() => GrabarPedido()}
         />
       </View>
-    </ScrollView>
+    </ScrollView>) : ( 
+      <View style={styles.containerLoad}>
+      <ActivityIndicator size="large" loading={loadform} />
+      <Text style={styles.centeredTextLoad}>Cargando Pedido ...</Text>
+    </View>
+    )
+    
   );
 }
 
@@ -3492,6 +3560,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     paddingLeft: 5,
     color: 'blue'
+  },
+  containerLoad: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  centeredTextLoad: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginTop: 10,
+    textAlign: 'center',
   },
   input: {
     height: 40,

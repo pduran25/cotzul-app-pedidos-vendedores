@@ -169,7 +169,7 @@ export default function PedidosEnviados(props) {
         "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor=" +
           dataUser.vn_codigo
       );*/
-      const database_name = "CotzulBDS.db";
+      const database_name = "CotzulBD1.db";
       const database_version = "1.0";
       const database_displayname = "CotzulBDS";
       const database_size = 200000;

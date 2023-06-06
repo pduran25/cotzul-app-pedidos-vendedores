@@ -157,7 +157,7 @@ export default function NuevoPed(props) {
 
 
 
-  const database_name = "CotzulBDS.db";
+  const database_name = "CotzulBD1.db";
   const database_version = "1.0";
   const database_displayname = "CotzulBDS";
   const database_size = 200000;
@@ -265,6 +265,7 @@ export default function NuevoPed(props) {
                 item.it_costoprom,
                 item.it_peso,
                 item.it_referencia + "-" + item.it_descripcion)}
+                onEndEditing={()=>GrabadaTemporal()}
              
             />
           </View>
@@ -287,6 +288,7 @@ export default function NuevoPed(props) {
               ]}
               style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
               value={itemtotal[index].codprecio}
+              onEndEditing={()=>GrabadaTemporal()}
           />  
           </View>
           <View
@@ -303,6 +305,7 @@ export default function NuevoPed(props) {
                 placeholder="0,0"
                 style={styles.tabletext}
                 onChangeText={(val) => setPrecioVal(val, index, item.it_codprod)}
+                onEndEditing={()=>GrabadaTemporal()}
               />
             ) : (
               <Text style={styles.tabletext}>
@@ -349,9 +352,22 @@ export default function NuevoPed(props) {
                   item.it_costoprom,
                   item.it_peso,
                   item.it_referencia + "-" + item.it_descripcion)}
+                  onEndEditing={()=>GrabadaTemporal()}
                 
               />
             )}
+          </View>
+          <View
+            style={{
+              width: 70,
+              height: 50,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext}>
+              $ {Number((itemtotal[index].subtotal *  itemtotal[index].descuento)/100).toFixed(2)}
+            </Text>
           </View>
           <View
             style={{
@@ -406,6 +422,13 @@ export default function NuevoPed(props) {
     CargarResultados();
 
   };
+
+   const setSeguro2 = (val) =>{
+    setSeguro(val);
+    CargarResultados();
+
+  };
+
 
   const setCanti = (valor, index, codprod,
     cant,
@@ -1354,6 +1377,7 @@ export default function NuevoPed(props) {
           if(i+1 == itemtotal.length)
           estrella = "";
 
+
         cadenita1 =
           cadenita1 +
           numcod +
@@ -1538,7 +1562,6 @@ export default function NuevoPed(props) {
     setGnOrden(varorden);
     setGnVentas(varventas);
     setGnGastos(vargastos);
-    GrabadaTemporal();
   };
 
   const cargarPlazo = async () => {
@@ -1633,6 +1656,8 @@ export default function NuevoPed(props) {
       database_size
     );
 
+
+
       if (ttcodigo != 0 && ttrans != 0) {
 
         db.transaction((tx) => {
@@ -1667,13 +1692,15 @@ export default function NuevoPed(props) {
 
     try{
 
+      console.log("valor de cadenita nuevo: "+ cadenita);
+
       db.transaction((txn) => {
 
         var leni = 0;
 
         txn.executeSql("SELECT * FROM pedidosvendedor WHERE pv_codigo = ?", [parseInt(numdoc)], (tx, results) => {
           leni = results.rows.length;
-          console.log("cambio el idpedido:  SELECT * FROM pedidosvendedor WHERE pv_codigo ="+ parseInt(numdoc));
+          console.log("cambio el idpedido:  SELECT * FROM pedidosvendedor WHERE pv_codigo ="+ parseInt(numdoc)+" ---resultado: "+leni);
 
           if(leni>0){
             txn.executeSql(
@@ -2081,35 +2108,11 @@ export default function NuevoPed(props) {
       console.log("--------*********se cayo"+e)
     }
 
-    const jsonValue = null;
-
-    try{
-      jsonValue = await AsyncStorage.getItem(STORAGE_KEY)
-            .then( data => {
-
-              // the string value read from AsyncStorage has been assigned to data
-              console.log( data );
-
-              // transform it back to an object
-              data = JSON.parse( data );
-              console.log( data );
-
-              // Increment
-              data.vn_borrador = parseInt(data.vn_borrador) + 1;
-
-              console.log( data );
-
-              //save the value to AsyncStorage again
-              AsyncStorage.setItem(STORAGE_KEY, JSON.stringify( data ) );
-             
-            });
-    }catch(e){
-      console.log("--------*********se cayo"+e)
-    }
+    
 
     if(internet){
 
-      console.log("presentar internet");
+      console.log(" Si esta grabando presentar internet");
       var response = await fetch(
       "https://app.cotzul.com/Pedidos/grabarBorrador.php?numpedido=" +
         numdoc +
@@ -2894,6 +2897,16 @@ export default function NuevoPed(props) {
                 }}
               >
                 <Text style={styles.tabletitle}>% Desc.</Text>
+              </View>
+              <View
+                style={{
+                  width: 70,
+                  backgroundColor: "#9c9c9c",
+                  borderColor: "black",
+                  borderWidth: 1,
+                }}
+              >
+                <Text style={styles.tabletitle}>Val Desc.</Text>
               </View>
               <View
                 style={{
