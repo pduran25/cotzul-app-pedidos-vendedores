@@ -9,7 +9,9 @@ import {
   Alert,
   ActivityIndicator,
   AppState,
-  RefreshControl
+  RefreshControl, 
+  Linking,
+  Clipboard
 } from "react-native";
 import { colors, Icon } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
@@ -199,6 +201,20 @@ useEffect(()=> {
     }
   };
 
+  async function openUrl(url){
+    const isSupported = await Linking.canOpenURL(url);
+        if(isSupported){
+            await Linking.openURL(url)
+        }else{
+            Alert.alert('No se encontro el Link');
+        }
+}
+
+function copiarLink(url){
+  Clipboard.setString(url);
+  Alert.alert("Link copiado con éxito");
+}
+
   const listarPedidos = async (numvendedor) => {
     try {
       const database_name = "CotzulBD1.db";
@@ -289,8 +305,8 @@ useEffect(()=> {
           >
             <View
               style={{
-                width: 60,
-                height: 30,
+                width: 40,
+                height: 50,
                 borderColor: "black",
                 borderWidth: 1,
               }}
@@ -301,7 +317,7 @@ useEffect(()=> {
             <View
               style={{
                 width: 150,
-                height: 30,
+                height: 50,
                 borderColor: "black",
                 borderWidth: 1,
               }}
@@ -310,8 +326,8 @@ useEffect(()=> {
             </View>
             <View
               style={{
-                width: 70,
-                height: 30,
+                width: 40,
+                height: 50,
                 borderColor: "black",
                 borderWidth: 1,
               }}
@@ -324,19 +340,34 @@ useEffect(()=> {
             <View
               style={{
                 width: 70,
-                height: 30,
+                height: 50,
                 borderColor: "black",
                 borderWidth: 1,
               }}
             >
-            <Text style={styles.tabletext}>
               <Icon
                 onPress={() => PreguntarEliminar(item.pv_codigo)}
                 type="material-community"
                 name="delete"
+                size={30}
                 iconStyle={styles.iconRight}
               />
-            </Text>
+            </View>
+            <View
+              style={{
+                width: 70,
+                height: 50,
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Icon
+                onPress={ ()=>openUrl("https://app.cotzul.com/Pedidos/Presentacion/webpedido.php?idpedido="+item.pv_codigo+"&idcliente="+item.pv_codcliente+"&idvendedor="+idvendedor+"&tipopedido=1")}
+                type="material-community"
+                name="share"
+                size={30}
+                iconStyle={styles.iconRight}
+              />
             </View>
           </View>
         </TouchableOpacity>
@@ -380,11 +411,11 @@ useEffect(()=> {
       </View>
       <Text style={styles.titlespick}>Mis Pedidos Borrador:</Text>
       <ScrollView horizontal>
-        <View style={{ marginHorizontal: 20, marginTop: 10, height: 200 }}>
+        <View style={{ marginHorizontal: 20, marginTop: 10, height: 250}}>
           <View style={{ flexDirection: "row" }}>
             <View
               style={{
-                width: 60,
+                width: 40,
                 backgroundColor: "#9c9c9c",
                 borderColor: "black",
                 borderWidth: 1,
@@ -406,7 +437,7 @@ useEffect(()=> {
 
             <View
               style={{
-                width: 70,
+                width: 40,
                 backgroundColor: "#9c9c9c",
                 borderColor: "black",
                 borderWidth: 1,
@@ -424,6 +455,16 @@ useEffect(()=> {
               }}
             >
               <Text style={styles.tabletitle}>Elimina</Text>
+            </View>
+            <View
+              style={{
+                width: 70,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Compartir</Text>
             </View>
             
           </View>
@@ -467,12 +508,15 @@ const styles = StyleSheet.create({
   tabletitle: {
     fontSize: 12,
     fontWeight: "bold",
+    textAlign: "center"
   },
   tabletext: {
-    fontSize: 10,
+    fontSize: 12,
+    paddingLeft: 5
   },
   tableval: {
-    fontSize: 10,
+    fontSize: 12,
+    paddingRight: 5,
     textAlign: "right",
   },
   titlesSubtitle: {

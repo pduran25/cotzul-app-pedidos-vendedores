@@ -123,10 +123,11 @@ class ModalClientes extends Component {
         >
           <View
             style={{
-              width: 75,
-              height: 30,
+              width: 110,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
+              paddingLeft: 5
             }}
           >
             <Text style={styles.tabletext}>{item.ct_cedula}</Text>
@@ -134,33 +135,26 @@ class ModalClientes extends Component {
 
           <View
             style={{
-              width: 85,
-              height: 30,
+              width: 150,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
+              paddingLeft: 5
             }}
           >
             <Text style={styles.tabletext}>{item.ct_cliente}</Text>
           </View>
+          
           <View
             style={{
-              width: 85,
-              height: 30,
+              width: 100,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
+              paddingLeft: 5
             }}
           >
-            <Text style={styles.tabletext}>{item.ct_telefono}</Text>
-          </View>
-          <View
-            style={{
-              width: 85,
-              height: 30,
-              borderColor: "black",
-              borderWidth: 1,
-            }}
-          >
-            <Text style={styles.tabletext}>$ {item.ct_cupodisponible}</Text>
+            <Text style={styles.tableval}>$ {item.ct_cupodisponible}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -197,12 +191,12 @@ class ModalClientes extends Component {
               </View>
 
               <View
-                style={{ marginHorizontal: 20, marginTop: 10, height: 120 }}
+                style={{ marginHorizontal: 20, marginTop: 10, height: 200 }}
               >
                 <View style={{ flexDirection: "row" }}>
                   <View
                     style={{
-                      width: 75,
+                      width: 110,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
@@ -212,7 +206,7 @@ class ModalClientes extends Component {
                   </View>
                   <View
                     style={{
-                      width: 85,
+                      width: 150,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
@@ -221,19 +215,10 @@ class ModalClientes extends Component {
                     <Text style={styles.tabletitle}>Nombre:</Text>
                   </View>
 
+                  
                   <View
                     style={{
-                      width: 85,
-                      backgroundColor: "#9c9c9c",
-                      borderColor: "black",
-                      borderWidth: 1,
-                    }}
-                  >
-                    <Text style={styles.tabletitle}>Teléfono:</Text>
-                  </View>
-                  <View
-                    style={{
-                      width: 85,
+                      width: 100,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
@@ -405,9 +390,15 @@ const styles = StyleSheet.create({
   tabletitle: {
     fontSize: 12,
     fontWeight: "bold",
+    textAlign: "center"
   },
   tabletext: {
     fontSize: 12,
+  },
+  tableval: {
+    fontSize: 12,
+    textAlign: "right",
+    paddingRight: 5
   },
   searchText: {
     fontSize: 14,

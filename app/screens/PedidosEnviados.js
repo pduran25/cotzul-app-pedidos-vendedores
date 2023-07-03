@@ -279,7 +279,7 @@ export default function PedidosEnviados(props) {
             <View
               style={{
                 width: 60,
-                height: 30,
+                height: 50,
                 borderColor: "black",
                 borderWidth: 1,
               }}
@@ -290,7 +290,7 @@ export default function PedidosEnviados(props) {
             <View
               style={{
                 width: 220,
-                height: 30,
+                height: 50,
                 borderColor: "black",
                 borderWidth: 1,
               }}
@@ -300,7 +300,7 @@ export default function PedidosEnviados(props) {
             <View
               style={{
                 width: 70,
-                height: 30,
+                height: 50,
                 borderColor: "black",
                 borderWidth: 1,
               }}
@@ -352,7 +352,7 @@ export default function PedidosEnviados(props) {
       
       <Text style={styles.titlespick}>Mis Pedidos Enviados:</Text>
       <ScrollView horizontal>
-        <View style={{ marginHorizontal: 20, marginTop: 10, height: 200 }}>
+        <View style={{ marginHorizontal: 20, marginTop: 10, height: 250 }}>
           <View style={{ flexDirection: "row" }}>
             <View
               style={{
@@ -428,12 +428,15 @@ const styles = StyleSheet.create({
   tabletitle: {
     fontSize: 12,
     fontWeight: "bold",
+    textAlign: "center"
   },
   tabletext: {
-    fontSize: 10,
+    fontSize: 12,
+    paddingLeft:5
   },
   tableval: {
-    fontSize: 10,
+    fontSize: 12,
+    paddingRight: 5,
     textAlign: "right",
   },
   titlesSubtitle: {

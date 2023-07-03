@@ -137,9 +137,10 @@ class ModalTransporte extends Component {
             <View
               style={{
                 width: 160,
-                height: 30,
+                height: 50,
                 borderColor: "black",
                 borderWidth: 1,
+                paddingLeft: 5
               }}
             >
               <Text style={styles.tabletext}>{item.pl_razon}</Text>
@@ -148,9 +149,10 @@ class ModalTransporte extends Component {
             <View
               style={{
                 width: 160,
-                height: 30,
+                height: 50,
                 borderColor: "black",
                 borderWidth: 1,
+                paddingLeft: 5
               }}
             >
               <Text style={styles.tabletext}>{item.pl_nombre}</Text>
@@ -191,7 +193,7 @@ class ModalTransporte extends Component {
                 </View>
   
                 <View
-                  style={{ marginHorizontal: 20, marginTop: 10, height: 120 }}
+                  style={{ marginHorizontal: 20, marginTop: 10, height: 200 }}
                 >
                   <View style={{ flexDirection: "row" }}>
                     <View
@@ -382,6 +384,7 @@ class ModalTransporte extends Component {
     tabletitle: {
       fontSize: 12,
       fontWeight: "bold",
+      textAlign: "center"
     },
     tabletext: {
       fontSize: 12,

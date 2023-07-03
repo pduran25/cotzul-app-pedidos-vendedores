@@ -105,9 +105,10 @@ class ModalItems extends Component {
           <View
             style={{
               width: 150,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
+              paddingLeft: 5
             }}
           >
             <Text style={styles.tabletext}>{item.it_referencia}</Text>
@@ -116,9 +117,10 @@ class ModalItems extends Component {
           <View
             style={{
               width: 50,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
+              paddingLeft: 5
             }}
           >
             <Text style={styles.tabletext}>{item.it_stock}</Text>
@@ -126,9 +128,10 @@ class ModalItems extends Component {
           <View
             style={{
               width: 50,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
+              paddingLeft: 5
             }}
           >
             <Text style={styles.tabletext}>{item.it_bod}</Text>
@@ -136,9 +139,10 @@ class ModalItems extends Component {
           <View
             style={{
               width: 50,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
+              paddingLeft: 5
             }}
           >
             <Text style={styles.tabletext}>{item.it_alm}</Text>
@@ -146,9 +150,10 @@ class ModalItems extends Component {
           <View
             style={{
               width: 50,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
+              paddingLeft: 5
             }}
           >
             <Text style={styles.tabletext}>{item.it_chi}</Text>
@@ -156,9 +161,10 @@ class ModalItems extends Component {
           <View
             style={{
               width: 50,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
+              paddingLeft: 5
             }}
           >
             <Text style={styles.tabletext}>{item.it_rep}</Text>
@@ -166,9 +172,10 @@ class ModalItems extends Component {
           <View
             style={{
               width: 50,
-              height: 30,
+              height: 50,
               borderColor: "black",
               borderWidth: 1,
+              paddingLeft: 5
             }}
           >
             <Text style={styles.tabletext}>{item.it_lote}</Text>
@@ -402,7 +409,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    height: 350,
+    height: 450,
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
@@ -450,6 +457,7 @@ const styles = StyleSheet.create({
   tabletitle: {
     fontSize: 12,
     fontWeight: "bold",
+    textAlign: "center"
   },
   tabletext: {
     fontSize: 12,

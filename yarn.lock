@@ -1323,6 +1323,14 @@
     joi "^17.7.0"
     semver "^7.3.8"
 
+"@expo/eas-build-job@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@expo/eas-build-job/-/eas-build-job-1.0.13.tgz#1cd3981e86e1d4235f20a96f7ac768793b4f7c62"
+  integrity sha512-Q0i3GposBj/b2OPL0CV00HczawtslorNpoJSBQfB4aNR6i7DBIZZ1jWJtrFP8+zHZqlUi4d21aoblNUrKpgBew==
+  dependencies:
+    joi "^17.7.0"
+    semver "^7.3.8"
+
 "@expo/eas-json@3.10.2":
   version "3.10.2"
   resolved "https://registry.yarnpkg.com/@expo/eas-json/-/eas-json-3.10.2.tgz#ac34bf8cd769486e0c58e4211e60b01a5ad20f8e"

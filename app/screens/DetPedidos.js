@@ -34,7 +34,7 @@ export default function DetPedidos(props) {
             
                     <View style={{width:'100%'}}>
                         <Text style={{textAlign: 'right', paddingRight: 30,fontWeight:'bold'}}>Lote</Text>
-                        <Text style={{textAlign: 'right', paddingRight: 30}}>{(registro.pv_gngastos != null) ? Number(registro.pv_gngastos).toFixed(2):""}</Text>
+                        <Text style={{textAlign: 'right', paddingRight: 30, fontSize: 16}}>{(registro.pv_gngastos != null) ? Number(registro.pv_gngastos).toFixed(2):""}</Text>
                     </View>
             </View>
            
@@ -68,7 +68,7 @@ titlesdetalle:{
     paddingTop: 10,
 },
 titlespick:{
-    fontSize: 14,
+    fontSize: 16,
     color: colors.textDark,
     paddingHorizontal:10,
     paddingTop: 10
@@ -86,7 +86,7 @@ iconRight:{
 },
 detallebody:{
 
-    height: 60,
+    height: 100,
     width: '90%',
     marginHorizontal: 20,
     marginTop: 10,
@@ -95,7 +95,7 @@ detallebody:{
 dividobody:{
     flexDirection: "row",
     paddingTop: 0,
-    height: 65,
+    height: 100,
     width: '90%',
     marginHorizontal: 20,
     borderWidth: 1,
@@ -103,7 +103,7 @@ dividobody:{
 },
 totalbody:{
     borderWidth: 1,
-    height: 65,
+    height: 100,
     width: '90%',
     marginHorizontal: 20,
     paddingTop: 20,

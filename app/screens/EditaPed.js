@@ -190,6 +190,7 @@ export default function EditaPed(props) {
   const [activa, setActiva] = useState(0);
   const [datopedido, setDatoPedido] = useState(null);
   const [numitem, setNumItem] = useState(0);
+  const [numitemant, setNumItemant] = useState(0);
   const [idcliente, setIdCliente] = useState(0);
   const [datositems, setDatosItems] = useState([]);
   const [internet, setInternet] = useState(true);
@@ -242,7 +243,7 @@ export default function EditaPed(props) {
     cargarTarifas(tcodigo, item, "actualiza transporte");
     setPickertrp(item);
     setTtrans(item);
-    GrabadaTemporal()
+    CargarResultados();
   };
 
   async function openUrl(url){
@@ -261,8 +262,8 @@ export default function EditaPed(props) {
         <View style={{ flexDirection: "row" }}>
           <View
             style={{
-              width: 120,
-              height: 50,
+              width: 200,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -274,7 +275,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -284,7 +285,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -295,7 +296,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 100,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -304,8 +305,8 @@ export default function EditaPed(props) {
           </View>
           <View
             style={{
-              width: 70,
-              height: 50,
+              width: 100,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -334,7 +335,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 150,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -356,7 +357,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -377,7 +378,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -391,8 +392,8 @@ export default function EditaPed(props) {
           </View>
           <View
             style={{
-              width: 70,
-              height: 50,
+              width: 100,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -425,19 +426,21 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
-            <Text style={styles.tabletext}>
+            {checked == "second" ? (
+              <Text style={styles.tabletext}> --- </Text>
+            ) :  (<Text style={styles.tabletext}>
               $ {Number((itemtotal[index].subtotal *  itemtotal[index].descuento)/100).toFixed(2)}
-            </Text>
+            </Text>)}
           </View>
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -452,7 +455,7 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -466,19 +469,20 @@ export default function EditaPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
-            <Text style={styles.tabletext}>
+
               <Icon
                 onPress={() => eliminaItem(item.it_codprod)}
                 type="material-community"
                 name="delete"
+                size={30}
                 iconStyle={styles.iconRight}
               />
-            </Text>
+            
           </View>
         </View>
       </View>
@@ -574,17 +578,22 @@ export default function EditaPed(props) {
 
     if (valor == 1) {
       itemtotal[index].preciosel = itemtotal[index].subdist;
+      itemtotal[index].editable = 0;
     }
     if (valor == 2) {
       itemtotal[index].preciosel = itemtotal[index].contado;
+      itemtotal[index].editable = 0;
     }
     if (valor == 3) {
       itemtotal[index].preciosel = itemtotal[index].precio;
+      itemtotal[index].editable = 0;
     }
     if (valor == 4) {
       itemtotal[index].preciosel = 0;
       itemtotal[index].editable = 1;
     }
+
+    console.log("precio: "+ itemtotal[index].preciosel );
 
     ActualizaResultados(itemtotal[index].codprod);
   };
@@ -618,7 +627,7 @@ export default function EditaPed(props) {
     console.log(item.ct_plazo);
     setNotnomplazo(item.ct_plazo);
     cargarPlazo(Number(item.ct_idplazo));
-    GrabadaTemporal();
+    CargarResultados();
     
   };
 
@@ -805,7 +814,7 @@ useEffect(()=>{
           descripcion: itemtotal[i].descripcion,
           cantidad: itemtotal[i].cantidad,
           precio: itemtotal[i].precio,
-          pvp: itemtotal[i].pvp,
+          pvp: itemtotal[i].pvp, 
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
           codprecio: itemtotal[i].codprecio,
@@ -822,7 +831,7 @@ useEffect(()=>{
 
     var ressub = 0,
       restot = 0;
-    ressub = Number(cant) * Number(precio);
+    ressub = Number(cant) * Number(preciosel);
     restot = ressub - (ressub * desc) / 100;
     gngastosv = 0;
     if(restot > 0){
@@ -856,6 +865,8 @@ useEffect(()=>{
     console.log("valor temporal de row1:"+temp[0].cantidad);
     console.log("valor temporal de row2:"+temp[0].precio);
     console.log("valor temporal de row3:"+temp[0].descuento);
+
+   
     setItemTotal(temp);
 
     //GrabadaTemporal();
@@ -970,15 +981,22 @@ useEffect(()=>{
     setCadenaint(itemtext);
     setCadenita(cadenita1);
 
+    
     cargarTarifas(tcodigo, ttrans, "cargar resultados");
 
     setSubtotal(varsubtotal);
+    console.log("se carga el subtotal1: "+ datopedido.dp_subtotal);
     console.log("entro con el valor de transporte: " + ttrans);
     setKilos(totpeso);
 
     if (ttrans != 12 && ttrans != 90 && ttrans != 215) {
-      setTransporte(Number(vtrans));
-      vartransp = Number(vtrans);
+      if (vtrans != "") {
+        setTransporte(Number(vtrans));
+        vartransp = Number(vtrans);
+      } else {
+        setTransporte(0);
+        vartransp = 0;
+      }
     } else {
       console.log(
         "entro con el valor TARIFAS2:" +
@@ -1045,6 +1063,7 @@ useEffect(()=>{
     setGnGastos(vargastos);
     console.log("cargar resultados CargarResultadosTemp: "+ vargastos);
     setLoadform(true);
+    
    // GrabadaTemporal();
   };
 
@@ -1150,19 +1169,30 @@ useEffect(()=>{
         estrella
     }
 
-    setCadenaint(itemtext);
-    setCadenita(cadenita1);
+   
 
-    cargarTarifas(tcodigo, ttrans, "cargar resultados");
+    if(temp.length > 0){
+      setCadenaint(itemtext);
+      setCadenita(cadenita1);
+  
+      cargarTarifas(tcodigo, ttrans, "cargar resultados");
+      setItemTotal(temp);
 
-    setItemTotal(temp);
+   
+    
     setSubtotal(varsubtotal);
+    console.log("se carga el subtotal2: "+ varsubtotal);
     console.log("entro con el valor de transporte: " + ttrans);
     setKilos(totpeso);
 
     if (ttrans != 12 && ttrans != 90 && ttrans != 215) {
-      setTransporte(Number(vtrans));
-      vartransp = Number(vtrans);
+      if (vtrans != "") {
+        setTransporte(Number(vtrans));
+        vartransp = Number(vtrans);
+      } else {
+        setTransporte(0);
+        vartransp = 0;
+      }
     } else {
       console.log(
         "entro con el valor TARIFAS2:" +
@@ -1176,6 +1206,7 @@ useEffect(()=>{
             vartransp = Number(vpeso.pl_tarifa1);
             setTarifa(vpeso.pl_tarifa1);
             setTransporte(vartransp);
+            
           } else {
             vartransp = totpeso * vpeso.pl_tarifa2;
             setTarifa(vpeso.pl_tarifa2);
@@ -1230,6 +1261,7 @@ useEffect(()=>{
 
     console.log("cargar resultados CargarResultados: "+ vargastos);
     GrabadaTemporal();
+  }
   };
 
   const ActualizaResultados = (codprod) => {
@@ -1409,6 +1441,7 @@ useEffect(()=>{
     setCadenita(cadenita1);
 
     setSubtotal(varsubtotal);
+    console.log("se carga el subtotal3: "+ varsubtotal);
 
     setKilos(totpeso);
 
@@ -1427,8 +1460,13 @@ useEffect(()=>{
     console.log("vpeso: " + vpeso.pl_peso);
 
     if (ttrans != 12 && ttrans != 90 && ttrans != 215) {
-      setTransporte(Number(vtrans));
-      vartransp = Number(vtrans);
+      if (vtrans != "") {
+        setTransporte(Number(vtrans));
+        vartransp = Number(vtrans);
+      } else {
+        setTransporte(0);
+        vartransp = 0;
+      }
     } else {
       if (vpeso.pl_peso != 0) {
         if (totpeso < vpeso.pl_peso) {
@@ -1680,6 +1718,7 @@ useEffect(()=>{
 
     setItemTotal(temp);
     setSubtotal(varsubtotal);
+    console.log("se carga el subtotal4: "+ varsubtotal);
 
     setKilos(totpeso);
 
@@ -1829,7 +1868,7 @@ useEffect(()=>{
 
   const cargarListaItems = (itemes) => {  
 
-    console.log("Cargar Lista de Items: "+ itemes);
+    console.log("Cantidad de items ------: "+ itemes);
     setDatosItems(itemes.split("*"));
     valitem = itemes.split("*");
     console.log("Cantidad de items1: "+ valitem.length);
@@ -1837,7 +1876,6 @@ useEffect(()=>{
    
 
     var itemval;
-  //  for (var x = 1; x < valitem.length; x++) {
       console.log("Cantidad de items2---: "+numitem+"----"+valitem[numitem]);
       itemval = valitem[numitem].split(";");
       console.log("Cantidad de items0: "+itemval[0]);
@@ -1848,27 +1886,7 @@ useEffect(()=>{
       console.log("Cantidad de items5: "+itemval[5]);
       console.log("Cantidad de items6: "+itemval[6]);
       console.log("Cantidad de items7: "+itemval[7]);
-
-      /*codprod,
-    cantidad,
-    descuento,
-    codprecio,
-    preciosel,
-    editable*/ 
-
-    /* itemtotal[i].codprod +
-        ";" +
-        itemtotal[i].descripcion +
-        ";" +
-        itemtotal[i].cantidad +
-        ";" +
-        itemtotal[i].codprecio +
-        ";" +
-        itemtotal[i].preciosel +
-        ";" +
-        itemtotal[i].descuento +
-        ";" +
-        itemtotal[i].total + */
+      setNumItemant(numitem);
       cargarItemElegido(
         itemval[1],
         Number(itemval[3]),
@@ -1877,7 +1895,6 @@ useEffect(()=>{
         Number(itemval[5]),
         0
       );
-      
       
 
   };
@@ -1923,7 +1940,7 @@ useEffect(()=>{
     editable
   ) => {
 
-    console.log("revisando elegido: "+codprod);
+    console.log("Cantidad de items revisando elegido: "+codprod);
     try {
 
       db = SQLite.openDatabase(
@@ -1933,11 +1950,12 @@ useEffect(()=>{
         database_size
       );
       db.transaction((tx) => {
-        tx.executeSql("SELECT * FROM items WHERE it_codprod = "+codprod, [], (tx, results) => {
+        tx.executeSql("SELECT * FROM items WHERE it_codprod = ?", [codprod], (tx, results) => {
           var len = results.rows.length;
           console.log("selecciono: "+len);
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);
+            console.log("Cantidad de items codprod: " + row.it_codprod);
             console.log("codigo precio: " + row.it_precio);
             console.log("valor descuento: " + descuento);
           //actualizaItem(row);
@@ -1947,12 +1965,13 @@ useEffect(()=>{
             console.log("newitem+ " + JSON.stringify(row));
             setDataItem(dataitem.concat(row));
             console.log("dataitem+ " + JSON.stringify(dataitem));
+            
             setNumItem(numitem+1);
           agregaResultados(
               row.it_codprod,
               cantidad,
               descuento,
-              preciosel,
+              row.it_precio,
               row.it_pvp,
               row.it_preciosub,
               row.it_contado,
@@ -2147,10 +2166,11 @@ useEffect(()=>{
 
   useEffect(() => {
 
-    if(numitem > 0){
+    
+    if(numitem > 0 && numitem != numitemant){
 
       var itemval;
-
+      console.log("Cantidad de items : veces que ingresa a itemtotal hook: con el numitem: "+numitem);
       console.log(" valor de itemtotal: Cantidad de items numitem: "+ numitem + "valdatositem: "+datositems.length);
 
       if((datositems.length) > numitem){
@@ -2161,6 +2181,7 @@ useEffect(()=>{
           console.log("Cantidad de items25: "+itemval[5]);
           console.log("Cantidad de items26: "+itemval[4]);
           console.log("Cantidad de items27: "+itemval[6]);
+          setNumItemant(numitem);
           cargarItemElegido(
             itemval[1],
             Number(itemval[3]),
@@ -2176,8 +2197,8 @@ useEffect(()=>{
 
      if(itemtotal.length == datositems.length){
       console.log("valor de datositems---: "+(datositems.length)+ " los valores de numitem son: "+numitem);
-        setLoading(true);
         CargarResultadosTemp();
+        setLoading(true);
       }
     }
 
@@ -2188,39 +2209,48 @@ useEffect(()=>{
 
   useEffect(() => {
 
+
+    
       if(datopedido){
-        console.log("entra a datopedido:" + datopedido.dp_tipodoc);
+        console.log("entra a datopedido:" + JSON.stringify(datopedido));
         setPedido(datopedido.dp_codigo);
         setNumDoc(datopedido.dp_codigo);
         setObs(datopedido.dp_observacion);
         setIdCliente(datopedido.dp_codcliente);
         setChecked(datopedido.dp_tipodesc == 0 ? "first" : "second");
-        setPorcent(datopedido.dp_pordesc);
+        console.log("valor de porcentaje descuento: "+ datopedido.dp_porcdesc);
+        setPorcent(datopedido.dp_porcdesc);
         console.log("Datos trans: "+ datopedido.dp_ttrans);
         setIdTrans(Number(datopedido.dp_ttrans)); 
         setPickertrp(Number(datopedido.dp_ttrans));
         setTtrans(Number(datopedido.dp_ttrans));
         setSubtotal(Number(datopedido.dp_subtotal));
+        console.log("se carga el subtotal1: "+ datopedido.dp_subtotal);
         setDescuento(Number(datopedido.dp_descuento));
         setSeguro(Number(datopedido.dp_seguro));
         setIva(Number(datopedido.dp_iva));
         setTransporte(Number(datopedido.dp_transporte));
         setTotal(Number(datopedido.dp_total));
         setGnGastos(Number(datopedido.dp_gngastos));
-
-       
+        setVTrans(datopedido.dp_transporte);
+        
 
         console.log("valor de gngastos: "+ datopedido.dp_gngastos);
         cargarFormaPago(Number(datopedido.dp_tipodoc));
 
         if(datopedido.item.length > 0){
+          console.log("ingres al length");
           console.log("Los datos del pedido son: "+datopedido.item);
           cargarListaItems(""+datopedido.item);
           console.log("grabando con chargue 1: "+chargue);
           console.log("grabando con chargue 2: "+chargue);
+          
         }else{
+
           setLoadform(true);
         }
+
+
         
         
       }
@@ -3182,7 +3212,7 @@ useEffect(()=>{
       <View style={styles.detallebody}>
         <View style={styles.row}>
           <View style={styles.itemrow2}>
-            <ModalItems actualizaItem={actualizaItem}></ModalItems>
+          {((tcodigo!=0 && pickerfp != 0 && pickertrp != 0)?(<ModalItems actualizaItem={actualizaItem}></ModalItems>):(<View></View>))}
           </View>
         </View>
         <Text style={{ fontWeight: "bold", marginHorizontal: 10 }}>
@@ -3190,11 +3220,11 @@ useEffect(()=>{
         </Text>
 
         <ScrollView horizontal>
-          <View style={{ marginTop: 10, height: 120, marginHorizontal: 10 }}>
+          <View style={{ marginTop: 10, height: 300, marginHorizontal: 10 }}>
             <View style={{ flexDirection: "row" }}>
               <View
                 style={{
-                  width: 120,
+                  width: 200,
                   backgroundColor: "#9c9c9c",
                   borderColor: "black",
                   borderWidth: 1,
@@ -3234,7 +3264,7 @@ useEffect(()=>{
               </View>
               <View
                 style={{
-                  width: 70,
+                  width: 100,
                   backgroundColor: "#9c9c9c",
                   borderColor: "black",
                   borderWidth: 1,
@@ -3274,7 +3304,7 @@ useEffect(()=>{
               </View>
               <View
                 style={{
-                  width: 70,
+                  width: 100,
                   backgroundColor: "#9c9c9c",
                   borderColor: "black",
                   borderWidth: 1,
@@ -3433,7 +3463,9 @@ useEffect(()=>{
                     placeholder="0,0"
                     onFocus={""}
                     style={styles.itemtext}
-                    onChangeText={(val) => setVTrans2(val)}
+                    value={vtrans}
+                    onChangeText={(val) => setVTrans(val)}
+                    onEndEditing={()=>CargarResultados()} 
                   />
                 </>
               ) : (
@@ -3557,7 +3589,7 @@ const styles = StyleSheet.create({
   },
   tabletext1: {
     textAlign: "center",
-    fontSize: 12,
+    fontSize: 13,
     paddingLeft: 5,
     color: 'blue'
   },
@@ -3585,7 +3617,7 @@ const styles = StyleSheet.create({
   },
   tabletext: {
     textAlign: "center",
-    fontSize: 12,
+    fontSize: 13,
     paddingLeft: 5,
   },
   titlesWrapper: {

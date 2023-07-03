@@ -755,15 +755,15 @@ export default function CargarInformacion() {
       });
     });
     
-    if(dataUser.vn_loading > 1){
+   /* if(dataUser.vn_loading > 1){
       
       ActualizarPedidosOffline();
       
     }else{
       obtenerPedidosVendedor();
-    }
+    }*/
 
-    //obtenerPedidosVendedor();
+    obtenerPedidosVendedor();
 
 
 

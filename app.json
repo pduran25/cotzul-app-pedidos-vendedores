@@ -2,7 +2,7 @@
   "expo": {
     "name": "Pedidos Vendedores",
     "slug": "cotzul-pedidos-vendedores",
-    "version": "1.0.1",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "jsEngine": "hermes",
@@ -26,6 +26,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
       },
+      "versionCode": 4,
       "package": "com.pedroduran25.apppedidosvendedores"
     },
     "web": {

@@ -143,6 +143,7 @@ export default function NuevoPed(props) {
   const [kilos, setKilos] = useState(0);
   const [notidplazo, setNotIdplazo] = useState(0);
   const [cargado, setCargado] = useState(0);
+  const [preori, setPreori] = useState(1);
   const [notnomplazo, setNotnomplazo] = useState("plazo");
   var resindex = 0;
   var itemtext = "";
@@ -153,6 +154,7 @@ export default function NuevoPed(props) {
   let [pickertrp, setPickertrp] = useState(0);
   let [pickerven, setPickerven] = useState(0);
   const [internet, setInternet] = useState(true);
+  const [insertado, setInsertado] = useState(0);
   
 
 
@@ -199,8 +201,8 @@ export default function NuevoPed(props) {
         <View style={{ flexDirection: "row" }}>
           <View
             style={{
-              width: 120,
-              height: 50,
+              width: 200,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }} 
@@ -213,7 +215,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -223,7 +225,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -234,7 +236,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 100,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -243,8 +245,8 @@ export default function NuevoPed(props) {
           </View>
           <View
             style={{
-              width: 70,
-              height: 50,
+              width: 100,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -272,7 +274,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 150,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -294,7 +296,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -316,7 +318,7 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -327,8 +329,8 @@ export default function NuevoPed(props) {
           </View>
           <View
             style={{
-              width: 70,
-              height: 50,
+              width: 100,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -360,19 +362,21 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
-            <Text style={styles.tabletext}>
+           {checked == "second" ? (
+              <Text style={styles.tabletext}> --- </Text>
+            ) :  (<Text style={styles.tabletext}>
               $ {Number((itemtotal[index].subtotal *  itemtotal[index].descuento)/100).toFixed(2)}
-            </Text>
+            </Text>)}
           </View>
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
@@ -384,31 +388,30 @@ export default function NuevoPed(props) {
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
             <Text style={styles.tabletext}>
-              {Number(itemtotal[index].gngastos).toFixed(2)}
+              {(itemtotal[index].gngastos == NaN) ?  Number(0).toFixed(2) : Number(itemtotal[index].gngastos).toFixed(2)}
             </Text>
           </View>
           <View
             style={{
               width: 70,
-              height: 50,
+              height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
-            <Text style={styles.tabletext}>
-              <Icon
+            <Icon
                 onPress={() => eliminaItem(item.it_codprod)}
                 type="material-community"
                 name="delete"
+                size={30}
                 iconStyle={styles.iconRight}
               />
-            </Text>
           </View>
         </View>
       </View>
@@ -419,7 +422,8 @@ export default function NuevoPed(props) {
 
   const setVTrans2 = (val) =>{
     setVTrans(val);
-    CargarResultados();
+    console.log("valor de transporte: "+vtrans);
+    
 
   };
 
@@ -476,10 +480,11 @@ export default function NuevoPed(props) {
       setPickerplz(notidplazo);
   }, [plazo]);
 
-  useEffect(() =>{
+  /*useEffect(() =>{
     if(cliente.ct_codigo != 0)
         GrabadaTemporal();
   },[cliente])
+  */
 
 
   useEffect(() => {
@@ -545,20 +550,26 @@ export default function NuevoPed(props) {
   const setNumprecio = (valor, index) => {
     setTprecio(valor);
      itemtotal[index].codprecio = valor;
+     setPreori(valor);
 
     if (valor == 1) {
       itemtotal[index].preciosel = itemtotal[index].subdist;
+      itemtotal[index].editable = 0;
     }
     if (valor == 2) {
       itemtotal[index].preciosel = itemtotal[index].contado;
+      itemtotal[index].editable = 0;
     }
     if (valor == 3) {
       itemtotal[index].preciosel = itemtotal[index].precio;
+      itemtotal[index].editable = 0;
     }
     if (valor == 4) {
       itemtotal[index].preciosel = 0;
       itemtotal[index].editable = 1;
     }
+
+    console.log("precio: "+ itemtotal[index].preciosel );
 
    
 
@@ -593,7 +604,7 @@ export default function NuevoPed(props) {
     setUbicacion(item.ct_ubicacion);
     cargarTarifas(item.ct_tcodigo, ttrans, "actualizacliente");
     cargarPlazo();
-    GrabadaTemporal();
+    CargarResultados();
   };
 
   const inicializaTransporte = () => {
@@ -609,11 +620,11 @@ export default function NuevoPed(props) {
   };
 
   const actualizaTransporte = (item) => {
-    console.log("Valor de transporte"+item);
+    console.log("Valor de transporte:"+item);
     cargarTarifas(tcodigo, item, "actualiza transporte");
     setPickertrp(item);
     setTtrans(item);
-    GrabadaTemporal();
+    CargarResultados();
   };
 
   const actualizaVendedor = (item) => {
@@ -624,6 +635,8 @@ export default function NuevoPed(props) {
   };
 
   const actualizaItem = (newitem) => {
+
+
     console.log("newitem:"+newitem);
     if (noElementoSimilar(newitem.it_codprod)) {
       resindex = 0;
@@ -853,6 +866,8 @@ export default function NuevoPed(props) {
     var rescosto = 0;
     var varsubtotalcosto = 0;
 
+    console.log("valor de vtrans 1: "+vtrans);
+
     reviewInternet();
 
     for (let i = 0; i < itemtotal.length; i++) {
@@ -962,9 +977,18 @@ export default function NuevoPed(props) {
     console.log("valor de peso:"+ vpeso.pl_peso);
     setKilos(totpeso);
 
+    console.log("valor de vtrans: "+vtrans);
+
     if (ttrans != 12 && ttrans != 90 && ttrans != 215) {
-      setTransporte(Number(vtrans));
-      vartransp = Number(vtrans);
+      if (vtrans != "") {
+        setTransporte(Number(vtrans));
+        console.log("valor transporte 1:" + vtrans);
+        vartransp = Number(vtrans);
+      } else {
+        setTransporte(0);
+        console.log("valor transporte 1:" + 0);
+        vartransp = 0;
+      }
     } else {
       console.log(
         "entro con el valor TARIFAS2:" +
@@ -978,10 +1002,12 @@ export default function NuevoPed(props) {
             vartransp = Number(vpeso.pl_tarifa1);
             setTarifa(vpeso.pl_tarifa1);
             setTransporte(vartransp);
+            console.log("valor transporte 2:" + vartransp);
           } else {
             vartransp = totpeso * vpeso.pl_tarifa2;
             setTarifa(vpeso.pl_tarifa2);
             setTransporte(vartransp);
+            console.log("valor transporte 2.5:" + vartransp);
           }
         }
       }
@@ -1223,8 +1249,15 @@ export default function NuevoPed(props) {
     console.log("vpeso: " + vpeso.pl_peso);
 
     if (ttrans != 12 && ttrans != 90 && ttrans != 215) {
-      setTransporte(Number(vtrans));
-      vartransp = Number(vtrans);
+      if (vtrans != "") {
+        setTransporte(Number(vtrans));
+        vartransp = Number(vtrans);
+        console.log("valor transporte 3:" + vtrans);
+      } else {
+        setTransporte(0);
+        vartransp = 0;
+        console.log("valor transporte 3.5:" + vartransp);
+      }
     } else {
       if (vpeso.pl_peso != 0) {
         if (totpeso < vpeso.pl_peso) {
@@ -1232,11 +1265,13 @@ export default function NuevoPed(props) {
           setTarifa(vpeso.pl_tarifa1);
           console.log("valor de tarifa 1: " + vpeso.pl_tarifa1);
           setTransporte(vartransp);
+          console.log("valor transporte 4:" + vartransp);
         } else {
           vartransp = totpeso * vpeso.pl_tarifa2;
           console.log("valor de tarifa 2: " + vpeso.pl_tarifa2);
           setTarifa(vpeso.pl_tarifa2);
           setTransporte(vartransp);
+          console.log("valor transporte 4.5:" + vartransp);
         }
       }
     }
@@ -1504,11 +1539,13 @@ export default function NuevoPed(props) {
 
     if (ttrans != 12 && ttrans != 90 && ttrans != 215) {
       if (vtrans != "") {
-        setTransporte(Number(vtrans));
-        vartransp = Number(vtrans);
+        setTransporte(Number(0));
+        vartransp = Number(0);
+        console.log("valor transporte 5:" + 0);
       } else {
         setTransporte(0);
         vartransp = 0;
+        console.log("valor transporte 5.5:" + 0);
       }
     } else {
       if (vpeso.pl_peso != null || totpeso != null) {
@@ -1524,11 +1561,13 @@ export default function NuevoPed(props) {
             console.log("valor de tarifa 1: " + vpeso.pl_tarifa1);
             setTarifa(vpeso.pl_tarifa1);
             setTransporte(vartransp);
+            console.log("valor transporte 6:" + vartransp);
           } else {
             vartransp = totpeso * vpeso.pl_tarifa2;
             console.log("valor de tarifa 2: " + vpeso.pl_tarifa2);
             setTarifa(vpeso.pl_tarifa2);
             setTransporte(vartransp);
+            console.log("valor transporte 6.5:" + vartransp);
           }
         }
       }
@@ -1702,7 +1741,7 @@ export default function NuevoPed(props) {
           leni = results.rows.length;
           console.log("cambio el idpedido:  SELECT * FROM pedidosvendedor WHERE pv_codigo ="+ parseInt(numdoc)+" ---resultado: "+leni);
 
-          if(leni>0){
+          if(leni>0 && insertado != 0){
             txn.executeSql(
               "UPDATE pedidosvendedor SET pv_codigovendedor = ?, pv_vendedor = ?, pv_codcliente = ?, pv_cliente = ?, pv_total = ?, pv_estatus = ?, pv_gngastos = ?, pv_numpedido = ?, pv_online = ? WHERE  pv_codigo = ?",
               [
@@ -1773,6 +1812,9 @@ export default function NuevoPed(props) {
   
           }else{
 
+            if(insertado == 0){
+              setInsertado(1);
+              console.log("INSERT INTO pedidosvendedor insertado= "+insertado);
             txn.executeSql(
               "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido, pv_online) " +
                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
@@ -1861,6 +1903,7 @@ export default function NuevoPed(props) {
   
           GrabaKEYADD();
           
+        }
 
     
           
@@ -2147,7 +2190,7 @@ export default function NuevoPed(props) {
         "&descuento=" +
         descuento +
         "&transporte=" +
-        pickertrp +
+        transporte +
         "&seguro=" +
         seguro +
         "&iva=" +
@@ -2681,16 +2724,6 @@ export default function NuevoPed(props) {
             <Text style={styles.tittext}>Forma de Pago:</Text>
           </View>
           <View style={styles.itemrow}>
-            {/*<RNPickerSelect
-              useNativeAndroidPickerStyle={false}
-              style={pickerStyle}
-              onValueChange={(doc) => setDoc(doc)}
-              placeholder={{ label: "SELECCIONAR", value: 0 }}
-              items={[
-                { label: "CHEQUE A FECHA", value: 1 },
-                { label: "FACT. A CRÉDITO", value: 2 },
-              ]}
-            />*/}
 
             <Picker
               onChanged={setPickerfp}
@@ -2798,7 +2831,7 @@ export default function NuevoPed(props) {
       <View style={styles.detallebody}>
         <View style={styles.row}>
           <View style={styles.itemrow2}>
-            {<ModalItems actualizaItem={actualizaItem}></ModalItems>}
+            {((tcodigo!=0 && pickerfp != 0 && pickertrp != 0)?(<ModalItems actualizaItem={actualizaItem}></ModalItems>):(<View></View>))}
           </View>
         </View>
         <Text style={{ fontWeight: "bold", marginHorizontal: 10 }}>
@@ -2806,11 +2839,11 @@ export default function NuevoPed(props) {
         </Text>
 
         <ScrollView horizontal>
-          <View style={{ marginTop: 10, height: 120, marginHorizontal: 10 }}>
+          <View style={{ marginTop: 10, height: 300, marginHorizontal: 10 }}>
             <View style={{ flexDirection: "row" }}>
               <View
                 style={{
-                  width: 120,
+                  width: 200,
                   backgroundColor: "#9c9c9c",
                   borderColor: "black",
                   borderWidth: 1,
@@ -2850,7 +2883,7 @@ export default function NuevoPed(props) {
               </View>
               <View
                 style={{
-                  width: 70,
+                  width: 100,
                   backgroundColor: "#9c9c9c",
                   borderColor: "black",
                   borderWidth: 1,
@@ -2890,7 +2923,7 @@ export default function NuevoPed(props) {
               </View>
               <View
                 style={{
-                  width: 70,
+                  width: 100,
                   backgroundColor: "#9c9c9c",
                   borderColor: "black",
                   borderWidth: 1,
@@ -2954,10 +2987,10 @@ export default function NuevoPed(props) {
       </View>
 
       <View style={styles.row}>
-        <View style={styles.titlesWrapper}>
+        <View style={styles.titlesWrappe1}>
           <Text style={{ fontWeight: "bold" }}>Pesos: </Text>
         </View>
-        <View style={styles.titlesWrapper}>
+        <View style={styles.titlesWrappe1}>
           <Text style={{ fontWeight: "bold" }}>Total Pedido:</Text>
         </View>
       </View>
@@ -3049,7 +3082,9 @@ export default function NuevoPed(props) {
                     placeholder="0,0"
                     onFocus={""}
                     style={styles.itemtext}
-                    onChangeText={(val) => setVTrans2(val)}
+                    onChangeText={(val) => setVTrans(val)}
+                    onEndEditing={() =>CargarResultados()}
+                   
                   />
                 </>
               ) : (
@@ -3200,18 +3235,25 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 12,
   },
+  iconRight:{
+    
+  },
   tabletext1: {
     textAlign: "center",
-    fontSize: 12,
+    fontSize: 13,
     paddingLeft: 5,
     color: 'blue'
   },
   tabletext: {
     textAlign: "center",
-    fontSize: 12,
-    paddingLeft: 5,
+    fontSize: 13,
   },
   titlesWrapper: {
+    marginTop: 5,
+    paddingHorizontal: 20,
+  },
+  titlesWrappe1: {
+    width: "50%",
     marginTop: 5,
     paddingHorizontal: 20,
   },

@@ -99,14 +99,14 @@ export default function Perfil(){
         <Text style={styles.txtusuario}>{dataUser.vn_nombre}</Text>
       
             <CargarInformacion />
-      
+        
         <Button
             title="Cerrar sesión"
             containerStyle={styles.btnContainerLogin}
             buttonStyle = {styles.btnLogin}
             onPress= {onSubmit}
         />
-        
+        <Text style={styles.txtusuario}>Version App: 1.0.4</Text>
     </View>
         
         </>
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     btnContainerLogin:{
-        marginTop: 30, 
+        marginTop: 10, 
         width: "95%"
     },
     btnLogin:{
