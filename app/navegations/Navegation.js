@@ -9,6 +9,7 @@ import Productos from "../screens/Productos";
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import PedidosStack from "./PedidosStack";
+import ItemsStack from "./ItemsStack";
 
 
 
@@ -96,6 +97,11 @@ export default function Navigation(props){
                     options={{headerShown: false}}
                     />
                     <Tab.Screen 
+                    name="Precios" 
+                    component={ItemsStack}
+                    options={{headerShown: false}}
+                    />
+                    <Tab.Screen 
                     name="Perfil" 
                     component={PerfilStack}
                     options={{headerShown: false}}  />
@@ -131,6 +137,9 @@ function screenOptions(route, color){
             break;
         case "Perfil":
             iconName = "account-circle";
+            break;
+        case "Precios":
+            iconName = "format-list-bulleted";
             break;
         default: 
             break;

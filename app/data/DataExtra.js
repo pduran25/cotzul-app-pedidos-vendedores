@@ -1,18 +1,18 @@
 import React, {useState, useEffect, useCallback, useMemo} from 'react'
-import { colors } from "react-native-elements";
-import { Image, FlatList, Text, View, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, ScrollView} from 'react-native';
+import { Image, FlatList, Text, View, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, ScrollView, Linking} from 'react-native';
 import axios from 'axios'
-import {locationsRef} from "../utils/firebase"
+import { colors, Icon } from "react-native-elements";
 import * as SQLite from 'expo-sqlite';
 import {useNavigation} from "@react-navigation/native"
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import NetInfo from "@react-native-community/netinfo";
+import ModalDetalle from '../screens/ModalDetalle';
 
 
 const STORAGE_KEY = '@save_productos'
-const database_name = 'CotzulBD.db';
-const database_version = '1.0';
-const database_displayname = 'CotzulBD';
+const database_name = "CotzulBD10.db";
+const database_version = "1.0";
+const database_displayname = "CotzulBDS";
 const database_size = 200000;
 
 
@@ -28,7 +28,7 @@ export default function  DataExtra(props) {
     const [internet, setInternet] = useState(true);
     const [cont, setCont] = useState(0);
 
-    const [sqla, setSql] = useState("SELECT * FROM Producto WHERE pr_referencia LIKE ?");
+    const [sqla, setSql] = useState("SELECT * FROM items WHERE it_referencia LIKE ?");
 
    
 
@@ -50,14 +50,29 @@ export default function  DataExtra(props) {
         db.transaction((tx) => {
             tx.executeSql(
             sqla,
-            [`${texto}%`, familia],
+            [`${texto}%`],
             (tx, results) => {
-                var temp = [];
+                    var temp = [];
                     console.log(results)
-                    for (let i = 0; i < results.rows.length; ++i)
-                        temp.push(results.rows.item(i));
-                setPosts(temp);
-                console.log("entro ")
+                    if( results.rows.length > 0){
+                      for (let i = 0; i < results.rows.length; ++i)
+                      temp.push(results.rows.item(i));
+                      setPosts(temp);
+                      console.log("entro ")
+                    }else{
+                      const sqlb = 'SELECT * FROM items WHERE it_marca LIKE ?';
+            
+                      tx.executeSql(
+                        sqlb,
+                        [`${texto}%`],
+                        (tx, results) => {
+                          for (let i = 0; i < results.rows.length; ++i)
+                          temp.push(results.rows.item(i));
+                          setPosts(temp);
+                          console.log("entro ")
+                        });
+                    }
+                    
             }
             );
     
@@ -75,22 +90,13 @@ useEffect(() => {
 
 
 
+
+
 useEffect(() => {
-    if(tproducto == 0){
-        if(familia != 0){
-                setSql("SELECT * FROM Producto WHERE pr_referencia LIKE ? AND pr_codfamilia = ?")
-        }else{
-                setSql("SELECT * FROM Producto WHERE pr_referencia LIKE ? AND pr_codfamilia != ?")
-        }
-    }else if(tproducto == 1){
-        setSql("SELECT b.pr_codigo as pr_codigo, b.pr_codprod as pr_codprod, b.pr_referencia as pr_referencia, b.pr_familia as pr_familia, b.pr_nivel1 as pr_nivel1, b.pr_nivel2 as pr_nivel2, b.pr_pvp as pr_pvp, b.pr_rutaimg as pr_rutaimg, b.pr_stock as pr_stock, b.pr_arrayimg as arrayimg FROM ProdHueso a, Producto b WHERE a.ph_codigo = b.pr_codigo AND b.pr_referencia LIKE ? AND pr_codfamilia != ?")
-    }else if(tproducto == 2){
-        setSql("SELECT b.pr_codigo as pr_codigo, b.pr_codprod as pr_codprod, b.pr_referencia as pr_referencia, b.pr_familia as pr_familia, b.pr_nivel1 as pr_nivel1, b.pr_nivel2 as pr_nivel2, b.pr_pvp as pr_pvp, b.pr_rutaimg as pr_rutaimg, b.pr_stock as pr_stock, b.pr_arrayimg as arrayimg FROM ProdLiquidacion a, Producto b WHERE a.pl_codigo = b.pr_codigo AND b.pr_referencia LIKE ? AND pr_codfamilia != ?")
-    }else if(tproducto == 3){
-        setSql("SELECT b.pr_codigo as pr_codigo, b.pr_codprod as pr_codprod, b.pr_referencia as pr_referencia, b.pr_familia as pr_familia, b.pr_nivel1 as pr_nivel1, b.pr_nivel2 as pr_nivel2, b.pr_pvp as pr_pvp, b.pr_rutaimg as pr_rutaimg, b.pr_stock as pr_stock, b.pr_arrayimg as arrayimg FROM ProdxLlegar a, Producto b WHERE a.sf_codigo = b.pr_codigo AND b.pr_referencia LIKE ? AND b.pr_codfamilia != ?")
-    }
+
+    setSql("SELECT * FROM items WHERE it_referencia LIKE ?")
     setCont(cont+1)
-}, [texto,familia, tproducto]);
+}, [texto]);
 
       
    useCallback(() => {
@@ -108,18 +114,77 @@ useEffect(() => {
     return (
            
         <View>
-            {((posts.length <= 0) || (texto.length == 0 && familia == 0 && tproducto == 0)) ? (
+            {((posts.length <= 0) || (texto.length == 0)) ? (
                 <NoFoundProducts />
-            ) : (<View>
-                <FlatList
+            ) : (<ScrollView horizontal>
+        <View style={{ marginHorizontal: 20, marginTop: 10, height: 500 }}>
+          <View style={{ flexDirection: "row" }}>
+            <View
+              style={{
+                width: 100,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Ref.</Text>
+            </View>
+
+            <View
+              style={{
+                width: 60,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Detalle</Text>
+            </View>
+            
+            <View
+              style={{
+                width: 80,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Marca</Text>
+            </View>
+
+            <View
+              style={{
+                width: 80,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Precio</Text>
+            </View>
+            <View
+              style={{
+                width: 50,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Stock</Text>
+            </View>
+
+            
+            
+          </View>
+          <FlatList
                 data = {posts}
                 keyExtractor={( id , index) => index.toString()}
                 renderItem={({ item }) => (<ListProducto producto={item} navigation={navigation} internet={internet} 
                 /> )} 
                 ListFooterComponent={() => <View style={{flex:1,justifyContent: "center",alignItems: "center"}}><Text style={styles.finalproducto}>--- Fin de busqueda ---</Text></View>}
                 />
-
-            </View>)}
+        </View>
+      </ScrollView>)}
         </View>
         
     
@@ -143,11 +208,18 @@ function NoFoundProducts(){
 
 function ListProducto(props){
     const {producto, navigation, internet} = props;
-    const {pr_codigo,pr_codprod, pr_referencia, pr_familia, pr_nivel1, pr_nivel2, pr_pvp, pr_rutaimg, pr_stock, pr_arrayimg} = producto;
+    const {it_codigo,it_codprod, it_referencia, it_descripcion, it_pvp, it_rutaimg, it_stock, it_arrayimg, it_marca} = producto;
     const [actual, setActual] = useState(0); 
     const [presiono, setPresiono] = useState(0); 
 
-
+    async function openUrl(url){
+        const isSupported = await Linking.canOpenURL(url);
+            if(isSupported){
+                await Linking.openURL(url)
+            }else{
+                Alert.alert('No se encontro el Link');
+            }
+    }
 
     const goProducto = () =>{
         if(presiono == 0){
@@ -164,34 +236,72 @@ function ListProducto(props){
      }
      
 
-    return (<TouchableOpacity onPress={goProducto}>
-                <View style={styles.productoCardWrapper}>
-                <View style={styles.productoImage}>
-                    {(presiono == 1 && actual == pr_codigo) ? 
-                        <Image PlaceholderContent = {<ActivityIndicator color="fff" />}
-                        style={{width:100, height:100}}
-                        source={{uri: pr_rutaimg}}
-                        /> :
-                    <Image
-                    PlaceholderContent = {<ActivityIndicator color="fff" />}
-                    style={{width:100, height:100}}
-                    source={require("../../assets/img/noexiste.png")}
-                    />}
-                    
-                </View>
-                    <View style={styles.productoTexto}>
-                        <Text style={styles.productoReferencia}>{pr_referencia}</Text>
-                        <Text style={styles.productoCodigo}>{pr_codprod}</Text>
-                        <Text style={styles.productoConf}>{pr_familia}</Text>
-                        <Text style={styles.productoConf}>{pr_nivel1}</Text>
-                        <Text style={styles.productoConf}>{pr_nivel2}</Text>
-                        
-                    </View>
-                    <View style={styles.productoPrecio}>
-                                <Text style={styles.textoPrecio}>cant: {pr_stock}</Text>
-                    </View>
-                </View>
-                </TouchableOpacity>);
+    return (<View>
+        <View
+          style={{
+            flexDirection: "row",
+            marginRight: 15,
+          }}
+        >
+          <View
+            style={{
+              width: 100,
+              height: 50,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext1} onPress={() =>openUrl("https://app.cotzul.com/Catalogo/Presentacion/prod/producto.php?id="+it_codigo)}>{it_referencia}</Text>
+          </View>
+          <View
+            style={{
+              width: 60,
+              height: 50,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+              <ModalDetalle codigo={it_codigo}></ModalDetalle>
+            
+          </View>
+
+          <View
+            style={{
+              width: 80,
+              height: 50,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext}>{it_marca}</Text>
+          </View>
+          <View
+            style={{
+              width: 80,
+              height: 50,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tableval}>
+             $ {it_pvp} 
+            </Text>
+          </View>
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tableval}>
+              {it_stock} 
+            </Text>
+          </View>
+          
+        </View>
+      </View>);
 }
 
 
@@ -254,7 +364,31 @@ const styles = StyleSheet.create({
         fontSize: 15,
         height: 250,
         marginTop: 10,
-    }
+    },
+    iconRight:{
+        marginTop: 10,
+        marginLeft: 20,
+      },
+    tabletitle: {
+        fontSize: 12,
+        fontWeight: "bold",
+        textAlign: "center"
+      },tabletext: {
+        fontSize: 12,
+        paddingLeft:5
+      },
+      tableval: {
+        fontSize: 12,
+        paddingRight: 5,
+        textAlign: "right",
+      },
+      tabletext1: {
+        textAlign: "center",
+        fontSize: 13,
+        paddingLeft: 5,
+        color: 'blue'
+      },
+      
 });
 
 

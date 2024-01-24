@@ -33,7 +33,7 @@ class ModalItems extends Component {
   setTextoSearch(texto) {
     console.log("nuevo texto cargando item: " + this.state.search);
     this.setState({ search: texto });
-    this.getItems(texto);
+    this.getItems(texto, this.props.retroventa);
   }
 
   componentDidMount() {
@@ -53,14 +53,15 @@ class ModalItems extends Component {
     this.setModalVisible(!this.state.modalVisible);
   }
 
-  getItems = async (texto) => {
+  getItems = async (texto, retro) => {
     try {
       this.setState({ isLoading: true });
-      const database_name = "CotzulBD1.db";
+      const database_name = "CotzulBD10.db";
       const database_version = "1.0";
       const database_displayname = "CotzulBDS";
       const database_size = 200000;
       let db = null;
+      var txtsql = "";
 
       db = SQLite.openDatabase(
         database_name,
@@ -69,10 +70,15 @@ class ModalItems extends Component {
         database_size
       );
 
+      if(retro == 9){
+        txtsql = " AND it_activex = 1";
+      } 
+      
+
       if(texto.length > 0){
       db.transaction((tx) => {
         tx.executeSql(
-          "SELECT * FROM items WHERE it_referencia like ?",
+          "SELECT * FROM items WHERE it_referencia like ?"+txtsql,
           ["%"+this.state.search + "%"],
           (tx, results) => {
             var len = results.rows.length;
@@ -104,7 +110,7 @@ class ModalItems extends Component {
         >
           <View
             style={{
-              width: 150,
+              width: 80,
               height: 50,
               borderColor: "black",
               borderWidth: 1,
@@ -116,7 +122,7 @@ class ModalItems extends Component {
 
           <View
             style={{
-              width: 50,
+              width: 40,
               height: 50,
               borderColor: "black",
               borderWidth: 1,
@@ -127,7 +133,7 @@ class ModalItems extends Component {
           </View>
           <View
             style={{
-              width: 50,
+              width: 40,
               height: 50,
               borderColor: "black",
               borderWidth: 1,
@@ -138,7 +144,7 @@ class ModalItems extends Component {
           </View>
           <View
             style={{
-              width: 50,
+              width: 40,
               height: 50,
               borderColor: "black",
               borderWidth: 1,
@@ -149,7 +155,7 @@ class ModalItems extends Component {
           </View>
           <View
             style={{
-              width: 50,
+              width: 40,
               height: 50,
               borderColor: "black",
               borderWidth: 1,
@@ -160,7 +166,7 @@ class ModalItems extends Component {
           </View>
           <View
             style={{
-              width: 50,
+              width: 40,
               height: 50,
               borderColor: "black",
               borderWidth: 1,
@@ -171,7 +177,7 @@ class ModalItems extends Component {
           </View>
           <View
             style={{
-              width: 50,
+              width: 40,
               height: 50,
               borderColor: "black",
               borderWidth: 1,
@@ -222,80 +228,80 @@ class ModalItems extends Component {
                 <View style={{ flexDirection: "row"}}>
                   <View
                     style={{
-                      width: 150,
+                      width: 80,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
                     }}
                   >
-                    <Text style={styles.tabletitle}>Referencia:</Text>
+                    <Text style={styles.tabletitle}>Ref.</Text>
                   </View>
                   <View
                     style={{
-                      width: 50,
+                      width: 40,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
                     }}
                   >
-                    <Text style={styles.tabletitle}>Stock:</Text>
+                    <Text style={styles.tabletitle}>Stock</Text>
                   </View>
 
                   <View
                     style={{
-                      width: 50,
+                      width: 40,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
                     }}
                   >
-                    <Text style={styles.tabletitle}>Bod:</Text>
+                    <Text style={styles.tabletitle}>Bod</Text>
                   </View>
                   <View
                     style={{
-                      width:  50,
+                      width:  40,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
                     }}
                   >
-                    <Text style={styles.tabletitle}>Tel:</Text>
+                    <Text style={styles.tabletitle}>Tel</Text>
                   </View>
                   <View
                     style={{
-                      width: 50,
+                      width: 40,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
                     }}
                   >
-                    <Text style={styles.tabletitle}>Pro:</Text>
+                    <Text style={styles.tabletitle}>Pro</Text>
                   </View>
                   <View
                     style={{
-                      width: 50,
+                      width: 40,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
                     }}
                   >
-                    <Text style={styles.tabletitle}>Rep:</Text>
+                    <Text style={styles.tabletitle}>Rep</Text>
                   </View>
                   
                   <View
                     style={{
-                      width: 50,
+                      width: 40,
                       backgroundColor: "#9c9c9c",
                       borderColor: "black",
                       borderWidth: 1,
                     }}
                   >
-                    <Text style={styles.tabletitle}>Lote:</Text>
+                    <Text style={styles.tabletitle}>Lote</Text>
                   </View>
                 </View>
                 
                 {isLoading ? (
-                  <ActivityIndicator size="large" loading={isLoading} />
+                  ((data.length > 0 && this.state.search.length > 0)?(<ActivityIndicator size="large" loading={isLoading} />):(<View/>))
                 ) : (
                   <FlatList
                     data={data}
@@ -461,6 +467,7 @@ const styles = StyleSheet.create({
   },
   tabletext: {
     fontSize: 12,
+    textAlign: "center"
   },
   searchText: {
     fontSize: 14,

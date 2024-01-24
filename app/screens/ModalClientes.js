@@ -65,29 +65,37 @@ class ModalClientes extends Component {
     console.log("valor de busqueda: "+ texto.length );
 
       
-    const database_name = "CotzulBD1.db";
+    const database_name = "CotzulBD10.db";
     const database_version = "1.0";
     const database_displayname = "CotzulBDS";
     const database_size = 200000;
 
+    console.log("idvendedor: "+this.props.idvendedor);
+    console.log("texto: "+texto.toUpperCase());
+
 
       if(texto.length > 0){
+     
       db = SQLite.openDatabase(
         database_name,
         database_version,
         database_displayname,
         database_size
       );
+
+      
       db.transaction((tx) => {
         tx.executeSql(
-          "SELECT * FROM clientes WHERE ct_idvendedor=? AND upper(ct_cliente) LIKE ? ",
+          "SELECT * FROM clientes WHERE ct_idvendedor = ? AND upper(ct_cliente) LIKE ?",
           [this.props.idvendedor, "%"+texto.toUpperCase()+"%"],
           (tx, results) => {
             var len = results.rows.length;
+            console.log("length: "+ len);
             for (let i = 0; i < len; i++) {
               let row = results.rows.item(i);
+              console.log(`CLIENTES: ` + JSON.stringify(row));
             }
-            //console.log(JSON.stringify(results.rows._array));
+            console.log(JSON.stringify(results.rows._array));
 
             const responseCL = results.rows._array;
             //console.log(responseCL);
@@ -95,7 +103,9 @@ class ModalClientes extends Component {
             //setResponseCL({ clientes: JSON.stringify(results.rows._array) });
             this.setState({ data: responseCL });
             this.setState({ isLoading: false });
-          }
+          },(tx, error) => {
+            console.log('Error al insertar el producto:', error.message); // Imprime el mensaje de error
+        }
         );
       });
       //this.setState({ data: responseCL?.clientes });
@@ -228,7 +238,7 @@ class ModalClientes extends Component {
                   </View>
                 </View>
                 {isLoading ? (
-                  <ActivityIndicator size="large" loading={isLoading} />
+                   ((data.length > 0 && this.state.search.length > 0)?(<ActivityIndicator size="large" loading={isLoading} />):(<View/>))
                 ) : (
                   <FlatList
                     data={data}

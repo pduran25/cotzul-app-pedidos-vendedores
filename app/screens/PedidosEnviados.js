@@ -9,13 +9,13 @@ import {
   Alert,
   ActivityIndicator,
   AppState,
+  Linking,
   RefreshControl
 } from "react-native";
-import { colors } from "react-native-elements";
+import { colors, Icon } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
 import { Button } from "react-native-elements";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import RNPickerSelect from "react-native-picker-select";
 import DetPedidos from "./DetPedidos";
 import { AuthContext } from "../components/Context";
 import * as SQLite from "expo-sqlite";
@@ -88,6 +88,7 @@ export default function PedidosEnviados(props) {
   const [cadena, setCadena] = useState("");
   const [idpedido, setIdPedido] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [totencontrados, setTotEncontrados] = useState(0);
 
   const [responsePV, setResponsePV] = useState(null);
 
@@ -169,7 +170,7 @@ export default function PedidosEnviados(props) {
         "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor=" +
           dataUser.vn_codigo
       );*/
-      const database_name = "CotzulBD1.db";
+      const database_name = "CotzulBD10.db";
       const database_version = "1.0";
       const database_displayname = "CotzulBDS";
       const database_size = 200000;
@@ -183,11 +184,13 @@ export default function PedidosEnviados(props) {
         database_size
       );
       db.transaction((tx) => {
-        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus != -1", [], (tx, results) => {
+     
+        tx.executeSql("SELECT * FROM pedidosvendedor a, datospedidos b WHERE a.pv_estatus != -1 AND a.pv_codigo = b.dp_codigo AND a.pv_codcliente= b.dp_codcliente ORDER BY a.pv_codigo DESC", [], (tx, results) => {
           var len = results.rows.length;
+          setTotEncontrados(len);
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);
-            //console.log(`PEDIDOS VENDEDOR: ` + JSON.stringify(row));
+            console.log(`PEDIDOS VENDEDOR: ` + JSON.stringify(row));
           }
           setLoading(true);
           setData(results.rows._array);
@@ -284,12 +287,22 @@ export default function PedidosEnviados(props) {
                 borderWidth: 1,
               }}
             >
+              <Text style={styles.tabletext}>{item.pv_codigo}</Text>
+            </View>
+            <View
+              style={{
+                width: 60,
+                height: 50,
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
               <Text style={styles.tabletext}>{item.pv_numpedido}</Text>
             </View>
 
             <View
               style={{
-                width: 220,
+                width: 150,
                 height: 50,
                 borderColor: "black",
                 borderWidth: 1,
@@ -306,14 +319,55 @@ export default function PedidosEnviados(props) {
               }}
             >
               <Text style={styles.tableval}>
-                {Number(item.pv_gngastos).toFixed(2)} %
+                {Number(item.pv_gngastos).toFixed(2)}
               </Text>
+            </View>
+            <View
+              style={{
+                width: 80,
+                height: 50,
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tableval}>
+                {item.dp_fecha} 
+              </Text>
+            </View>
+            <View
+              style={{
+                width: 70,
+                height: 50,
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Icon
+                onPress={ ()=>openUrl("https://app.cotzul.com/Pedidos/Presentacion/webpedido.php?idpedido="+item.pv_codigo+"&idcliente="+item.pv_codcliente+"&idvendedor="+item.pv_codigovendedor+"&tipopedido=2", item.pv_online)}
+                type="material-community"
+                name="share"
+                size={30}
+                iconStyle={styles.iconRight}
+              />
             </View>
           </View>
         </TouchableOpacity>
       );
     }
   };
+
+  async function openUrl(url, online){
+    if(online == 1){
+      const isSupported = await Linking.canOpenURL(url);
+      if(isSupported){
+          await Linking.openURL(url)
+      }else{
+          Alert.alert('No se encontro el Link');
+      }
+    }else
+          Alert.alert('Pedido No está en la NUBE. Editalo y guardalo como pedido borrador');
+   
+}
 
   const nuevoPedido = () => {
     navigation.navigate("nuevoped", { dataUser, regresarFunc });
@@ -350,7 +404,7 @@ export default function PedidosEnviados(props) {
       {/*Search*/}
 
       
-      <Text style={styles.titlespick}>Mis Pedidos Enviados:</Text>
+      <Text style={styles.titlespick}>Mis Pedidos Enviados ({totencontrados}):</Text>
       <ScrollView horizontal>
         <View style={{ marginHorizontal: 20, marginTop: 10, height: 250 }}>
           <View style={{ flexDirection: "row" }}>
@@ -362,12 +416,21 @@ export default function PedidosEnviados(props) {
                 borderWidth: 1,
               }}
             >
-              <Text style={styles.tabletitle}>#Doc.</Text>
+              <Text style={styles.tabletitle}>#Borr.</Text>
             </View>
-            
             <View
               style={{
-                width: 220,
+                width: 60,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>#Ped.</Text>
+            </View>
+            <View
+              style={{
+                width: 150,
                 backgroundColor: "#9c9c9c",
                 borderColor: "black",
                 borderWidth: 1,
@@ -385,6 +448,27 @@ export default function PedidosEnviados(props) {
               }}
             >
               <Text style={styles.tabletitle}>Lote</Text>
+            </View>
+
+            <View
+              style={{
+                width: 80,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Fecha</Text>
+            </View>
+            <View
+              style={{
+                width: 70,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Compartir</Text>
             </View>
             
           </View>
@@ -475,9 +559,7 @@ const styles = StyleSheet.create({
   btnLogin: {
     backgroundColor: "#6f4993",
   },
-  iconRight: {
-    color: "#c1c1c1",
-  },
+
   detallebody: {
     height: 75,
     width: "90%",

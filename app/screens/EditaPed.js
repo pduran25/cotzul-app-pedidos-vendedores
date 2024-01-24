@@ -7,9 +7,9 @@ import {
   Alert,
   TextInput,
   ActivityIndicator,
-  Linking 
+  Linking,
+  Pressable
 } from "react-native";
-import RNPickerSelect from "react-native-picker-select";
 import {
   SearchBar,
   ListItem,
@@ -123,7 +123,7 @@ const handleClick = (event) => {
   console.log(event.currentTarget.id);
 };
 
-const database_name = "CotzulBD1.db";
+const database_name = "CotzulBD10.db";
 const database_version = "1.0";
 const database_displayname = "CotzulBDS";
 const database_size = 200000;
@@ -196,6 +196,11 @@ export default function EditaPed(props) {
   const [internet, setInternet] = useState(true);
   const [chargue, setChargue] = useState(0);
   const [valdatositem, setValDatosItem] = useState(0);
+  const [activador, setActivador] = useState(0);
+  const [activotpedido, setActivotpedido] = useState(0); 
+  const [enviadoBorrador, setEnviadoBorrador] = useState(false);
+  const [enviadoPedido, setEnviadoPedido] = useState(false); 
+  
 
   let [picker, setPicker] = useState(1);
   let [pickerpri, setPickerpri] = useState(1);
@@ -203,6 +208,8 @@ export default function EditaPed(props) {
   let [pickerplz,setPickerplz] = useState(0);
   let [pickertrp, setPickertrp] = useState(-1);
   let [pickerven, setPickerven] = useState(0);
+  let [pickervnt, setPickervnt] = useState(1);
+  
 
   var valitem = "";
 
@@ -217,7 +224,7 @@ export default function EditaPed(props) {
 
   const reviewInternet = () =>{
     NetInfo.fetch().then(state => {
-        console.log("Connection type", state.type);
+        console.log("Connection type ed pedido", state.type);
         console.log("Is connected?", state.isConnected);
         setInternet(state.isConnected)
     });
@@ -243,8 +250,12 @@ export default function EditaPed(props) {
     cargarTarifas(tcodigo, item, "actualiza transporte");
     setPickertrp(item);
     setTtrans(item);
-    CargarResultados();
+    
   };
+
+  useEffect(()=>{
+    CargarResultados();
+  },[ttrans])
 
   async function openUrl(url){
     const isSupported = await Linking.canOpenURL(url);
@@ -274,7 +285,7 @@ export default function EditaPed(props) {
           </View>
           <View
             style={{
-              width: 70,
+              width: 50,
               height: 80,
               borderColor: "black",
               borderWidth: 1,
@@ -282,27 +293,7 @@ export default function EditaPed(props) {
           >
             <Text style={styles.tabletext}>{item.it_stock}</Text>
           </View>
-          <View
-            style={{
-              width: 70,
-              height: 80,
-              borderColor: "black",
-              borderWidth: 1,
-            }}
-          >
-            <Text style={styles.tabletext}>{item.it_sku}</Text>
-          </View>
-
-          <View
-            style={{
-              width: 100,
-              height: 80,
-              borderColor: "black",
-              borderWidth: 1,
-            }}
-          >
-            <Text style={styles.tabletext}>{item.it_marca}</Text>
-          </View>
+          
           <View
             style={{
               width: 100,
@@ -344,10 +335,10 @@ export default function EditaPed(props) {
             <Picker
               onChanged={(tprecio) => setNumprecio(tprecio, index)}
               options={[
-                { text: "SUBDIST.", value: 1},
-                { text: "CONTADO", value: 2 },
-                { text: "CREDITO", value: 3 },
-                { text: "EDITABLE", value: 4 }, 
+                { text: "SUB.", value: 1},
+                { text: "CONT.", value: 2 },
+                { text: "CRED.", value: 3 },
+                { text: "EDIT.", value: 4 }, 
               ]}
               style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
               value={itemtotal[index].codprecio}
@@ -367,11 +358,11 @@ export default function EditaPed(props) {
                 keyboardType="numeric"
                 placeholder="0,0"
                 style={styles.tabletext}
-                onChangeText={(val) => setPrecioVal(val, index, item.it_codprod)}
+                onChangeText={(val) => setPrecioVal(val.replace(/,/g, '.'), index, item.it_codprod)}
               />
             ) : (
               <Text style={styles.tabletext}>
-                $ {Number(itemtotal[index].preciosel).toFixed(2)}
+                $ {roundNumber(itemtotal[index].preciosel).toFixed(2)}
               </Text>
             )}
           </View>
@@ -385,7 +376,7 @@ export default function EditaPed(props) {
           >
             <Text style={styles.tabletext}>
               ${" "}
-              {Number(
+              {roundNumber(
                 itemtotal.length > 0 ? itemtotal[index].subtotal : "0"
               ).toFixed(2)}
             </Text>
@@ -434,7 +425,7 @@ export default function EditaPed(props) {
             {checked == "second" ? (
               <Text style={styles.tabletext}> --- </Text>
             ) :  (<Text style={styles.tabletext}>
-              $ {Number((itemtotal[index].subtotal *  itemtotal[index].descuento)/100).toFixed(2)}
+              $ {roundNumber((itemtotal[index].subtotal *  itemtotal[index].descuento)/100).toFixed(2)}
             </Text>)}
           </View>
           <View
@@ -447,24 +438,43 @@ export default function EditaPed(props) {
           >
             <Text style={styles.tabletext}>
               ${" "}
-              {Number(
+              {roundNumber(
                 itemtotal.length > 0 ? itemtotal[index].total : "0"
               ).toFixed(2)}
             </Text>
           </View>
           <View
             style={{
-              width: 70,
+              width: 50,
               height: 80,
               borderColor: "black",
               borderWidth: 1,
             }}
           >
             <Text style={styles.tabletext}>
-              {Number(
-                itemtotal.length > 0 ? itemtotal[index].gngastos : "0"
-              ).toFixed(2)}
+            {isNaN(itemtotal[index].gngastos) ?  roundNumber(0).toFixed(2) : roundNumber(itemtotal[index].gngastos).toFixed(2)}
             </Text>
+          </View>
+          <View
+            style={{
+              width: 50,
+              height: 80,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext}>{item.it_sku}</Text>
+          </View>
+
+          <View
+            style={{
+              width: 100,
+              height: 80,
+              borderColor: "black",
+              borderWidth: 1,
+            }}
+          >
+            <Text style={styles.tabletext}>{item.it_marca}</Text>
           </View>
           <View
             style={{
@@ -488,6 +498,11 @@ export default function EditaPed(props) {
       </View>
     );
   };
+
+
+  function roundNumber(number) {
+    return Math.round(number * 100) / 100;
+  }
 
   const setCanti = (valor, index, codprod,
     cant,
@@ -614,7 +629,7 @@ export default function EditaPed(props) {
     return date + "-" + month + "-" + year; //format: d-m-y;
   };
 
-  const [fechaped, setFechaPed] = useState(moment(new Date()).format('DD/MM/YYYY'));
+  const [fechaped, setFechaPed] = useState(moment(new Date()).format('DD/MM/YYYY HH:mm:ss').toString());
 
   const actualizaCliente = (item) => {
     setCliente(item);
@@ -657,6 +672,16 @@ export default function EditaPed(props) {
     console.log("codigo del nuevo vendedor: " + item);
   };
 
+  useEffect(() => {
+    if(dataitem.length > 0){
+      setEnviadoBorrador(true);
+      setEnviadoPedido(true);
+    }else{
+      setEnviadoBorrador(false);
+      setEnviadoPedido(false);
+    }
+  }, [dataitem]);
+
   const actualizaItem = (newitem) => {
     if (noElementoSimilar(newitem.it_codprod)) {
      // resindex = 0;
@@ -687,6 +712,21 @@ export default function EditaPed(props) {
     }
   };
 
+  const PreguntarEnviar = () =>{
+    Alert.alert(
+      '¿Desea Continuar?',
+      '¿Está seguro de enviar el Pedido?',
+      [
+        { text: "Cancelar", style: 'cancel', onPress: () => {} },
+        {
+          text: 'Enviar',
+          style: 'destructive',
+          onPress: () => GrabarPedido(),
+        },
+      ]
+    );
+  }
+
   const noElementoSimilar = (codigo) => {
     var variable = true;
     for (let i = 0; i < itemtotal.length; i++) {
@@ -699,6 +739,7 @@ export default function EditaPed(props) {
     setDataItem(dataitem.filter((item) => item.it_codprod !== nameItem));
     console.log("ingreso: " + nameItem);
     eliminardeArray(nameItem);
+    
   };
 
   const eliminardeArray = (codigo) => {
@@ -709,6 +750,8 @@ export default function EditaPed(props) {
 
     //delete itemtotal[vindex];
     itemtotal.splice(vindex, 1);
+    if(itemtotal.length == 0)
+      setActivotpedido(0);
     CargarResultados();
   };
 
@@ -818,7 +861,7 @@ useEffect(()=>{
           subdist: itemtotal[i].subdist,
           contado: itemtotal[i].contado,
           codprecio: itemtotal[i].codprecio,
-          preciosel: itemtotal[i].preciosel,
+          preciosel: itemtotal[i].subdist,
           editable: itemtotal[i].editable,
           costo: itemtotal[i].costo,
           descuento: itemtotal[i].descuento,
@@ -843,35 +886,59 @@ useEffect(()=>{
 
     console.log("Valor de cantidad: "+cant);
 
-    temp.push({
-      codprod: codprod,
-      descripcion: descripcion,
-      cantidad: cant,
-      precio: precio,
-      pvp: pvp,
-      subdist: subdist,
-      contado: contado,
-      codprecio: codprecio,
-      preciosel: preciosel,
-      editable: editable,
-      costo: costo,
-      descuento: desc,
-      subtotal: ressub,
-      total: restot,
-      peso: peso,
-      gngastos: gngastosv,
-    });
+    if(!loadform){
+      temp.push({
+        codprod: codprod,
+        descripcion: descripcion,
+        cantidad: cant,
+        precio: precio,
+        pvp: pvp,
+        subdist: subdist,
+        contado: contado,
+        codprecio: codprecio,
+        preciosel: preciosel,
+        editable: editable,
+        costo: costo,
+        descuento: desc,
+        subtotal: ressub,
+        total: restot,
+        peso: peso,
+        gngastos: gngastosv,
+      });
+    }else{
+      temp.push({
+        codprod: codprod,
+        descripcion: descripcion,
+        cantidad: cant,
+        precio: precio,
+        pvp: pvp,
+        subdist: subdist,
+        contado: contado,
+        codprecio: codprecio,
+        preciosel: subdist,
+        editable: editable,
+        costo: costo,
+        descuento: desc,
+        subtotal: ressub,
+        total: restot,
+        peso: peso,
+        gngastos: gngastosv,
+      });
+    }
+    
     
     console.log("valor temporal de row1:"+temp[0].cantidad);
     console.log("valor temporal de row2:"+temp[0].precio);
     console.log("valor temporal de row3:"+temp[0].descuento);
 
-   
+    cargarTarifas(tcodigo, ttrans, "Editar Resultados");
     setItemTotal(temp);
+
+    setActivotpedido(1);
 
     //GrabadaTemporal();
     
-    
+    setActivador(1);
     console.log("valor del itemtotal: " + JSON.stringify(temp[0]));
   };
 
@@ -997,6 +1064,7 @@ useEffect(()=>{
         setTransporte(0);
         vartransp = 0;
       }
+      setTarifa(0);
     } else {
       console.log(
         "entro con el valor TARIFAS2:" +
@@ -1031,15 +1099,22 @@ useEffect(()=>{
  
 
     varseguro = ((varsubtotal - vardesc) * vseguro) / 100;
+    console.log("valor de seguro 1: "+varseguro);
     setSeguro(varseguro);
 
     variva = (varsubtotal - vardesc + varseguro) * 0.12;
     setIva(variva);
 
-    vartotal = varsubtotal - vardesc + varseguro + vartransp + variva;
+    vartotal = roundNumber(varsubtotal) - roundNumber(vardesc) + roundNumber(varseguro)  + roundNumber(transporte)  + roundNumber(variva);
+    console.log("*valor del subtotal:1 " + varsubtotal);
+    console.log("*valor del descuento:1 " + vardesc);
+    console.log("*valor del seguro:1 " + varseguro);
+    console.log("*valor del transporte:1 " + transporte);
+    console.log("*valor del iva:1 " + variva);
+
     setTotal(vartotal);
 
-    console.log("valor del total: " + vartotal);
+    console.log("*valor del total 1*: " + vartotal);
     setTotal(vartotal);
 
     console.log("res. subtotal: " + Number(varsubtotal));
@@ -1065,6 +1140,203 @@ useEffect(()=>{
     setLoadform(true);
     
    // GrabadaTemporal();
+  };
+
+  const CargarResultadosT = () => {
+    var temp = [];
+    var varsubtotal = 0;
+    var varseguro = 0;
+    var vartransp = 0;
+    var variva = 0;
+    var vartotal = 0;
+    var vardesc = 0;
+    var varorden = 0,
+      varventas = 0,
+      vargastos = 0;
+    var resdes = 0;
+    var valpeso = 0;
+    var totpeso = 0;
+    var numcod = 0;
+    var porcpor = 0;
+    itemtext = "";
+    var cadenita1 = "";
+    var gngastosv = 0;
+    var estrella = "*";
+    var rescosto = 0;
+    var varsubtotalcosto = 0;
+
+    reviewInternet();
+
+    for (let i = 0; i < itemtotal.length; i++) {
+      numcod++;
+
+      varsubtotal = varsubtotal + itemtotal[i].subtotal;
+
+      gngastosv = (Number(itemtotal[i].subtotal)-Number((itemtotal[i].subtotal * itemtotal[i].descuento)/100)) / (Number(itemtotal[i].costo)*Number(itemtotal[i].cantidad));
+      temp.push({
+        codprod: itemtotal[i].codprod,
+        descripcion: itemtotal[i].descripcion,
+        cantidad: itemtotal[i].cantidad,
+        precio: itemtotal[i].precio,
+        pvp: itemtotal[i].pvp,
+        subdist: itemtotal[i].subdist,
+        contado: itemtotal[i].contado,
+        codprecio: itemtotal[i].codprecio,
+        preciosel: itemtotal[i].preciosel,
+        editable: itemtotal[i].editable,
+        costo: itemtotal[i].costo,
+        descuento: itemtotal[i].descuento,
+        subtotal: itemtotal[i].subtotal,
+        total: itemtotal[i].total,
+        peso: itemtotal[i].peso,
+        gngastos: gngastosv,
+      });
+
+
+      valpeso = Number(itemtotal[i].cantidad) * Number(itemtotal[i].peso);
+      rescosto = Number(itemtotal[i].cantidad) * Number(itemtotal[i].costo);
+     
+      varsubtotalcosto = varsubtotalcosto + rescosto;
+      totpeso = totpeso + valpeso;
+      porcpor = Number(porcpor) + Number(itemtotal[i].descuento);
+      resdes =
+        resdes + Number(itemtotal[i].subtotal * itemtotal[i].descuento) / 100;
+      itemtext =
+        itemtext +
+        '<detalle d0="' +
+        numcod +
+        '" d1="' +
+        itemtotal[i].codprod +
+        '" d2="' +
+        itemtotal[i].cantidad +
+        '" d3="' +
+        itemtotal[i].preciosel +
+        '" d4="' +
+        itemtotal[i].descripcion +
+        '" d5="' +
+        itemtotal[i].peso +
+        '" d6="' +
+        itemtotal[i].descuento +
+        '" d7="' +
+        0 +
+        '"></detalle>';
+
+        if(i+1 == itemtotal.length)
+        estrella = "";
+
+      cadenita1 =
+        cadenita1 +
+        numcod +
+        ";" +
+        itemtotal[i].codprod +
+        ";" +
+        itemtotal[i].descripcion +
+        ";" +
+        itemtotal[i].cantidad +
+        ";" +
+        itemtotal[i].codprecio +
+        ";" +
+        itemtotal[i].preciosel +
+        ";" +
+        itemtotal[i].descuento +
+        ";" +
+        itemtotal[i].total+
+        estrella
+    }
+
+   
+
+    if(temp.length > 0){
+      setCadenaint(itemtext);
+      setCadenita(cadenita1);
+      setItemTotal(temp);
+
+   
+    
+    setSubtotal(varsubtotal);
+    console.log("se carga el subtotal2: "+ varsubtotal);
+    console.log("entro con el valor de transporte: " + ttrans);
+    setKilos(totpeso);
+
+    if (ttrans != 12 && ttrans != 90 && ttrans != 215) {
+      if (vtrans != "") {
+        setTransporte(Number(vtrans));
+        vartransp = Number(vtrans);
+      } else {
+        setTransporte(0);
+        vartransp = 0;
+      }
+      setTarifa(0);
+    } else {
+      console.log(
+        "entro con el valor TARIFAS2:" +
+          vpeso.pl_peso +
+          " EL TOTAL PESO: " +
+          totpeso
+      );
+      if (vpeso.pl_peso != null || totpeso != null) {
+        if (vpeso.pl_peso != 0) {
+          if (totpeso < vpeso.pl_peso) {
+            vartransp = Number(vpeso.pl_tarifa1);
+            setTarifa(vpeso.pl_tarifa1);
+            setTransporte(vartransp);
+            
+          } else {
+            vartransp = totpeso * vpeso.pl_tarifa2;
+            setTarifa(vpeso.pl_tarifa2);
+            setTransporte(vartransp);
+          }
+        }
+      }
+    }
+
+    if (checked == "second") {
+      vardesc = (varsubtotal * porcent) / 100;
+    } else {
+      vardesc = resdes;
+      porcpor = (vardesc / varsubtotal) * 100;
+      setPorcent(porcpor);
+    }
+    setDescuento(vardesc);
+
+ 
+
+    varseguro = ((varsubtotal - vardesc) * vseguro) / 100;
+    console.log("valor de seguro 2: "+varseguro);
+    setSeguro(varseguro);
+
+    variva = (varsubtotal - vardesc + varseguro) * 0.12;
+    setIva(variva);
+
+    vartotal = roundNumber(varsubtotal) - roundNumber(vardesc) + roundNumber(varseguro)  + roundNumber(vartransp)  + roundNumber(variva);
+    setTotal(vartotal);
+
+    console.log("valor del total 2*: " + vartotal);
+    setTotal(vartotal);
+
+    console.log("res. subtotal: " + Number(varsubtotal));
+    console.log(
+      "resultado var orden: " +
+        (Number(vartotal) - Number(vardesc) - Number(varsubtotal)).toFixed(2)
+    );
+
+    console.log("valores total: "+Number(vartotal)+" vardesc: "+ Number(vardesc)+" varsubtotal: "+Number(varsubtotal) );
+    varorden = Number(varsubtotal) - Number(vardesc) - Number(varsubtotalcosto);
+    varventas = (gnorden / (Number(varsubtotal) - Number(vardesc))) * 100;
+    vargastos =
+      (Number(varsubtotal) - Number(vardesc)) / Number(varsubtotalcosto);
+    
+    console.log("varsubtotal - cargarresultados: "+ varsubtotal+ "vardesc "+ vardesc+ "varsubtotalcosto: "+ varsubtotalcosto);
+
+    console.log("valor de vargastos: "+ vargastos);
+
+    setGnOrden(varorden);
+    setGnVentas(varventas);
+    setGnGastos(vargastos);
+
+    console.log("cargar resultados CargarResultados: "+ vargastos);
+    GrabadaTemporal();
+  }
   };
 
   const CargarResultados = () => {
@@ -1193,6 +1465,7 @@ useEffect(()=>{
         setTransporte(0);
         vartransp = 0;
       }
+      setTarifa(0);
     } else {
       console.log(
         "entro con el valor TARIFAS2:" +
@@ -1228,15 +1501,17 @@ useEffect(()=>{
  
 
     varseguro = ((varsubtotal - vardesc) * vseguro) / 100;
+    console.log("valor de seguro 3: "+varseguro);
     setSeguro(varseguro);
 
     variva = (varsubtotal - vardesc + varseguro) * 0.12;
     setIva(variva);
 
-    vartotal = varsubtotal - vardesc + varseguro + vartransp + variva;
+    vartotal = roundNumber(varsubtotal) - roundNumber(vardesc) + roundNumber(varseguro)  + roundNumber(vartransp)  + roundNumber(variva);
+
     setTotal(vartotal);
 
-    console.log("valor del total: " + vartotal);
+    console.log("valor del total 3*: " + vartotal);
     setTotal(vartotal);
 
     console.log("res. subtotal: " + Number(varsubtotal));
@@ -1467,6 +1742,7 @@ useEffect(()=>{
         setTransporte(0);
         vartransp = 0;
       }
+      setTarifa(0);
     } else {
       if (vpeso.pl_peso != 0) {
         if (totpeso < vpeso.pl_peso) {
@@ -1486,15 +1762,17 @@ useEffect(()=>{
     /*validación de seguro*/
 
     varseguro = ((varsubtotal - vardesc) * vseguro) / 100;
+    console.log("valor de seguro 4: "+varseguro);
     setSeguro(varseguro);
 
     variva = (varsubtotal - vardesc + varseguro) * 0.12;
     setIva(variva);
 
-    vartotal = varsubtotal - vardesc + varseguro + vartransp + variva;
+
+    vartotal = roundNumber(varsubtotal) - roundNumber(vardesc) + roundNumber(varseguro)  + roundNumber(vartransp)  + roundNumber(variva);
     setTotal(vartotal);
 
-    console.log("valor del total: " + vartotal);
+    console.log("valor del total 4*: " + vartotal);
 
     console.log("res. subtotal: " + Number(varsubtotal));
     console.log(
@@ -1725,7 +2003,11 @@ useEffect(()=>{
     cargarTarifas(tcodigo, ttrans, "editar REsultados");
 
     if (checked == "second") {
-      vardesc = (varsubtotal * porcent) / 100;
+      if(porcent == ""){
+        vardesc = (varsubtotal * porcent) / 100;
+      }else{
+        vardesc = 0;
+      }
     } else {
       vardesc = resdes;
       porcpor = (vardesc / varsubtotal) * 100;
@@ -1744,6 +2026,7 @@ useEffect(()=>{
         setTransporte(0);
         vartransp = 0;
       }
+      setTarifa(0);
     } else {
       if (vpeso.pl_peso != null || totpeso != null) {
         console.log(
@@ -1769,17 +2052,28 @@ useEffect(()=>{
     }
 
     /*validación de seguro*/
+    console.log("valor del seguro: "+vseguro);
+
+
 
     varseguro = ((varsubtotal - vardesc) * vseguro) / 100;
+    console.log("valor de seguro 5: "+varseguro);
     setSeguro(varseguro);
 
     variva = (varsubtotal - vardesc + varseguro) * 0.12;
     setIva(variva);
 
-    vartotal = varsubtotal - vardesc + varseguro + vartransp + variva;
-    setTotal(vartotal);
+    vartotal = roundNumber(varsubtotal) - roundNumber(vardesc) + roundNumber(varseguro)  + roundNumber(vartransp)  + roundNumber(variva);
 
-    console.log("valor del total: " + vartotal);
+    
+    console.log("*valor del subtotal5: " + varsubtotal);
+    console.log("*valor del descuento5: " + vardesc);
+    console.log("*valor del seguro5: " + varseguro);
+    console.log("*valor del transporte5: " + vartransp);
+    console.log("*valor del iva5: " + variva);
+
+    console.log("*valor del total 5*: " + vartotal);
+    setTotal(vartotal);
 
     console.log("res. subtotal: " + Number(varsubtotal));
     console.log(
@@ -2233,6 +2527,7 @@ useEffect(()=>{
         setTotal(Number(datopedido.dp_total));
         setGnGastos(Number(datopedido.dp_gngastos));
         setVTrans(datopedido.dp_transporte);
+        setPickervnt(datopedido.dp_tipopedido);
         
 
         console.log("valor de gngastos: "+ datopedido.dp_gngastos);
@@ -2275,6 +2570,11 @@ useEffect(()=>{
 
 
   const GrabadaTemporal = async () => {
+
+    setObs(obs.replace(/#/g, ''))
+    if(activador == 1){
+
+   
     db = SQLite.openDatabase(
       database_name,
       database_version,
@@ -2323,7 +2623,7 @@ useEffect(()=>{
             
           txn.executeSql(
               "UPDATE datospedidos SET dp_codvendedor = ?, dp_codcliente = ?, dp_subtotal = ?, dp_descuento = ?"+
-              ", dp_transporte = ?, dp_seguro = ?, dp_iva = ?, dp_total = ?"+
+              ", dp_transporte = ?, dp_seguro = ?, dp_iva = ?, dp_total = ?, dp_tipopedido = ?"+
               ", dp_estatus = ?, dp_codpedven = ?, dp_idvendedor = ?, dp_fecha = ?, dp_empresa = ?"+
               ", dp_prioridad = ?, dp_observacion = ?, dp_tipodoc = ?, dp_tipodesc = ?, dp_porcdesc = ?, dp_valordesc = ?"+
               ", dp_ttrans = ?, dp_gnorden = ?, dp_gnventas = ?, dp_gngastos = ?, item = ?, dp_numpedido = ?, dp_cadenaxml = ? WHERE"+
@@ -2338,6 +2638,7 @@ useEffect(()=>{
                 seguro.toString(),
                 iva.toString(),
                 total.toString(),
+                pickervnt.toString(),
                 "-1",
                 dataUser.vn_recibo.toString(),
                 parseInt(dataUser.vn_codigo),
@@ -2380,6 +2681,8 @@ useEffect(()=>{
     }
   }
 
+}
+
   }
 
 
@@ -2387,6 +2690,8 @@ useEffect(()=>{
     try {
 
       reviewInternet();
+      setEnviadoBorrador(false);
+      setEnviadoPedido(false);
       var textofinal =
         '<?xml version="1.0" encoding="iso-8859-1"?><c c0="2" c1="1" c2="' +
         idpedido +
@@ -2420,7 +2725,10 @@ useEffect(()=>{
         0 +
         '" c17="' +
         0 +
-        '" c18="'+dataUser.vn_usuario+'" >' +
+        '" c18="' +
+        dataUser.vn_usuario+
+        '" c19="' +
+        pickervnt + '" >' +
         cadenaint +
         "</c>";
       console.log(
@@ -2464,6 +2772,8 @@ useEffect(()=>{
           iva +
           "&total=" +
           total +
+          "&tipopedido=" +
+          pickervnt +
           "&idnewvendedor=" +
           idnewvendedor +
           "&cadenaxml=" +
@@ -2523,7 +2833,7 @@ useEffect(()=>{
       txn.executeSql(
         "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
           ", dp_subtotal , dp_descuento , dp_transporte  " +
-          ", dp_seguro , dp_iva , dp_total  " +
+          ", dp_seguro , dp_iva , dp_total, dp_tipopedido  " +
           ", dp_estatus , dp_codpedven " +
           ", dp_idvendedor , dp_fecha , dp_empresa  " +
           ", dp_prioridad , dp_observacion" +
@@ -2532,7 +2842,7 @@ useEffect(()=>{
           ", dp_gngastos, item, dp_numpedido, dp_cadenaxml ) " +
           " VALUES (?, ?, ?, ?, ?" +
           ", ?, ?, ?, ?, ?" +
-          ", ?, ?, ?, ?" +
+          ", ?, ?, ?, ?, ?" +
           ", ?, ?, ?, ?" +
           ", ?, ?, ?, ?, ?" +
           ", ?, ?, ?, ?); ",
@@ -2546,6 +2856,7 @@ useEffect(()=>{
           seguro.toString(),
           iva.toString(),
           total.toString(),
+          pickervnt.toString(),
           "-1",
           dataUser.vn_recibo.toString(),
           parseInt(dataUser.vn_codigo),
@@ -2625,6 +2936,8 @@ useEffect(()=>{
           iva +
           "&total=" +
           total +
+          "&tipopedido=" +
+          pickervnt +
           "&idnewvendedor=" +
           idnewvendedor +
           "&cadenaxml=" +
@@ -2656,6 +2969,7 @@ useEffect(()=>{
 
 
       reviewInternet();
+     
       console.log("cadenaint: "+cadenaint+" numdoc: "+ numdoc+" ttrans: "+ ttrans+" cliente: "+cliente.ct_codigo+" doc: "+pickerfp+" tplazo: "+tplazo+" itemtotal length: "+itemtotal.length );
       if (
         cadenaint != "" &&
@@ -2671,7 +2985,7 @@ useEffect(()=>{
         //var textofinal = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><c c0=\"2\" c1=\"1\" c2=\""+numdoc+"\" c3=\""+dataUser.vn_codigo+"\" c4=\""+ttrans+"\" c5=\""+cliente.ct_codigo+"\" c6=\""+doc+"\" c7=\""+tplazo+"\" c8=\""+obs+"\" c9=\""+subtotal+"\" c10=\""+porcent+"\" c11=\""+descuento+"\" c12=\""+seguro+"\" c13=\""+transporte+"\" c14=\""+iva+"\" c15=\""+total+"\" c16=\""+0+"\" c17=\""+0+"\" c18=\""+dataUser.vn_usuario+"\" >"+cadenaint+"</c>";
         var textofinal =
           '<?xml version="1.0" encoding="iso-8859-1"?><c c0="2" c1="1" c2="' +
-          numped +
+          numdoc +
           '" c3="' +
           dataUser.vn_codigo +
           '" c4="' +
@@ -2702,18 +3016,21 @@ useEffect(()=>{
           0 +
           '" c17="' +
           0 +
-          '" c18="'+dataUser.vn_usuario+'" >' +
+          '" c18="' +
+        dataUser.vn_usuario+
+        '" c19="' +
+        pickervnt + '" >' +
           cadenaint +
           "</c>";
         console.log(
-          "https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido=" +
-            numped +
+          "https://app.cotzul.com/Pedidos/setPedidoVendedor1.php?numpedido=" +
+            numdoc +
             "&idvendedor=" +
             dataUser.vn_codigo +
             "&usuvendedor=" +
             dataUser.vn_usuario +
             "&fecha=" +
-            fechaped +
+            moment(new Date()).format('DD/MM/YYYY HH:mm:ss').toString() +
             "&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones=" +
             obs +
             "&idcliente=" +
@@ -2746,6 +3063,8 @@ useEffect(()=>{
             iva +
             "&total=" +
             total +
+            "&tipopedido=" +
+            pickervnt +
             "&idnewvendedor=" +
             idnewvendedor +
             "&cadenaxml=" +
@@ -2755,15 +3074,17 @@ useEffect(()=>{
         );
 
         if(internet){
+          setEnviadoBorrador(false);
+          setEnviadoPedido(false);
         const response = await fetch(
-          "https://app.cotzul.com/Pedidos/setPedidoVendedor.php?numpedido=" +
-            numped +
+          "https://app.cotzul.com/Pedidos/setPedidoVendedor1.php?numpedido=" +
+            numdoc +
             "&idvendedor=" +
             dataUser.vn_codigo +
             "&usuvendedor=" +
             dataUser.vn_usuario +
             "&fecha=" +
-            fechaped +
+            moment(new Date()).format('DD/MM/YYYY HH:mm:ss').toString() +
             "&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones=" +
             obs +
             "&idcliente=" +
@@ -2796,6 +3117,8 @@ useEffect(()=>{
             iva +
             "&total=" +
             total +
+            "&tipopedido=" +
+            pickervnt +
             "&idnewvendedor=" +
             idnewvendedor +
             "&cadenaxml=" +
@@ -2804,102 +3127,125 @@ useEffect(()=>{
             cadenita
         );
 
-        try{
-          db.transaction((txn) => {
-              txn.executeSql(
-                "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido, pv_online) " +
-                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
-                [
-                  parseInt(numped),
-                  parseInt(dataUser.vn_codigo),
-                  dataUser.vn_nombre,
-                  parseInt(cliente.ct_codigo),
-                  cliente.ct_cliente,
-                  total.toString(),
-                  "1",
-                  gngastos.toString(),
-                  parseInt(numped),
-                  (internet)?Number(1):Number(0)
-                ],
-                (txn, results) => {
-                  if (results.rowsAffected > 0) {
-                    console.log("Entro bien a grabar primera table");
-                  }
-                }
-              );
-    
-              txn.executeSql("DELETE FROM pedidosvendedor WHERE pv_codigo = ?", [idpedido]); 
-    
-    
-            txn.executeSql(
-              "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
-                ", dp_subtotal , dp_descuento , dp_transporte  " +
-                ", dp_seguro , dp_iva , dp_total  " +
-                ", dp_estatus , dp_codpedven " +
-                ", dp_idvendedor , dp_fecha , dp_empresa  " +
-                ", dp_prioridad , dp_observacion" +
-                ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
-                ", dp_ttrans , dp_gnorden , dp_gnventas  " +
-                ", dp_gngastos, item, dp_numpedido, dp_cadenaxml ) " +
-                " VALUES (?, ?, ?, ?, ?" +
-                ", ?, ?, ?, ?, ?" +
-                ", ?, ?, ?, ?" +
-                ", ?, ?, ?, ?" +
-                ", ?, ?, ?, ?, ?" +
-                ", ?, ?, ?, ?); ",
-              [
-                parseInt(numped),
-                parseInt(dataUser.vn_codigo),
-                parseInt(cliente.ct_codigo),
-                subtotal.toString(),
-                descuento.toString(),
-                pickertrp.toString(),
-                seguro.toString(),
-                iva.toString(),
-                total.toString(),
-                "-1",
-                dataUser.vn_recibo.toString(),
-                parseInt(dataUser.vn_codigo),
-                fechaped.toString(),
-               'COTZUL',
-               'NORMAL',
-                obs,
-                pickerfp.toString(),
-                (checked == "second" ? "1" : "0"),
-                porcent.toString(),
-                descuento.toString(),
-                pickertrp.toString(),
-                gnorden.toString(),
-                gnventas.toString(),
-                gngastos.toString(),
-                cadenita.toString(),
-                parseInt(0),
-                textofinal
-              ],
-              (txn, results) => {
-                console.log("WWWWW"+JSON.stringify(results));
-                if (results.rowsAffected > 0) {
-                  console.log("Entro bien a grabar segunda table");
-                }
-              }
-            );
-
-            txn.executeSql("DELETE FROM datospedidos WHERE dp_codigo = ?", [idpedido]); 
-    
-    
-          });
-    
-        }catch(e){
-          console.log("--------*********se cayo"+e)
-        }
-
         const jsonResponse = await response.json();
-        //console.log(jsonResponse.estatusped);
-        if (jsonResponse.estatusped == "REGISTRADO") {
-          console.log("Se registro con éxito");
-          //navigation.navigate("productos");
-          regresarFunc();
-        }
+
+              jsonResponse?.estatusped.map((value, index) => {
+                if(value.es_resultado == "REGISTRADO"){
+                  console.log("Se registro con éxito");
+                  console.log("el codigo registrado fue: "+ value.es_secuencia);
+                  
+                  
+
+                  try{
+                    db.transaction((txn) => {
+                      txn.executeSql("DELETE FROM pedidosvendedor WHERE pv_codigo = ?", [idpedido]); 
+                        txn.executeSql(
+                          "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido, pv_online) " +
+                            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+                          [
+                            parseInt(idpedido),
+                            parseInt(dataUser.vn_codigo),
+                            dataUser.vn_nombre,
+                            parseInt(cliente.ct_codigo),
+                            cliente.ct_cliente,
+                            total.toString(),
+                            "1",
+                            gngastos.toString(),
+                            parseInt(value.es_secuencia),
+                            (internet)?Number(1):Number(0)
+                          ],
+                          (txn, results) => {
+                            if (results.rowsAffected > 0) {
+                              console.log("Entro bien a grabar primera table");
+                            }
+                          }
+                        );
+              
+                        
+                        txn.executeSql("DELETE FROM datospedidos WHERE dp_codigo = ?", [idpedido]);
+              
+                      txn.executeSql(
+                        "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
+                          ", dp_subtotal , dp_descuento , dp_transporte  " +
+                          ", dp_seguro , dp_iva , dp_total, dp_tipopedido  " +
+                          ", dp_estatus , dp_codpedven " +
+                          ", dp_idvendedor , dp_fecha , dp_empresa  " +
+                          ", dp_prioridad , dp_observacion" +
+                          ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
+                          ", dp_ttrans , dp_gnorden , dp_gnventas  " +
+                          ", dp_gngastos, item, dp_numpedido, dp_cadenaxml ) " +
+                          " VALUES (?, ?, ?, ?, ?" +
+                          ", ?, ?, ?, ?, ?" +
+                          ", ?, ?, ?, ?, ?" +
+                          ", ?, ?, ?, ?" +
+                          ", ?, ?, ?, ?, ?" +
+                          ", ?, ?, ?, ?); ",
+                        [
+                          parseInt(idpedido),
+                          parseInt(dataUser.vn_codigo),
+                          parseInt(cliente.ct_codigo),
+                          subtotal.toString(),
+                          descuento.toString(),
+                          pickertrp.toString(),
+                          seguro.toString(),
+                          iva.toString(),
+                          total.toString(),
+                          pickervnt.toString(),
+                          "1",
+                          dataUser.vn_recibo.toString(),
+                          parseInt(dataUser.vn_codigo),
+                          moment(new Date()).format('DD/MM/YYYY HH:mm:ss').toString(),
+                         'COTZUL',
+                         'NORMAL',
+                          obs,
+                          pickerfp.toString(),
+                          (checked == "second" ? "1" : "0"),
+                          porcent.toString(),
+                          descuento.toString(),
+                          pickertrp.toString(),
+                          gnorden.toString(),
+                          gnventas.toString(),
+                          gngastos.toString(),
+                          cadenita.toString(),
+                          parseInt(value.es_secuencia),
+                          textofinal
+                        ],
+                        (txn, results) => {
+                          console.log("WWWWW"+JSON.stringify(results));
+                          if (results.rowsAffected > 0) {
+                            console.log("Entro bien a grabar segunda table");
+                          }
+                        }
+                      );
+          
+                      dataUser.vn_recibo = value.es_secuencia;
+
+                     db.transaction((txn) => {
+                      txn.executeSql("UPDATE usuario SET us_recibo = ? WHERE us_numunico = 1 ", [parseInt(dataUser.vn_recibo)+1], (txn, results) => {
+                       if (results.rowsAffected > 0) {
+                         dataUser.vn_recibo = dataUser.vn_recibo + 1;
+                         
+                         console.log("Actualizo el nuevo numero recibo");
+                       }
+                     });
+                   });
+              
+              
+                    });
+              
+                  }catch(e){
+                    console.log("--------*********se cayo"+e)
+                  }
+
+
+                  navigation.navigate("productos");
+                  regresarFunc();
+                }
+        });
+
+       /* */
+
+        
       }else{
         Alert.alert("Su dispositivo no cuenta con internet");
       }
@@ -3014,6 +3360,22 @@ useEffect(()=>{
               style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
               value={pickerpri}
           />
+          </View>
+        </View>
+        <View style={styles.row}>
+          <View style={styles.itemrow2}>
+            <Text style={styles.tittext}>Tipo Pedido:</Text>
+            <View style={styles.itemobserv}><View style={styles.itemobserv}>{(activotpedido==0)?(<Picker
+              onChanged={setPickervnt}
+              options={[
+                {value: 0, text: 'SELECCIONAR'},
+                  {value: 1, text: 'NORMAL'},
+                  {value: 9, text: 'RETROVENTA'},
+              ]}
+              
+              style={{borderWidth: 1, borderColor: '#a7a7a7', borderRadius: 5, marginBottom: 5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center', textAlign:'center'}}
+              value={pickervnt}
+          />):( <View>{(pickervnt == 1)?(<Text style={styles.tittext2}>NORMAL</Text>):(<Text style={styles.tittext2}>RETROVENTA</Text>)}</View>)}</View></View>
           </View>
         </View>
         <View style={styles.row}>
@@ -3211,8 +3573,13 @@ useEffect(()=>{
       </View>
       <View style={styles.detallebody}>
         <View style={styles.row}>
-          <View style={styles.itemrow2}>
-          {((tcodigo!=0 && pickerfp != 0 && pickertrp != 0)?(<ModalItems actualizaItem={actualizaItem}></ModalItems>):(<View></View>))}
+        <View style={styles.itemrow2}>
+            {((tcodigo!=0 && pickerfp != 0 && pickertrp != 0)?(<ModalItems actualizaItem={actualizaItem} retroventa={pickervnt}></ModalItems>):( <View style={styles.styleview} ><Pressable
+          style={[styles.button, styles.buttonOpen]}
+          onPress={() => Alert.alert("Antes de continuar, asegúrate de completar la cabecera")}
+        >
+          <Text style={styles.textStyle}>Seleccionar Item</Text>
+        </Pressable></View>))}
           </View>
         </View>
         <Text style={{ fontWeight: "bold", marginHorizontal: 10 }}>
@@ -3234,7 +3601,7 @@ useEffect(()=>{
               </View>
               <View
                 style={{
-                  width: 70,
+                  width: 50,
                   backgroundColor: "#9c9c9c",
                   borderColor: "black",
                   borderWidth: 1,
@@ -3242,26 +3609,7 @@ useEffect(()=>{
               >
                 <Text style={styles.tabletitle}>Stock</Text>
               </View>
-              <View
-                style={{
-                  width: 70,
-                  backgroundColor: "#9c9c9c",
-                  borderColor: "black",
-                  borderWidth: 1,
-                }}
-              >
-                <Text style={styles.tabletitle}>SKU</Text>
-              </View>
-              <View
-                style={{
-                  width: 100,
-                  backgroundColor: "#9c9c9c",
-                  borderColor: "black",
-                  borderWidth: 1,
-                }}
-              >
-                <Text style={styles.tabletitle}>Marca</Text>
-              </View>
+              
               <View
                 style={{
                   width: 100,
@@ -3334,13 +3682,33 @@ useEffect(()=>{
               </View>
               <View
                 style={{
-                  width: 70,
+                  width: 50,
                   backgroundColor: "#9c9c9c",
                   borderColor: "black",
                   borderWidth: 1,
                 }}
               >
                 <Text style={styles.tabletitle}>Lote</Text>
+              </View>
+              <View
+                style={{
+                  width: 50,
+                  backgroundColor: "#9c9c9c",
+                  borderColor: "black",
+                  borderWidth: 1,
+                }}
+              >
+                <Text style={styles.tabletitle}>SKU</Text>
+              </View>
+              <View
+                style={{
+                  width: 100,
+                  backgroundColor: "#9c9c9c",
+                  borderColor: "black",
+                  borderWidth: 1,
+                }}
+              >
+                <Text style={styles.tabletitle}>Marca</Text>
               </View>
 
               <View
@@ -3361,7 +3729,7 @@ useEffect(()=>{
                 keyExtractor={(item, index) => index.toString()}
               />
             ) : (
-              <ActivityIndicator size="large" loading={loading} />
+              ((dataitem.length > 0)?(<ActivityIndicator size="large" loading={loading} />):(<View/>))
             )}
           </View>
         </ScrollView>
@@ -3424,7 +3792,7 @@ useEffect(()=>{
               <Text style={styles.tittext}>Subtotal:</Text>
             </View>
             <View style={styles.itemrow}>
-              <Text style={styles.itemtext}>${subtotal.toFixed(2)}</Text>
+              <Text style={styles.itemtext}>${roundNumber(subtotal).toFixed(2)}</Text>
             </View>
           </View>
           <View style={styles.row}>
@@ -3432,7 +3800,7 @@ useEffect(()=>{
               <Text style={styles.tittext}>Desc.(-):</Text>
             </View>
             <View style={styles.itemrow}>
-              <Text style={styles.itemtext}>${descuento.toFixed(2)}</Text>
+              <Text style={styles.itemtext}>${roundNumber(descuento).toFixed(2)}</Text>
             </View>
           </View>
           <View style={styles.row}>
@@ -3440,7 +3808,7 @@ useEffect(()=>{
               <Text style={styles.tittext}>Seguro(+):</Text>
             </View>
             <View style={styles.itemrow}>
-              <Text style={styles.itemtext}>${seguro.toFixed(2)}</Text>
+              <Text style={styles.itemtext}>${roundNumber(seguro).toFixed(2)}</Text>
             </View>
           </View>
           <View style={styles.row}>
@@ -3448,7 +3816,7 @@ useEffect(()=>{
               <Text style={styles.tittext}>IVA(+):</Text>
             </View>
             <View style={styles.itemrow}>
-              <Text style={styles.itemtext}>${iva.toFixed(2)}</Text>
+              <Text style={styles.itemtext}>${roundNumber(iva).toFixed(2)}</Text>
             </View>
           </View>
           <View style={styles.row}>
@@ -3469,7 +3837,7 @@ useEffect(()=>{
                   />
                 </>
               ) : (
-                <Text style={styles.itemtext}>${transporte.toFixed(2)}</Text>
+                <Text style={styles.itemtext}>${roundNumber(transporte).toFixed(2)}</Text>
               )}
             </View>
           </View>
@@ -3478,25 +3846,26 @@ useEffect(()=>{
               <Text style={styles.tittext}>Total:</Text>
             </View>
             <View style={styles.itemrow}>
-              <Text style={styles.itemtext}>${total.toFixed(2)}</Text>
+              <Text style={styles.itemtext}>${Number(total).toFixed(2)}</Text>
             </View>
           </View>
         </View>
       </View>
 
       <View style={{ alignItems: "center", marginVertical: 20 }}>
-        <Button
+        {(enviadoBorrador)?(<Button
           title="Grabar Borrador"
           containerStyle={styles.btnContainerLogin}
           buttonStyle={styles.btnLogin}
           onPress={() => GrabarBorrador()}
-        />
-        <Button
+        />):(<View></View>)}
+        {(enviadoPedido)?(<Button
           title="Enviar Pedido"
           containerStyle={styles.btnContainerLogin}
           buttonStyle={styles.btnLogin}
-          onPress={() => GrabarPedido()}
-        />
+          onPress={() => PreguntarEnviar()}
+        />):(<View></View>)}
+        
       </View>
     </ScrollView>) : ( 
       <View style={styles.containerLoad}>
@@ -3641,6 +4010,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textDark,
   },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonOpen: {
+    backgroundColor: "#6f4993",
+  },
+  buttonClose: {
+    backgroundColor: "#2196F3",
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  styleview:{
+    paddingVertical:10
+  },
   titlespick2: {
     fontSize: 16,
     color: colors.textDark,
@@ -3716,5 +4104,10 @@ const styles = StyleSheet.create({
   },
   btnLogin: {
     backgroundColor: "#6f4993",
+  },
+  tittext2: {
+    fontSize: 14,
+    marginTop: 5,
+    textAlign: "center",
   },
 });

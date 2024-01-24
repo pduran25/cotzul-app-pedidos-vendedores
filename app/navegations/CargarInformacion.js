@@ -20,6 +20,8 @@ import NetInfo from "@react-native-community/netinfo";
 
 const APIpedidosvendedor =
   "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor=";
+  const APIpedidosvendedorEnviados =
+  "https://app.cotzul.com/Pedidos/getPedidosVendedorEnviados.php?idvendedor=";
 const APItransportes = "https://app.cotzul.com/Pedidos/pd_getTransporte.php";
 const APIVendedores = "https://app.cotzul.com/Pedidos/getVendedoresList.php";
 const APIClientes =
@@ -34,7 +36,7 @@ const APIDatosPedidos =
 const APITranstarifa = "https://app.cotzul.com/Pedidos/pd_gettranstarifa.php";
 const APITransubicacion = "https://app.cotzul.com/Pedidos/pd_gettransubicacion.php";
 
-const database_name = "CotzulBD1.db";
+const database_name = "CotzulBD10.db";
 const database_version = "1.0";
 const database_displayname = "CotzulBDS";
 const database_size = 200000;
@@ -104,7 +106,7 @@ export default function CargarInformacion() {
 
   const reviewInternet = () =>{
     NetInfo.fetch().then(state => {
-        console.log("Connection type", state.type);
+        console.log("Connection type cargaIn", state.type);
         console.log("Is connected?", state.isConnected);
         setInternet(state.isConnected)
     });
@@ -125,7 +127,7 @@ export default function CargarInformacion() {
   }
 
   const myFunction = () => {
-    console.log('Función ejecutada');
+   // console.log('Función ejecutada');
     reviewInternet();
   };
 
@@ -321,6 +323,12 @@ export default function CargarInformacion() {
   saveTransportes = (myResponse) => {
     console.log("GUARDA REGISTROS transportes");
 
+    const itemTrans = myResponse?.transporte;
+    console.log(itemTrans);
+
+    let totalTrans = myResponse?.transporte.length;
+    let insertedCount = 0;
+
     db = SQLite.openDatabase(
       database_name,
       database_version,
@@ -338,26 +346,30 @@ export default function CargarInformacion() {
           "pl_nombre VARCHAR(200), pl_visible VARCHAR(10));"
       );
 
-      myResponse?.transporte.map((value, index) => {
+
+      itemTrans.forEach((trans) => {
         txn.executeSql(
           "INSERT INTO transportes(pl_codigo,pl_razon,pl_nombre,pl_visible) " +
             " VALUES (?, ?, ?, ?); ",
           [
-            Number(value.pl_codigo),
-            value.pl_razon,
-            value.pl_nombre,
-            value.pl_visible,
+            Number(trans.pl_codigo),
+            trans.pl_razon,
+            trans.pl_nombre,
+            trans.pl_visible,
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
+              insertedCount++;
               cont++;
-            }
+              if(insertedCount == totalTrans)
+                listarTransportes();
+            } 
           }
         );
       });
     });
 
-    listarTransportes();
+   
   };
 
   const listarTransportes = () => {
@@ -373,11 +385,12 @@ export default function CargarInformacion() {
         var len = results.rows.length;
         for (let i = 0; i < len; i++) {
           let row = results.rows.item(i);
-          //console.log(`TRANSPORTE: ` + JSON.stringify(row));
+          console.log(`TRANSPORTE: ` + JSON.stringify(row));
         }
+        obtenerVendedores();
       });
     });
-    obtenerVendedores();
+    
   };
   /** FIN TRANSPORTES **/
 
@@ -392,6 +405,12 @@ export default function CargarInformacion() {
 
   saveVendedores = (myResponse) => {
     console.log("GUARDA REGISTROS vendedores");
+
+    const itemVend = myResponse?.vendedores;
+    console.log(itemVend);
+
+    let totalVend = myResponse?.vendedores.length;
+    let insertedCount = 0;
 
     db = SQLite.openDatabase(
       database_name,
@@ -409,20 +428,23 @@ export default function CargarInformacion() {
           "(vd_codigo INTEGER, vd_vendedor VARCHAR(200));"
       );
 
-      myResponse?.vendedores.map((value, index) => {
+      itemVend.forEach((vend) => {
         txn.executeSql(
           "INSERT INTO vendedores(vd_codigo,vd_vendedor) " + " VALUES (?, ?); ",
-          [Number(value.vd_codigo), value.vd_vendedor],
+          [Number(vend.vd_codigo), vend.vd_vendedor],
           (txn, results) => {
             if (results.rowsAffected > 0) {
               cont++;
+              insertedCount++;
+              if(insertedCount == totalVend)
+                listarVendedores();
             }
           }
         );
       });
     });
 
-    listarVendedores();
+    
   };
 
   const listarVendedores = () => {
@@ -438,11 +460,12 @@ export default function CargarInformacion() {
         var len = results.rows.length;
         for (let i = 0; i < len; i++) {
           let row = results.rows.item(i);
-          //console.log(`VENDEDORES: ` + JSON.stringify(row));
+          console.log(`VENDEDORES: ` + JSON.stringify(row));
         }
+        obtenerPlazo();
       });
     });
-    obtenerPlazo();
+    
   };
   /** FIN VENDEDORES **/
 
@@ -467,10 +490,14 @@ export default function CargarInformacion() {
       database_size
     );
 
+    const clienteList = myResponse?.clientes;
+    console.log(clienteList);
+
     var cont = 0;
     db.transaction((txn) => {
+      console.log("entro a Clientes");
       txn.executeSql("DROP TABLE IF EXISTS clientes");
-     txn.executeSql(
+      txn.executeSql(
         "CREATE TABLE IF NOT EXISTS " +
           "clientes " +
           "(ct_codigo INTEGER, ct_cedula VARCHAR(20), ct_tipoid VARCHAR(20)" +
@@ -481,7 +508,9 @@ export default function CargarInformacion() {
           ", ct_ciudad VARCHAR(50)   );"
       );
 
-      myResponse?.clientes.map((value, index) => {
+      let totalCliente = myResponse?.clientes.length;
+      let insertedCount = 0;
+      clienteList.forEach((cli) => {
         txn.executeSql(
           "INSERT INTO clientes(ct_codigo,ct_cedula,ct_tipoid" +
             ", ct_cliente  , ct_telefono , ct_direccion   " +
@@ -491,33 +520,41 @@ export default function CargarInformacion() {
             ", ct_ciudad) " +
             " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?); ",
           [
-            Number(value.ct_codigo),
-            value.ct_cedula,
-            value.ct_tipoid,
-            value.ct_cliente,
-            value.ct_telefono,
-            value.ct_direccion,
-            value.ct_correo,
-            value.ct_cupoasignado,
-            value.ct_cupodisponible,
-            value.ct_idplazo,
-            value.ct_plazo,
-            value.ct_tcodigo,
-            value.ct_idvendedor,
-            value.ct_usuvendedor,
-            value.ct_ubicacion,
-            value.ct_ciudad,
+            Number(cli.ct_codigo),
+            cli.ct_cedula,
+            cli.ct_tipoid,
+            cli.ct_cliente,
+            cli.ct_telefono,
+            cli.ct_direccion,
+            cli.ct_correo,
+            cli.ct_cupoasignado,
+            cli.ct_cupodisponible,
+            cli.ct_idplazo,
+            cli.ct_plazo,
+            cli.ct_tcodigo,
+            cli.ct_idvendedor,
+            cli.ct_usuvendedor,
+            cli.ct_ubicacion,
+            cli.ct_ciudad,
           ],
           (txn, results) => {
+            console.log("Prueba de descarga Clientes");
             if (results.rowsAffected > 0) {
+              insertedCount++;
               cont++;
+              if(totalCliente == insertedCount){
+                listarClientes();
+              }
             }
+          },
+          (txn, error) => {
+              console.log('Error al insertar el cliente:', error.message); // Imprime el mensaje de error
           }
         );
       });
     });
 
-    listarClientes();
+    
   };
 
   const listarClientes = () => {
@@ -531,13 +568,15 @@ export default function CargarInformacion() {
     db.transaction((tx) => {
       tx.executeSql("SELECT * FROM clientes", [], (tx, results) => {
         var len = results.rows.length;
+        console.log("cantidad de Clientes: "+len);
         for (let i = 0; i < len; i++) {
           let row = results.rows.item(i);
-          //console.log(`CLIENTES: ` + JSON.stringify(row));
+          console.log(`CLIENTES: ` + JSON.stringify(row));
+          
         }
-        
+         obtenerItems();
       });
-      obtenerItems();
+      
     });
     
   };
@@ -554,6 +593,12 @@ export default function CargarInformacion() {
 
   savePlazos = (myResponse) => {
     console.log("GUARDA REGISTROS plazos");
+
+    const itemPlazo = myResponse?.plazo;
+    console.log(itemPlazo);
+
+    let totalPlazo = myResponse?.plazo.length;
+    let insertedCount = 0;
 
     db = SQLite.openDatabase(
       database_name,
@@ -572,22 +617,25 @@ export default function CargarInformacion() {
           ", pl_notaidplazo VARCHAR(10)  );"
       );
 
-      myResponse?.plazo.map((value, index) => {
+      itemPlazo.forEach((pla) => {
         txn.executeSql(
           "INSERT INTO plazos(pl_codigo,pl_descripcion" +
             ", pl_notaidplazo) " +
             " VALUES (?, ?, ?); ",
-          [Number(value.pl_codigo), value.pl_descripcion, "1"],
+          [Number(pla.pl_codigo), pla.pl_descripcion, "1"],
           (txn, results) => {
             if (results.rowsAffected > 0) {
               cont++;
+              insertedCount++;
+              if(insertedCount == totalPlazo)
+                listarPlazos();
             }
           }
         );
       });
     });
 
-    listarPlazos();
+    
   };
 
   const listarPlazos = () => {
@@ -603,11 +651,12 @@ export default function CargarInformacion() {
         var len = results.rows.length;
         for (let i = 0; i < len; i++) {
           let row = results.rows.item(i);
-          //console.log(`PLAZOS: ` + JSON.stringify(row));
+          console.log(`PLAZOS: ` + JSON.stringify(row));
         }
+        obtenerTarifas();
       });
     });
-    obtenerTarifas();
+    
   };
   /** FIN PLAZO **/
 
@@ -622,6 +671,12 @@ export default function CargarInformacion() {
 
   saveTarifas = (myResponse) => {
     console.log("GUARDA REGISTROS transtarifa");
+
+    const itemTarifa = myResponse?.transtarifas;
+    console.log(itemTarifa);
+
+    let totalTarifa = myResponse?.transtarifas.length;
+    let insertedCount = 0;
 
     db = SQLite.openDatabase(
       database_name,
@@ -640,31 +695,34 @@ export default function CargarInformacion() {
           ", tt_peso FLOAT, tt_tarifa1 FLOAT, tt_tarifa2 FLOAT, tt_estado VARCHAR(2), tt_usuarioing INTEGER);"
       );
 
-      myResponse?.transtarifas.map((value, index) => {
+      itemTarifa.forEach((tar) => {
         txn.executeSql(
           "INSERT INTO transtarifas(tt_codigo,tt_idtransporte,tt_idtarifa" +
             ", tt_peso,tt_tarifa1,tt_tarifa2, tt_estado, tt_usuarioing) " +
             " VALUES (?, ?, ?, ?, ?, ?, ?, ?); ",
           [
-            value.tt_codigo,
-            value.tt_idtransporte,
-            value.tt_idtarifa,
-            value.tt_peso,
-            value.tt_tarifa1,
-            value.tt_tarifa2,
-            value.tt_estado,
-            value.tt_usuarioing
+            tar.tt_codigo,
+            tar.tt_idtransporte,
+            tar.tt_idtarifa,
+            tar.tt_peso,
+            tar.tt_tarifa1,
+            tar.tt_tarifa2,
+            tar.tt_estado,
+            tar.tt_usuarioing
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
+              insertedCount++;
               cont++;
+              if(insertedCount == totalTarifa)
+                listarTarifas();
             }
           }
         );
       });
     });
 
-    listarTarifas();
+    
   };
 
   const listarTarifas = () => {
@@ -682,10 +740,11 @@ export default function CargarInformacion() {
           let row = results.rows.item(i);
           console.log(`TARIFAS: ` + JSON.stringify(row));
         }
+        obtenerUbicacion();
       });
     });
     
-    obtenerUbicacion();
+    
     //datospedidos();
     
   };
@@ -700,6 +759,12 @@ export default function CargarInformacion() {
 
   saveUbicacion = (myResponse) => {
     console.log("GUARDA REGISTROS transubicacion");
+
+    const itemUbi = myResponse?.transubicacion;
+    console.log(itemUbi);
+
+    let totalUbi = myResponse?.transubicacion.length;
+    let insertedCount = 0;
 
     db = SQLite.openDatabase(
       database_name,
@@ -717,24 +782,28 @@ export default function CargarInformacion() {
           "(tu_codigo INTEGER, tu_descripcion VARCHAR(20));"
       );
 
-      myResponse?.transubicacion.map((value, index) => {
+      itemUbi.forEach((ubi) => {
         txn.executeSql(
           "INSERT INTO transubicacion(tu_codigo,tu_descripcion) " +
             " VALUES (?, ?); ",
           [
-            value.tu_codigo,
-            value.tu_descripcion
+            ubi.tu_codigo,
+            ubi.tu_descripcion
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
+              insertedCount++;
               cont++;
+
+              if(insertedCount == totalUbi)
+                listarTransUbicacion();
             }
           }
         );
       });
     });
 
-    listarTransUbicacion();
+    
   };
 
   const listarTransUbicacion = () => {
@@ -755,15 +824,15 @@ export default function CargarInformacion() {
       });
     });
     
-   /* if(dataUser.vn_loading > 1){
-      
+    if(dataUser.vn_loading > 1){
+      console.log("entro a recarga");
       ActualizarPedidosOffline();
       
     }else{
       obtenerPedidosVendedor();
-    }*/
+    }
 
-    obtenerPedidosVendedor();
+   //obtenerPedidosVendedor();
 
 
 
@@ -821,8 +890,9 @@ export default function CargarInformacion() {
             console.log("valor de pvcodigo: "+ pvcodigo);
             pvcodigovendedor = Number(row.pv_codigovendedor);
             pvcodcliente = Number(row.pv_codcliente);
+            pvestatus = Number(row.pv_estatus);
 
-            tx.executeSql("SELECT dp_fecha, dp_observacion, dp_tipodoc, dp_tipodesc, dp_porcdesc, dp_valordesc, dp_transporte, dp_seguro, dp_iva, dp_total, item, dp_ttrans, dp_subtotal, dp_gnorden, dp_gnventas, dp_gngastos, dp_cadenaxml  FROM datospedidos WHERE dp_codigo = ?", [pvcodigo], (tx, resulta) => {
+            tx.executeSql("SELECT dp_fecha, dp_observacion, dp_tipopedido, dp_tipodoc, dp_tipodesc, dp_porcdesc, dp_valordesc, dp_transporte, dp_seguro, dp_iva, dp_total, item, dp_ttrans, dp_subtotal, dp_gnorden, dp_gnventas, dp_gngastos, dp_cadenaxml  FROM datospedidos WHERE dp_codigo = ?", [pvcodigo], (tx, resulta) => {
               var lena = resulta.rows.length;
               console.log("Entra a la cantidad2:--- "+lena);
               for (let j = 0; j < lena; j++) {
@@ -842,6 +912,7 @@ export default function CargarInformacion() {
                 dpitem = rowa.item;
                 dpttrans = rowa.dp_ttrans;
                 dpsubtotal = rowa.dp_subtotal;
+                dptipopedido = rowa.dp_tipopedido;
 
                 dpgnorden = rowa.dp_gnorden;
                 dpgnventas = rowa.dp_gnventas;
@@ -852,18 +923,22 @@ export default function CargarInformacion() {
 
                 console.log("valor de texto final: "+ dpcadenaxml);
 
-                envioValor = "https://app.cotzul.com/Pedidos/grabarBorrador.php?numpedido=" +
+                envioValor = "https://app.cotzul.com/Pedidos/grabarBorrador1.php?numpedido=" +
                 pvcodigo +
                 "&idvendedor=" +
                 pvcodigovendedor +
                 "&usuvendedor=" +
                 dataUser.vn_usuario +
+                "&estatus=" +
+                pvestatus +
                 "&fecha=" +
                 dpfecha +
                 "&empresa=COTZUL-BODEGA&prioridad=NORMAL&observaciones=" +
                 dpobservacion +
                 "&idcliente=" +
                 pvcodcliente +
+                "&tipopedido=" +
+                dptipopedido +
                 "&tipodoc=" +
                 dptipodoc +
                 "&tipodesc=" +
@@ -923,7 +998,6 @@ export default function CargarInformacion() {
     var response = await fetch(valorenvio);
 
     const jsonResponse = await response.json();
-      //console.log(jsonResponse.estatusped);
       if (jsonResponse.estatusped == "REGISTRADO") {
         console.log("Se registro con éxito");
       }
@@ -950,6 +1024,12 @@ export default function CargarInformacion() {
       database_size
     );
 
+    const itemList = myResponse?.items;
+    console.log(itemList);
+
+    let totalItem = myResponse?.items.length;
+    let insertedCount = 0;
+
     var cont = 0;
     db.transaction((txn) => {
       txn.executeSql("DROP TABLE IF EXISTS items");
@@ -960,51 +1040,56 @@ export default function CargarInformacion() {
           ", it_descripcion VARCHAR(200), it_precio VARCHAR(20), it_pvp VARCHAR(20) " +
           ", it_preciosub VARCHAR(20), it_contado VARCHAR(20), it_stock VARCHAR(20) " +
           ", it_marca VARCHAR(50), it_familia VARCHAR(50), it_costoprom VARCHAR(20) " +
-          ", it_peso VARCHAR(50), it_sku VARCHAR(10), it_bod INTEGER, it_alm INTEGER, it_chi INTEGER, it_rep INTEGER, it_lote VARCHAR(20)" +
+          ", it_peso VARCHAR(50), it_sku VARCHAR(10), it_bod INTEGER, it_alm INTEGER, it_chi INTEGER, it_rep INTEGER, it_lote VARCHAR(20), it_activex INTEGER" +
           " );"
 
 
       );
-
-      myResponse?.items.map((value, index) => {
+      
+      itemList.forEach((item) => {
         txn.executeSql(
           "INSERT INTO items(it_codigo , it_codprod , it_referencia " +
             ", it_descripcion , it_precio , it_pvp " +
             ", it_preciosub , it_contado , it_stock  " +
             ", it_marca , it_familia , it_costoprom  " +
-            ", it_peso,it_sku, it_bod, it_alm, it_chi, it_rep, it_lote) " +
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+            ", it_peso,it_sku, it_bod, it_alm, it_chi, it_rep, it_lote, it_activex) " +
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
           [
-            Number(value.it_codigo),
-            value.it_codprod,
-            value.it_referencia,
-            value.it_descripcion,
-            value.it_precio,
-            value.it_pvp,
-            value.it_preciosub,
-            value.it_contado,
-            value.it_stock,
-            value.it_marca,
-            value.it_familia,
-            value.it_costoprom,
-            value.it_peso,
-            value.it_sku,
-            value.it_bod,
-            value.it_alm,
-            value.it_chi,
-            value.it_rep,
-            value.it_lote
+            Number(item.it_codigo),
+            item.it_codprod,
+            item.it_referencia,
+            item.it_descripcion,
+            item.it_precio,
+            item.it_pvp,
+            item.it_preciosub,
+            item.it_contado,
+            item.it_stock,
+            item.it_marca,
+            item.it_familia,
+            item.it_costoprom,
+            item.it_peso,
+            item.it_sku,
+            item.it_bod,
+            item.it_alm,
+            item.it_chi,
+            item.it_rep,
+            item.it_lote,
+            item.it_activex
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
+              insertedCount++;
               cont++;
+              if(insertedCount == totalItem){
+                listarItems();
+              }
             }
           }
         );
       });
     });
 
-    listarItems();
+   
   };
 
   const listarItems = () => {
@@ -1022,10 +1107,11 @@ export default function CargarInformacion() {
           let row = results.rows.item(i);
           console.log(`ITEMS: ` + JSON.stringify(row));
         }
+        obtenerTransportes();
       });
     });
    // obtenerPedidosVendedor();
-   obtenerTransportes();
+   
   };
   /** FIN ITEM **/
 
@@ -1061,7 +1147,7 @@ export default function CargarInformacion() {
           ", dp_seguro VARCHAR(20), dp_iva VARCHAR(20), dp_total VARCHAR(20) " +
           ", dp_estatus VARCHAR(50), dp_codpedven VARCHAR(50)" +
           ", dp_idvendedor VARCHAR(50), dp_fecha VARCHAR(50), dp_empresa VARCHAR(20) " +
-          ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50)" +
+          ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50), dp_tipopedido INTEGER " +
           ", dp_tipodoc VARCHAR(50), dp_tipodesc VARCHAR(50), dp_porcdesc VARCHAR(50), dp_valordesc VARCHAR(20) " +
           ", dp_ttrans VARCHAR(50), dp_gnorden VARCHAR(50), dp_gnventas VARCHAR(20) " +
           ", dp_gngastos VARCHAR(50), item TEXT , dp_numpedido INTEGER, dp_cadenaxml TEXT" +
@@ -1075,14 +1161,14 @@ export default function CargarInformacion() {
             ", dp_seguro , dp_iva , dp_total  " +
             ", dp_estatus , dp_codpedven " +
             ", dp_idvendedor , dp_fecha , dp_empresa  " +
-            ", dp_prioridad , dp_observacion " +
+            ", dp_prioridad , dp_observacion, dp_tipopedido " +
             ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
             ", dp_ttrans , dp_gnorden , dp_gnventas  " +
             ", dp_gngastos, item , dp_numpedido, dp_cadenaxml) " +
             " VALUES (?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?" +
             ", ?, ?, ?, ?" +
-            ", ?, ?, ?, ?, ?" +
+            ", ?, ?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?, ?" +
             ", ?, ?, ?, ?); ",
           [
@@ -1102,6 +1188,7 @@ export default function CargarInformacion() {
             value.dp_empresa,
             value.dp_prioridad,
             value.dp_observacion,
+            value.dp_tipopedido,
             value.dp_tipodoc,
             value.dp_tipodesc,
             value.dp_porcdesc,
@@ -1116,7 +1203,7 @@ export default function CargarInformacion() {
           ],
           (txn, results) => {
             if (results.rowsAffected > 0) {
-              console.log("numero de filas registradas: "+ results.rowsAffected);
+              console.log("numero de filas registradas datos pedidos: "+ results.rowsAffected);
             }
           }
         );

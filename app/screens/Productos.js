@@ -17,10 +17,10 @@ import { colors, Icon } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
 import { Button } from "react-native-elements";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import RNPickerSelect from "react-native-picker-select";
 import DetPedidos from "./DetPedidos";
 import { AuthContext } from "../components/Context";
 import * as SQLite from "expo-sqlite";
+import NetInfo from "@react-native-community/netinfo";
 
 function defaultValueRegister() {
   return {
@@ -43,6 +43,7 @@ function defaultValueUser() {
     vn_borrador: ""
   };
 }
+
 
 const STORAGE_KEY = "@save_data";
 const STORAGE_DB = "@login_data";
@@ -87,6 +88,8 @@ export default function Productos(props) {
   const [idpedido, setIdPedido] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [idvendedor, setIdvendedor] = useState(0); 
+  const [internet, setInternet] = useState(true);
+  const [totencontrados, setTotEncontrados] = useState(0);
 
 
   var cont = 0;
@@ -128,6 +131,7 @@ useEffect(() => {
   }, [idpedido]);
 
 
+
 useEffect(()=> {
   console.log("Veces que ingresa a datauser ****");
   if(idvendedor != 0){
@@ -147,7 +151,16 @@ useEffect(()=> {
    
   };
 
+  const reviewInternet = () =>{
+    NetInfo.fetch().then(state => {
+        console.log("Connection type prod", state.type);
+        console.log("Is connected?", state.isConnected);
+        setInternet(state.isConnected)
+    });
+} 
+
   const PreguntarEliminar = (idpedido) =>{
+    reviewInternet();
     Alert.alert(
       '¿Desea Continuar?',
       '¿Desea Eliminar el pedido con su respectiva información?',
@@ -167,10 +180,11 @@ useEffect(()=> {
 
   const EliminaPedido = async (idpedido) => {
     try {
-      const database_name = "CotzulBD1.db";
+      const database_name = "CotzulBD10.db";
       const database_version = "1.0";
       const database_displayname = "CotzulBDS";
       const database_size = 200000;
+      var isonline = 0;
 
 
       let db = null;
@@ -182,12 +196,35 @@ useEffect(()=> {
         database_size
       );
 
+      if(internet){
+        console.log("conectando para la eliminacion"+idpedido);
+        isonline = 1;
+        console.log("https://app.cotzul.com/Pedidos/setEliminarPedido.php?numpedido=" +
+        idpedido+"&idvendedor="+idvendedor);
+        const response = await fetch(
+          "https://app.cotzul.com/Pedidos/setEliminarPedido.php?numpedido=" +
+          idpedido+"&idvendedor="+idvendedor);
+
+            const jsonResponse = await response.json();
+
+            if(jsonResponse.estatusped == "ELIMINADO"){
+              console.log("Se elimino con éxito");
+            }else{
+              console.log("No elimino nada");
+            }
+
+      }
+      else {
+        isonline = 0;
+      }
+
+      console.log("conectando para la eliminacion 2");
+
       db.transaction((tx) => {
 
-        tx.executeSql("DELETE FROM pedidosvendedor WHERE pv_codigo = ?",[parseInt(idpedido)]);
+        tx.executeSql("UPDATE pedidosvendedor SET pv_estatus = 2, pv_online = ? WHERE pv_codigo = ?",[parseInt(isonline),parseInt(idpedido)]);
+        tx.executeSql("UPDATE datospedidos SET dp_estatus = 2 WHERE dp_codigo = ?",[parseInt(idpedido)]);
 
-       tx.executeSql("DELETE FROM datospedidos WHERE dp_codigo = ?",[parseInt(idpedido)]);
-        
       });
 
       
@@ -196,18 +233,22 @@ useEffect(()=> {
 
     } catch (error) {
       setLoading(false);
-      console.log("un error cachado eliminar pedidos");
-      console.log(error);
+      console.log("un error cachado eliminar pedidos"+error);
     }
   };
 
-  async function openUrl(url){
-    const isSupported = await Linking.canOpenURL(url);
-        if(isSupported){
-            await Linking.openURL(url)
-        }else{
-            Alert.alert('No se encontro el Link');
-        }
+
+  async function openUrl(url, online){
+    if(online == 1){
+      const isSupported = await Linking.canOpenURL(url);
+      if(isSupported){
+          await Linking.openURL(url)
+      }else{
+          Alert.alert('No se encontro el Link');
+      }
+    }else
+          Alert.alert('Pedido No está en la NUBE. Editalo y guardalo como pedido borrador');
+   
 }
 
 function copiarLink(url){
@@ -217,7 +258,7 @@ function copiarLink(url){
 
   const listarPedidos = async (numvendedor) => {
     try {
-      const database_name = "CotzulBD1.db";
+      const database_name = "CotzulBD10.db";
       const database_version = "1.0";
       const database_displayname = "CotzulBDS";
       const database_size = 200000;
@@ -243,9 +284,10 @@ function copiarLink(url){
           }
         });
         
-        tx.executeSql("SELECT * FROM pedidosvendedor WHERE pv_estatus = -1 ORDER BY pv_codigo", [], (tx, results) => {
+        tx.executeSql("SELECT * FROM pedidosvendedor a, datospedidos b WHERE a.pv_estatus = -1 AND a.pv_codigo = b.dp_codigo AND a.pv_codcliente= b.dp_codcliente ORDER BY a.pv_codigo DESC", [], (tx, results) => {
           var len = results.rows.length;
           console.log("Cantidad de lineas: "+len);
+          setTotEncontrados(len);
           for (let i = 0; i < len; i++) {
             let row = results.rows.item(i);
             console.log("rowsa: "+JSON.stringify(row));
@@ -333,7 +375,21 @@ function copiarLink(url){
               }}
             >
               <Text style={styles.tableval}>
-                {(item.pv_gngastos != NaN) ? Number(item.pv_gngastos).toFixed(2) : 0} 
+                {isNaN(item.pv_gngastos) ? 0 : Number(item.pv_gngastos).toFixed(2)} 
+              </Text>
+
+            </View>
+
+            <View
+              style={{
+                width: 80,
+                height: 50,
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tableval}>
+                {item.dp_fecha} 
               </Text>
 
             </View>
@@ -362,7 +418,7 @@ function copiarLink(url){
               }}
             >
               <Icon
-                onPress={ ()=>openUrl("https://app.cotzul.com/Pedidos/Presentacion/webpedido.php?idpedido="+item.pv_codigo+"&idcliente="+item.pv_codcliente+"&idvendedor="+idvendedor+"&tipopedido=1")}
+                onPress={ ()=>openUrl("https://app.cotzul.com/Pedidos/Presentacion/webpedido.php?idpedido="+item.pv_codigo+"&idcliente="+item.pv_codcliente+"&idvendedor="+idvendedor+"&tipopedido=1", item.pv_online)}
                 type="material-community"
                 name="share"
                 size={30}
@@ -409,7 +465,7 @@ function copiarLink(url){
           onPress={nuevoPedido}
         />
       </View>
-      <Text style={styles.titlespick}>Mis Pedidos Borrador:</Text>
+      <Text style={styles.titlespick}>Mis Pedidos Borrador ({totencontrados}):</Text>
       <ScrollView horizontal>
         <View style={{ marginHorizontal: 20, marginTop: 10, height: 250}}>
           <View style={{ flexDirection: "row" }}>
@@ -444,6 +500,17 @@ function copiarLink(url){
               }}
             >
               <Text style={styles.tabletitle}>Lote</Text>
+            </View>
+
+            <View
+              style={{
+                width: 80,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Fecha</Text>
             </View>
 
             <View

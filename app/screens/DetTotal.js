@@ -95,7 +95,7 @@ export default function DetTotal(props) {
     
 
     NetInfo.fetch().then(state => {
-        console.log("Connection type carousel", state.type);
+        console.log("Connection type det total", state.type);
         console.log("Is connected?", state.isConnected);
         setInternet(state.isConnected)
     });

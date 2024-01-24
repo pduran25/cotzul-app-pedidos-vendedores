@@ -11,7 +11,7 @@ import CargarInformacion from "../navegations/CargarInformacion";
 
 const STORAGE_KEY = '@save_data'
 
-const database_name = 'CotzulBD1.db';
+const database_name = 'CotzulBD10.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBDS';
 const database_size = 200000;
@@ -45,7 +45,7 @@ export default function Perfil(){
 
    const reviewInternet = () =>{
     NetInfo.fetch().then(state => {
-            console.log("Connection type", state.type);
+            console.log("Connection type perfil", state.type);
             console.log("Is connected?", state.isConnected);
             setInternet(state.isConnected)
     });
@@ -106,7 +106,7 @@ export default function Perfil(){
             buttonStyle = {styles.btnLogin}
             onPress= {onSubmit}
         />
-        <Text style={styles.txtusuario}>Version App: 1.0.4</Text>
+        <Text style={styles.txtusuario}>Version App: 1.0.23</Text>
     </View>
         
         </>

@@ -6,9 +6,9 @@ import {locationsRef} from "../utils/firebase"
 import {useNavigation} from "@react-navigation/native"
 import * as SQLite from 'expo-sqlite';
 
-const database_name = 'CotzulBD.db';
+const database_name = 'CotzulBD10.db';
 const database_version = '1.0';
-const database_displayname = 'CotzulBD';
+const database_displayname = 'CotzulBDS';
 const database_size = 200000;
 
 export default function DataCliente(props) {

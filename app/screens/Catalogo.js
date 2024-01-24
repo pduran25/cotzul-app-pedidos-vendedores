@@ -19,9 +19,9 @@ export default function Catalogo(){
     const STORAGE_DB = '@login_data'
     const [dataUser, setdataUser] = useState(null);
     
-    const database_name = 'CotzulBD.db';
+    const database_name = 'CotzulBD10.db';
     const database_version = '1.0';
-    const database_displayname = 'CotzulBD';
+    const database_displayname = 'CotzulBDS';
     const database_size = 200000;
     const [Clientes, setClientes] = useState([])
     const [nomcliente, setNomCliente] = useState("---")

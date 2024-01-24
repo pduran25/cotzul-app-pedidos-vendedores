@@ -15,7 +15,7 @@ import * as SQLite from "expo-sqlite";
 const STORAGE_KEY = '@save_data'
 const STORAGE_DB = '@login_data'
 
-const database_name = "CotzulBD1.db";
+const database_name = "CotzulBD10.db";
 const database_version = "1.0";
 const database_displayname = "CotzulBDS";
 const database_size = 200000;
@@ -82,7 +82,7 @@ export default function LoginForm(props) {
 
     const reviewInternet = () =>{
         NetInfo.fetch().then(state => {
-            console.log("Connection type", state.type);
+            console.log("Connection type login", state.type);
             console.log("Is connected?", state.isConnected);
             setInternet(state.isConnected)
         });

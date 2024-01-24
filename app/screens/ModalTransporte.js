@@ -67,7 +67,7 @@ class ModalTransporte extends Component {
         let db = null;
   
   
-        const database_name = "CotzulBD1.db";
+        const database_name = "CotzulBD10.db";
         const database_version = "1.0";
         const database_displayname = "CotzulBDS";
         const database_size = 200000;
@@ -218,7 +218,7 @@ class ModalTransporte extends Component {
                     </View>
                   </View>
                   {isLoading ? (
-                    <ActivityIndicator size="large" loading={isLoading} />
+                    ((data.length > 0 && this.state.search.length > 0)?(<ActivityIndicator size="large" loading={isLoading} />):(<View/>))
                   ) : (
                     <FlatList
                       data={data}
