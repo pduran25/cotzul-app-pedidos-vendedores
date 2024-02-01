@@ -108,7 +108,7 @@ export default function LoginForm(props) {
 
         var len = 0;
          db.transaction((txn) => {
-            console.log("probando el analisis...");
+            console.log("probando el analisisaa..");
             txn.executeSql("SELECT * FROM usuario WHERE us_numunico = 1", [], (tx, results) => {
                 len = results.rows.length;
                 var temp = [];
@@ -300,10 +300,13 @@ export default function LoginForm(props) {
                         console.log('https://app.cotzul.com/Pedidos/cr_getUsuarioVendedor.php?usuario='+formData.usuario.toLowerCase()+'&clave='+formData.password);
                         
                         const respuesta = await response.json();
+                        console.log("Valor de resultado: "+respuesta);
+
                         if(respuesta.usuario[0].vn_codigo != 0){
-                            //toastRef.current.show("Bienvenido " + respuesta.usuario[0].vn_nombre);
+                            toastRef.current.show("Bienvenido " + respuesta.usuario[0].vn_nombre);
                             console.log("usuario: "+ respuesta.usuario[0].vn_usuario);
                             AlmacenaUsuario(respuesta.usuario[0],respuesta.usuario[0].vn_usuario,respuesta.usuario[0].vn_clave, respuesta.usuario[0].vn_nombre, respuesta.usuario[0].vn_codigo, respuesta.usuario[0].vn_recibo, respuesta.usuario[0].vn_borrador,db);
+                            
                         }else{
                             toastRef.current.show("El usuario o contraseña estan erroneos");
                         }

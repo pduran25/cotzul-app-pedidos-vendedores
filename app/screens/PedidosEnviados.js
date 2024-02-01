@@ -350,6 +350,22 @@ export default function PedidosEnviados(props) {
                 iconStyle={styles.iconRight}
               />
             </View>
+            <View
+              style={{
+                width: 70,
+                height: 50,
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Icon
+                onPress={()=>openUrl("https://app.cotzul.com/Pedidos/cargarimagenrecibo.php?idcliente="+item.pv_codcliente+"&idpedido="+item.pv_numpedido,1)}
+                type="material-community"
+                name="camera"
+                size={30}
+                iconStyle={styles.iconRight}
+              />
+            </View>
           </View>
         </TouchableOpacity>
       );
@@ -365,7 +381,7 @@ export default function PedidosEnviados(props) {
           Alert.alert('No se encontro el Link');
       }
     }else
-          Alert.alert('Pedido No está en la NUBE. Editalo y guardalo como pedido borrador');
+          Alert.alert('Pedido No está en la NUBE. Editalo y guardalo como pedido borrador: '+url);
    
 }
 
@@ -469,6 +485,16 @@ export default function PedidosEnviados(props) {
               }}
             >
               <Text style={styles.tabletitle}>Compartir</Text>
+            </View>
+            <View
+              style={{
+                width: 70,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Comprobante</Text>
             </View>
             
           </View>

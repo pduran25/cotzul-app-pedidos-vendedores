@@ -1254,6 +1254,12 @@ export default function CargarInformacion() {
           onPress={sincronizarDatos}
         />
       )}
+      <Button
+          title="Manual de Usuario"
+          containerStyle={styles.btnContainerLogin}
+          buttonStyle={styles.btnLogin}
+          onPress={null}
+        />
     </>
   );
 }
