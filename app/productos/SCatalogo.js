@@ -9,9 +9,9 @@ import DataAddProd from '../data/DataAddProd'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 
-const database_name = 'CotzulBD10.db';
-const database_version = '1.0';
-const database_displayname = 'CotzulBDS';
+const database_name = 'CotzulBD2.db';
+const database_version = '2.0';
+const database_displayname = 'CotzulBD';
 const database_size = 200000;
 
 export default function SCatalogo(props) {

@@ -74,6 +74,11 @@ const dataped = [
   },
 ];
 
+const database_name = "CotzulBD2.db";
+const database_version = "2.0";
+const database_displayname = "CotzulBD";
+const database_size = 200000;
+
 export default function PedidosEnviados(props) {
   const [tpedido, setTpedido] = useState(-1);
   const { navigation, route } = props;
@@ -89,6 +94,10 @@ export default function PedidosEnviados(props) {
   const [idpedido, setIdPedido] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [totencontrados, setTotEncontrados] = useState(0);
+  const APIpedidosvendedor =
+  "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor=";
+  const APIDatosPedidos =
+  "https://app.cotzul.com/Pedidos/getDatosPedidoxVendedor.php?idvendedor=";
 
   const [responsePV, setResponsePV] = useState(null);
 
@@ -159,23 +168,219 @@ export default function PedidosEnviados(props) {
   }, [dataUser]);
 
   const regresarFunc = () => {
-    // console.log("ingreso a regresar");
     navigation.navigate("productos");
     listarPedidos();
   };
 
+  const obtenerPedidosVendedor = async () => {
+    console.log(": "+APIpedidosvendedor+dataUser.vn_codigo);
+    const response = await fetch(APIpedidosvendedor+dataUser.vn_codigo);
+    const jsonResponse = await response.json();
+    console.log("PEDIDOS VENDEDORES: "+jsonResponse?.pedidovendedor);
+
+    savePedidosVendedor(jsonResponse);
+  };
+
+  savePedidosVendedor = (myResponse) => {
+    console.log("GUARDA REGISTROS pedidovendedor");
+
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+
+    var cont = 0;
+    db.transaction((txn) => {
+      txn.executeSql("DROP TABLE IF EXISTS pedidosvendedor");
+      txn.executeSql(
+        "CREATE TABLE IF NOT EXISTS " +
+          "pedidosvendedor " +
+          "(pv_codigo INTEGER, pv_codigovendedor INTEGER,  pv_vendedor VARCHAR(100), pv_codcliente INTEGER, pv_cliente VARCHAR(200)," +
+          "pv_total VARCHAR(50), pv_estatus INTEGER, pv_gngastos VARCHAR(100), pv_numpedido INTEGER, pv_online INTEGER, pv_estatusimg INTEGER, pv_nombrearchivo VARCHAR(100));"
+      );
+
+      myResponse?.pedidovendedor.map((value, index) => {
+        txn.executeSql(
+          "INSERT INTO pedidosvendedor(pv_codigo,pv_codigovendedor,pv_vendedor,pv_codcliente,pv_cliente,pv_total,pv_estatus,pv_gngastos,pv_numpedido,pv_online, pv_estatusimg, pv_nombrearchivo) " +
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); ",
+          [
+            Number(value.pv_codigo),
+            Number(value.pv_codvendedor),
+            value.pv_vendedor,
+            Number(value.pv_codcliente),
+            value.pv_cliente,
+            value.pv_total,
+            value.pv_estatus,
+            value.pv_gngastos,
+            Number(value.pv_numpedido),
+            Number(1),
+            Number(value.pv_estatusimg),
+            value.pv_nombrearchivo
+          ],
+          (txn, results) => {
+            if (results.rowsAffected > 0) {
+              cont++;
+            }
+          }
+        );
+      });
+    });
+
+    listarPedidosVendedor();
+  };
+
+  const listarPedidosVendedor = () => {
+    console.log("LISTAR pedidovendedor cargarinfomracion");
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+
+
+    db.transaction((tx) => {
+      tx.executeSql("SELECT * FROM pedidosvendedor", [], (tx, results) => {
+        var len = results.rows.length;
+        console.log("total pedidos vendedor: "+ len);
+        for (let i = 0; i < len; i++) {
+          let row = results.rows.item(i);
+          console.log(`PEDIDOS VENDEDOR: ` + JSON.stringify(row));
+        }
+      });
+    });
+    datospedidos();
+    
+  };
+
+  const datospedidos = async () => {
+    console.log("GET API datospedidos");
+    const response = await fetch(APIDatosPedidos+dataUser.vn_codigo);
+    const jsonResponse = await response.json();
+ 
+    
+    saveDatosPedidos(jsonResponse);
+   //console.log(JSON.stringify(jsonResponse));
+  };
+
+  saveDatosPedidos = (myResponse) => {
+    console.log("GUARDA REGISTROS datospedidos");
+
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+
+    var cont = 0;
+    db.transaction((txn) => {
+      txn.executeSql("DROP TABLE IF EXISTS datospedidos");
+      txn.executeSql(
+        "CREATE TABLE IF NOT EXISTS " +
+          "datospedidos " +
+          "(dp_codigo INTEGER, dp_codvendedor INTEGER, dp_codcliente INTEGER" +
+          ", dp_subtotal VARCHAR(200), dp_descuento VARCHAR(20), dp_transporte VARCHAR(20) " +
+          ", dp_seguro VARCHAR(20), dp_iva VARCHAR(20), dp_total VARCHAR(20) " +
+          ", dp_estatus VARCHAR(50), dp_codpedven VARCHAR(50)" +
+          ", dp_idvendedor VARCHAR(50), dp_fecha VARCHAR(50), dp_empresa VARCHAR(20) " +
+          ", dp_prioridad VARCHAR(50), dp_observacion VARCHAR(50), dp_tipopedido INTEGER " +
+          ", dp_tipodoc VARCHAR(50), dp_tipodesc VARCHAR(50), dp_porcdesc VARCHAR(50), dp_valordesc VARCHAR(20) " +
+          ", dp_ttrans VARCHAR(50), dp_gnorden VARCHAR(50), dp_gnventas VARCHAR(20) " +
+          ", dp_gngastos VARCHAR(50), item TEXT , dp_numpedido INTEGER, dp_cadenaxml TEXT" +
+          " );"
+      );
+
+      myResponse?.pedido.map((value, index) => {
+        txn.executeSql(
+          "INSERT INTO datospedidos(dp_codigo , dp_codvendedor , dp_codcliente " +
+            ", dp_subtotal , dp_descuento , dp_transporte  " +
+            ", dp_seguro , dp_iva , dp_total  " +
+            ", dp_estatus , dp_codpedven " +
+            ", dp_idvendedor , dp_fecha , dp_empresa  " +
+            ", dp_prioridad , dp_observacion, dp_tipopedido " +
+            ", dp_tipodoc , dp_tipodesc ,dp_porcdesc, dp_valordesc  " +
+            ", dp_ttrans , dp_gnorden , dp_gnventas  " +
+            ", dp_gngastos, item , dp_numpedido, dp_cadenaxml) " +
+            " VALUES (?, ?, ?, ?, ?" +
+            ", ?, ?, ?, ?" +
+            ", ?, ?, ?, ?" +
+            ", ?, ?, ?, ?, ?, ?" +
+            ", ?, ?, ?, ?, ?" +
+            ", ?, ?, ?, ?); ",
+          [
+            value.dp_codigo,
+            value.dp_codvendedor,
+            value.dp_codcliente,
+            value.dp_subtotal,
+            value.dp_descuento,
+            value.dp_transporte,
+            value.dp_seguro,
+            value.dp_iva,
+            value.dp_total,
+            value.dp_estatus,
+            value.dp_codpedven,
+            value.dp_idvendedor,
+            value.dp_fecha,
+            value.dp_empresa,
+            value.dp_prioridad,
+            value.dp_observacion,
+            value.dp_tipopedido,
+            value.dp_tipodoc,
+            value.dp_tipodesc,
+            value.dp_porcdesc,
+            value.dp_valordesc,
+            value.dp_ttrans,
+            value.dp_gnorden,
+            value.dp_gnventas,
+            value.dp_gngastos,
+            JSON.stringify(value.item),
+            value.dp_numpedido,
+            value.dp_cadenaxml
+          ],
+          (txn, results) => {
+            if (results.rowsAffected > 0) {
+              console.log("numero de filas registradas datos pedidos: "+ results.rowsAffected);
+            }
+          }
+        );
+      });
+    });
+
+  
+   listarDatosPedidos();
+  };
+
+  const listarDatosPedidos = () => {
+    console.log("LISTAR datospedidos");
+    db = SQLite.openDatabase(
+      database_name,
+      database_version,
+      database_displayname,
+      database_size
+    );
+    db.transaction((tx) => {
+      tx.executeSql("SELECT * FROM datospedidos", [], (tx, results) => {
+        var len = results.rows.length;
+        for (let i = 0; i < len; i++) {
+          let row = results.rows.item(i);
+          console.log(`DATOS PEDIDOS: ` + JSON.stringify(row));
+        }
+        if(len > 0)
+          listarPedidos();
+      });
+    });
+  };
+
+
+
   const listarPedidos = async () => {
     try {
-      /*const response = await fetch(
-        "https://app.cotzul.com/Pedidos/getPedidosVendedor.php?idvendedor=" +
-          dataUser.vn_codigo
-      );*/
-      const database_name = "CotzulBD10.db";
-      const database_version = "1.0";
-      const database_displayname = "CotzulBDS";
-      const database_size = 200000;
 
       let db = null;
+      setLoading(false);
       console.log("LISTAR pedidovendedor pedidos enviados");
       db = SQLite.openDatabase(
         database_name,
@@ -184,7 +389,6 @@ export default function PedidosEnviados(props) {
         database_size
       );
       db.transaction((tx) => {
-     
         tx.executeSql("SELECT * FROM pedidosvendedor a, datospedidos b WHERE a.pv_estatus != -1 AND a.pv_codigo = b.dp_codigo AND a.pv_codcliente= b.dp_codcliente ORDER BY a.pv_codigo DESC", [], (tx, results) => {
           var len = results.rows.length;
           setTotEncontrados(len);
@@ -192,18 +396,13 @@ export default function PedidosEnviados(props) {
             let row = results.rows.item(i);
             console.log(`PEDIDOS VENDEDOR: ` + JSON.stringify(row));
           }
-          setLoading(true);
+          
           setData(results.rows._array);
-          //const pedidosvendedor = { pedidovendedor: results.rows._array };
-          //setResponsePV(pedidosvendedor);
+          setLoading(true);
+          setRefreshing(true);
         });
       });
-
-      //console.log(responsePV);
-      //const jsonResponse = await JSON.stringify(responsePV);
-      //setLoading(true);
-      //setData(responsePV?.pedidovendedor);
-      setRefreshing(false);
+     
     } catch (error) {
       setLoading(false);
       console.log("un error cachado listar pedidos");
@@ -234,7 +433,6 @@ export default function PedidosEnviados(props) {
         }
         texto = texto + "</c>";
       } else {
-        //console.log(pedidos[0].cb_observacion);
         if (pedidos[0].cb_observacion != "X")
           Alert.alert(pedidos[0].cb_observacion);
       }
@@ -366,6 +564,23 @@ export default function PedidosEnviados(props) {
                 iconStyle={styles.iconRight}
               />
             </View>
+            <View
+              style={{
+                width: 70,
+                height: 50,
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              {(item.pv_estatusimg == 1)?<Icon
+                onPress={()=>openUrl("https://app.cotzul.com/Pedidos/recibos/"+item.pv_nombrearchivo,1)}
+                type="material-community"
+                name="eye"
+                size={30}
+                iconStyle={styles.iconRight}
+              />:<Text style={styles.tabletitle}>NO</Text>}
+              
+            </View>
           </View>
         </TouchableOpacity>
       );
@@ -394,7 +609,9 @@ export default function PedidosEnviados(props) {
   }; 
 
   const onRefresh = useCallback(() => {
-    listarPedidos();
+    setRefreshing(true);
+    obtenerPedidosVendedor();
+    
 }, []);
 
   const recargarPedidos = () => {
@@ -494,19 +711,29 @@ export default function PedidosEnviados(props) {
                 borderWidth: 1,
               }}
             >
-              <Text style={styles.tabletitle}>Comprobante</Text>
+              <Text style={styles.tabletitle}>Recibo</Text>
+            </View>
+            <View
+              style={{
+                width: 70,
+                backgroundColor: "#9c9c9c",
+                borderColor: "black",
+                borderWidth: 1,
+              }}
+            >
+              <Text style={styles.tabletitle}>Respaldo</Text>
             </View>
             
           </View>
 
-          {loading && loading2 ? (
+          {loading ? (
             <FlatList
               data={data}
               renderItem={item}
               keyExtractor={(item, index) => index.toString()}
             />
           ) : (
-            <ActivityIndicator size="large" loading={loading && loading2} />
+            <ActivityIndicator size="large" loading={loading} />
           )}
         </View>
       </ScrollView>

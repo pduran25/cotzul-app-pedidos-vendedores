@@ -5,9 +5,9 @@ import React, {useState, useEffect} from 'react'
 
 
 import * as schema from './schemas';
-const database_name = 'CotzulDB10.db';
-const database_version = '1.0';
-const database_displayname = 'CotzulDBS';
+const database_name = 'CotzulBD2.db';
+const database_version = '2.0';
+const database_displayname = 'CotzulBD';
 const database_size = 200000;
 const [texto, setTexto] = useState("Cargando...");
 

@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback} from 'react'
-import {View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert} from "react-native";
+import {View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, TextInput, Keyboard} from "react-native";
 import { colors } from "react-native-elements";
 import { FlatList } from "react-native-gesture-handler";
 import Feather from 'react-native-vector-icons/Feather';
@@ -20,10 +20,11 @@ export default function ItemBusqueda(){
     const [familias, setFamilias] = useState([])
     const [elegido, setElegido] = useState(0)
     const [tproducto, setTproducto] = useState(0)
+    const [texto, setTexto] = useState("");
 
-    const database_name = 'CotzulBD10.db';
-    const database_version = '1.0';
-    const database_displayname = 'CotzulBDS';
+    const database_name = 'CotzulBD2.db';
+    const database_version = '2.0';
+    const database_displayname = 'CotzulBD';
     const database_size = 200000;
 
     useEffect(() => {
@@ -55,6 +56,12 @@ export default function ItemBusqueda(){
         });
     };
 
+    const handleKeyPress = (event) => {
+        console.log("Entro al Enter");
+        setTexto(search);
+        Keyboard.dismiss();
+    };
+
      const goFamilia = (codigo) =>{
         setElegido(codigo)
      }
@@ -75,11 +82,20 @@ export default function ItemBusqueda(){
             <View style={styles.searchWrapper}>
                
                 <View style={styles.search}>
-                <SearchBar
+               {/* <SearchBar
                 placeholder="Buscar por referencia"
                 onChangeText={(e)=> setSearch(e)}
                 containerStyle = {StyleSheet.Searchbar}
                 value= {search}
+    />*/}
+
+                <TextInput
+                    style={styles.searchBar}
+                    placeholder="Buscar por referencia"
+                    onChangeText={(text) => setSearch(text)}
+                    value={search}
+                    onSubmitEditing={handleKeyPress}
+                    onKeyPress={()=>setTexto("")}
                 />
                 </View>
                 
@@ -102,7 +118,7 @@ export default function ItemBusqueda(){
             {/*Familias*/}
             <ScrollView style={styles.scrollview}>
                 <View style={styles.productoWrapper}>
-                    <DataExtra texto={search} familia={elegido} tproducto={tproducto} />
+                    <DataExtra texto={texto} familia={elegido} tproducto={tproducto} />
                 </View>
             </ScrollView>
         </View>
@@ -114,6 +130,12 @@ const styles = StyleSheet.create({
         marginTop: 10,
         paddingHorizontal: 20,
     },
+    searchBar: {
+        height: 40,
+        borderColor: 'gray',
+        borderWidth: 1,
+        paddingHorizontal: 10,
+      },
 titlesSubtitle:{
    // fontFamily: 
    fontSize: 16,

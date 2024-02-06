@@ -11,9 +11,9 @@ import CargarInformacion from "../navegations/CargarInformacion";
 
 const STORAGE_KEY = '@save_data'
 
-const database_name = 'CotzulBD10.db';
-const database_version = '1.0';
-const database_displayname = 'CotzulBDS';
+const database_name = 'CotzulBD2.db';
+const database_version = '2.0';
+const database_displayname = 'CotzulBD';
 const database_size = 200000;
 
 export default function Perfil(){
@@ -24,6 +24,7 @@ export default function Perfil(){
     const {signOut, signUp} = React.useContext(AuthContext);
     const [internet, setInternet] = useState(true);
     const [activo, setActivo] = useState(false);
+    
    
     
 
@@ -54,6 +55,7 @@ export default function Perfil(){
    const onSubmit = async() =>{
         try {
 
+            let db = null;
             db = SQLite.openDatabase(
                 database_name,
                 database_version,
@@ -61,20 +63,31 @@ export default function Perfil(){
                 database_size
               );
 
+                console.log(db)
               db.transaction((tx) => {
-                tx.executeSql("UPDATE usuario SET us_login = 0 WHERE us_numunico = 1");
+                tx.executeSql("UPDATE usuario SET us_login = 0 WHERE us_numunico = 1",(tx,results)=>{
+                    console.log('Done.')
+                     getout();
+                },
+                (txn, error) => {
+                    console.log('Error al actualizar:', error.message); // Imprime el mensaje de error
+                });
               });
                 
 
-            await AsyncStorage.removeItem(STORAGE_KEY)
-            setUser(false)
-            signOut()
-            console.log('Done.')
+           
+            
           } catch(e) {
-            console.log(e)
+            console.log(e.message)
           }
         
           
+   }
+
+   const getout = async() =>{
+    await AsyncStorage.removeItem(STORAGE_KEY)
+                    setUser(false)
+                    signOut()
    }
 
    const onLoad = () =>{
@@ -106,7 +119,7 @@ export default function Perfil(){
             buttonStyle = {styles.btnLogin}
             onPress= {onSubmit}
         />
-        <Text style={styles.txtusuario}>Version App: 1.0.23</Text>
+        <Text style={styles.txtusuario}>Version App: 1.0.24</Text>
     </View>
         
         </>
